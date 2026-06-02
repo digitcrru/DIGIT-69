@@ -13,11 +13,21 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { DEFAULT: '#FF6B00', dark: '#E65C00', light: '#FF8533' },
-                        dark: { 900: '#0F172A', 800: '#1E293B', 700: '#334155' }
+                        brand: { DEFAULT: '#FF6B00', dark: '#E65C00', light: '#FF8A33', glow: 'rgba(255, 107, 0, 0.5)' },
+                        dark: { 900: '#0B1121', 800: '#131C31', 700: '#1E293B', 600: '#334155' }
                     },
                     fontFamily: {
-                        sans: ['Sarabun', 'Prompt', 'sans-serif'],
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -37,47 +47,84 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- PapaParse (For fast CSV reading) -->
+    <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
-        body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            background-color: #0B1121; 
+            color: #f8fafc; 
+            overflow-x: hidden;
+        }
         
-        /* Glassmorphism Classes */
+        /* Premium Glassmorphism */
         .glass {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(19, 28, 49, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         .glass-card {
-            background: linear-gradient(145deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 107, 0, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: linear-gradient(160deg, rgba(30,41,59,0.7) 0%, rgba(11,17,33,0.8) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
         }
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        /* Custom Input Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #FF6B00; }
         
+        /* Animated Background Gradients */
         .bg-animated {
-            background: radial-gradient(circle at 15% 50%, rgba(255, 107, 0, 0.15), transparent 25%),
-                        radial-gradient(circle at 85% 30%, rgba(255, 107, 0, 0.1), transparent 25%);
-            background-color: #0F172A;
+            background-color: #0B1121;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 107, 0, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(255, 107, 0, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
             background-attachment: fixed;
+        }
+
+        /* Gradient Text Utility */
+        .text-gradient {
+            background: linear-gradient(135deg, #FFB073 0%, #FF6B00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Custom Input Fields */
+        .input-premium {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .input-premium:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #FF6B00;
+            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
+            outline: none;
         }
     </style>
 </head>
-<body class="bg-animated min-h-screen text-slate-200">
+<body class="bg-animated min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // --- 📊 Mock Data (สำหรับให้ระบบทำงานได้ทันที โดยไม่ต้องต่อ API จริงในตอนนี้) ---
+        // --- 📊 Mock Data ---
         const MOCK_ACTIVITIES = [
             { ActID: 'A1', ActName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', Date: '2026-06-15', Location: 'หอประชุมใหญ่', Status: 'open' },
             { ActID: 'A2', ActName: 'อบรมสัมมนา AI & Data Science', Date: '2026-06-20', Location: 'ห้องประชุม 1', Status: 'open' },
@@ -92,66 +139,97 @@
         // --- 🎨 Icons (SVG) ---
         const Icons = {
             Home: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>,
-            CheckIn: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
-            History: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
+            CheckIn: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
+            History: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
             Login: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>,
             Dashboard: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>,
             Users: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>,
             Report: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>,
             Settings: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>,
-            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>,
+            ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>,
+            Search: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         };
 
         // ==========================================
         // 🚀 MAIN APP COMPONENT
         // ==========================================
         function App() {
-            // States
-            const [view, setView] = useState('home'); // home, checkin, survey, history, admin
+            const [view, setView] = useState('home'); 
             const [isAdmin, setIsAdmin] = useState(false);
             const [systemOpen, setSystemOpen] = useState(true);
             
-            // Data States
             const [activities, setActivities] = useState(MOCK_ACTIVITIES);
+            const [students, setStudents] = useState(MOCK_STUDENTS); // เปลี่ยนเป็น State เพื่อรองรับข้อมูลจริง
             const [currentStudent, setCurrentStudent] = useState(null);
             const [selectedActId, setSelectedActId] = useState(null);
 
-            // Load Settings from LocalStorage
             useEffect(() => {
                 const isSysOpen = localStorage.getItem('digit69_systemOpen');
                 if (isSysOpen !== null) setSystemOpen(isSysOpen === 'true');
+
+                // --- 📥 ดึงข้อมูลจริงจาก Google Sheets ---
+                const SHEET_ID = '1XJKJCp_XY_DUtU_z0PK3B-n3mB5BOkSHtS-7XPtCnHA';
+                const actsUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Activities`;
+                const studentsUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Students`;
+
+                // 1. ดึงข้อมูลกิจกรรม
+                Papa.parse(actsUrl, {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        if(results.data && results.data.length > 0 && results.data[0].ActID) {
+                            setActivities(results.data.filter(row => row.ActID !== "")); // กรองแถวว่างทิ้ง
+                        }
+                    }
+                });
+
+                // 2. ดึงข้อมูลนักศึกษา
+                Papa.parse(studentsUrl, {
+                    download: true,
+                    header: true,
+                    complete: (results) => {
+                        if(results.data && results.data.length > 0 && results.data[0].StudentID) {
+                            setStudents(results.data.filter(row => row.StudentID !== "")); // กรองแถวว่างทิ้ง
+                        }
+                    }
+                });
             }, []);
 
-            // --- SweetAlert Wrappers ---
-            const showLoading = (title) => {
-                Swal.fire({ title, background: '#1e293b', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            };
-            const showSuccess = (title) => {
-                Swal.fire({ icon: 'success', title, background: '#1e293b', color: '#fff', timer: 1500, showConfirmButton: false });
-            };
-            const showError = (title, text) => {
-                Swal.fire({ icon: 'error', title, text, background: '#1e293b', color: '#fff', confirmButtonColor: '#FF6B00' });
-            };
+            // UI Helpers
+            const customSwal = Swal.mixin({
+                background: '#131C31',
+                color: '#f8fafc',
+                customClass: {
+                    popup: 'border border-slate-700/50 rounded-2xl shadow-2xl',
+                    confirmButton: 'bg-brand hover:bg-brand-dark px-6 py-2 rounded-lg font-bold transition-all',
+                }
+            });
+
+            const showLoading = (title) => customSwal.fire({ title, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const showSuccess = (title) => customSwal.fire({ icon: 'success', title, timer: 1500, showConfirmButton: false });
+            const showError = (title, text) => customSwal.fire({ icon: 'error', title, text });
 
             // --- Navigation Bar ---
             const Navbar = () => (
-                <nav className="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg">
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
-                        <div className="bg-brand text-white p-2 rounded-xl font-bold text-xl shadow-lg shadow-brand/20">D.69</div>
+                <nav className="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center transition-all">
+                    <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setView('home')}>
+                        <div className="bg-gradient-to-br from-brand-light to-brand text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-lg shadow-lg shadow-brand/30 group-hover:scale-105 transition-transform">D.</div>
                         <div>
-                            <h1 className="text-xl font-bold tracking-wider text-white">DIGIT<span className="text-brand">.69</span></h1>
-                            <p className="text-xs text-slate-400">Activity Management System</p>
+                            <h1 className="text-xl font-bold tracking-wider text-white group-hover:text-brand-light transition-colors">DIGIT<span className="text-brand">.69</span></h1>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest">Activity System</p>
                         </div>
                     </div>
                     <div>
                         {!isAdmin ? (
-                            <button onClick={() => setView('adminLogin')} className="flex items-center gap-2 text-sm text-slate-300 hover:text-brand transition-colors bg-white/5 px-4 py-2 rounded-lg border border-white/10 hover:border-brand/50">
+                            <button onClick={() => setView('adminLogin')} className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-all bg-white/5 hover:bg-brand/10 px-5 py-2.5 rounded-xl border border-white/10 hover:border-brand/40 shadow-sm">
                                 <Icons.Login /> Staff Login
                             </button>
                         ) : (
-                            <div className="flex gap-4">
-                                <button onClick={() => setView('admin')} className="text-brand font-semibold">เข้าสู่ Dashboard</button>
-                                <button onClick={() => { setIsAdmin(false); setView('home'); }} className="text-red-400 hover:text-red-300">ออกจากระบบ</button>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setView('admin')} className="text-brand font-semibold hover:text-brand-light transition-colors">เข้าสู่ Dashboard</button>
+                                <div className="w-px h-5 bg-slate-700"></div>
+                                <button onClick={() => { setIsAdmin(false); setView('home'); }} className="text-slate-400 hover:text-red-400 transition-colors text-sm">ออกจากระบบ</button>
                             </div>
                         )}
                     </div>
@@ -162,50 +240,73 @@
             // 👩‍🎓 STUDENT VIEWS
             // ==========================================
 
-            // 1. Home View
             const HomeView = () => (
-                <div className="max-w-4xl mx-auto mt-20 p-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4">ยินดีต้อนรับสู่ระบบ <span className="text-brand">DIGIT.69</span></h2>
-                        <p className="text-slate-400 text-lg">บริหารจัดการประวัติการเข้าร่วมกิจกรรม คณะเทคโนโลยีดิจิทัล</p>
+                <div className="max-w-5xl mx-auto mt-16 p-6 animate-fade-in-up flex-1 flex flex-col justify-center pb-20">
+                    <div className="text-center mb-16 relative">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-brand/20 blur-[100px] rounded-full pointer-events-none"></div>
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-brand/10 border border-brand/20 text-brand text-xs font-bold tracking-widest mb-6">FACULTY OF DIGITAL TECHNOLOGY</span>
+                        <h2 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight text-white">
+                            Welcome to <br className="md:hidden" /><span className="text-gradient drop-shadow-sm">DIGIT.69</span>
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                            ระบบบริหารจัดการประวัติการเข้าร่วมกิจกรรม สำหรับนักศึกษาคณะเทคโนโลยีดิจิทัล สะดวก รวดเร็ว และตรวจสอบประวัติได้แบบเรียลไทม์
+                        </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Menu 1: Check-in */}
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full relative z-10">
+                        {/* Menu 1 */}
                         <div 
                             onClick={() => systemOpen ? setView('checkin') : null}
-                            className={`glass-card p-8 rounded-2xl transition-all duration-300 ${systemOpen ? 'cursor-pointer hover:-translate-y-2 hover:shadow-brand/20 hover:border-brand/50' : 'opacity-50 cursor-not-allowed grayscale'}`}
+                            className={`group relative glass-card p-10 rounded-3xl transition-all duration-500 ${systemOpen ? 'cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand/20 hover:border-brand/40' : 'opacity-50 cursor-not-allowed grayscale'}`}
                         >
-                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${systemOpen ? 'bg-brand/20 text-brand' : 'bg-gray-700 text-gray-400'}`}>
-                                <Icons.CheckIn />
+                            <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
+                            <div className="relative z-10">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${systemOpen ? 'bg-gradient-to-br from-brand/20 to-brand/5 text-brand border border-brand/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
+                                    <Icons.CheckIn />
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-brand transition-colors">ลงทะเบียนกิจกรรม</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed mb-6">เช็คชื่อเข้าร่วมกิจกรรมที่กำลังเปิดรับลงทะเบียน พร้อมทำแบบประเมินความพึงพอใจอย่างรวดเร็ว</p>
+                                
+                                <div className="flex items-center justify-between">
+                                    {!systemOpen ? (
+                                        <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full border border-red-500/20 flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ปิดระบบชั่วคราว
+                                        </span>
+                                    ) : (
+                                        <span className="text-brand text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">คลิกเพื่อเริ่มต้น <Icons.ChevronRight/></span>
+                                    )}
+                                </div>
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">1. ลงทะเบียนกิจกรรม</h3>
-                            <p className="text-slate-400 mb-4">เช็คชื่อเข้าร่วมกิจกรรมที่กำลังเปิดรับลงทะเบียน พร้อมทำแบบประเมิน</p>
-                            {!systemOpen && <span className="text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded-full border border-red-500/20">ปิดระบบชั่วคราว</span>}
                         </div>
 
-                        {/* Menu 2: History */}
+                        {/* Menu 2 */}
                         <div 
                             onClick={() => setView('history')}
-                            className="glass-card p-8 rounded-2xl cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-brand/20 hover:border-brand/50"
+                            className="group relative glass-card p-10 rounded-3xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 hover:border-blue-500/40 transition-all duration-500"
                         >
-                            <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6">
-                                <Icons.History />
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
+                            <div className="relative z-10">
+                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-400 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+                                    <Icons.History />
+                                </div>
+                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">ตรวจสอบประวัติ</h3>
+                                <p className="text-slate-400 text-sm leading-relaxed mb-6">เช็คประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณที่ผ่านมา รวมถึงจำนวนชั่วโมงกิจกรรมที่สะสมไว้</p>
+                                <span className="text-blue-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">ตรวจสอบเลย <Icons.ChevronRight/></span>
                             </div>
-                            <h3 className="text-2xl font-bold text-white mb-2">2. ตรวจสอบประวัติ</h3>
-                            <p className="text-slate-400">ตรวจสอบประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณที่ผ่านมา</p>
                         </div>
                     </div>
                 </div>
             );
 
-            // 2. Check-in View
             const CheckInView = () => {
                 const [searchId, setSearchId] = useState('');
-                const activeActs = activities.filter(a => a.Status === 'open');
+                const activeActs = activities.filter(a => a.Status === 'open' || a.Status === 'OPEN');
 
-                const handleSearch = () => {
-                    const student = MOCK_STUDENTS.find(s => s.StudentID === searchId || s.IDCard === searchId);
+                const handleSearch = (e) => {
+                    e?.preventDefault();
+                    if(!searchId) return;
+                    // ค้นหาจาก State ข้อมูลจริงที่ดึงมา
+                    const student = students.find(s => s.StudentID === searchId || s.IDCard === searchId);
                     if (student) {
                         setCurrentStudent(student);
                     } else {
@@ -214,67 +315,95 @@
                 };
 
                 const handleSubmit = () => {
-                    if (!selectedActId) return showError('แจ้งเตือน', 'กรุณาเลือกกิจกรรม');
+                    if (!selectedActId) return showError('แจ้งเตือน', 'กรุณาเลือกกิจกรรมที่ต้องการลงทะเบียน');
                     
                     showLoading('กำลังบันทึกข้อมูล...');
                     setTimeout(() => {
-                        showSuccess('เช็คชื่อสำเร็จ!');
-                        setView('survey'); // พรอมต์ระบุให้ไปหน้า Survey อัตโนมัติ
+                        showSuccess('เช็คชื่อเบื้องต้นสำเร็จ!');
+                        setView('survey');
                     }, 1000);
                 };
 
                 return (
-                    <div className="max-w-2xl mx-auto mt-10 p-6">
-                        <button onClick={() => setView('home')} className="text-brand flex items-center gap-2 mb-6 hover:underline">
+                    <div className="max-w-2xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
+                        <button onClick={() => setView('home')} className="text-slate-400 hover:text-brand flex items-center gap-2 mb-8 transition-colors text-sm font-medium">
                             ← กลับหน้าหลัก
                         </button>
                         
-                        <div className="glass-card p-8 rounded-2xl border-t-4 border-t-brand">
-                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Icons.CheckIn/> ลงทะเบียนเข้ากิจกรรม</h2>
+                        <div className="glass-card p-8 md:p-10 rounded-3xl relative overflow-visible">
+                            {/* Decorative element */}
+                            <div className="absolute top-0 right-10 w-20 h-1 bg-brand rounded-b-lg shadow-[0_0_20px_rgba(255,107,0,0.5)]"></div>
+                            
+                            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
+                                <div className="p-2 bg-brand/20 rounded-lg text-brand"><Icons.CheckIn/></div>
+                                ลงทะเบียนเข้ากิจกรรม
+                            </h2>
                             
                             {!currentStudent ? (
-                                <div className="space-y-4">
-                                    <label className="block text-sm text-slate-400">รหัสนักศึกษา / เลขบัตรประชาชน</label>
-                                    <div className="flex gap-4">
-                                        <input 
-                                            type="text" 
-                                            className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white"
-                                            placeholder="กรอกรหัส..."
-                                            value={searchId}
-                                            onChange={(e) => setSearchId(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                        />
-                                        <button onClick={handleSearch} className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-lg font-semibold transition">ค้นหา</button>
+                                <form onSubmit={handleSearch} className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">รหัสนักศึกษา หรือ เลขบัตรประชาชน</label>
+                                        <div className="relative">
+                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                                                <Icons.Search />
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                className="w-full input-premium rounded-xl pl-11 pr-4 py-4 text-white text-lg"
+                                                placeholder="กรอกข้อมูลเพื่อค้นหา..."
+                                                value={searchId}
+                                                onChange={(e) => setSearchId(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-slate-500">* ทดสอบใช้รหัส: 65123456</p>
-                                </div>
+                                    <button type="submit" className="w-full bg-gradient-to-r from-brand to-brand-dark hover:from-brand-light hover:to-brand text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition-all transform hover:scale-[1.01] flex justify-center items-center gap-2">
+                                        ค้นหาข้อมูล
+                                    </button>
+                                    <p className="text-center text-xs text-slate-500 mt-4 bg-dark-800/50 py-2 rounded-lg border border-slate-700/30">* ลองใช้รหัสนักศึกษาทดสอบ: <span className="text-slate-300 font-mono bg-dark-900 px-2 py-1 rounded">65123456</span></p>
+                                </form>
                             ) : (
-                                <div className="space-y-6 animate-fade-in">
-                                    <div className="bg-dark-800 p-4 rounded-xl border border-slate-700">
-                                        <p className="text-sm text-slate-400">ข้อมูลนักศึกษา</p>
-                                        <p className="text-lg font-bold text-white mt-1">{currentStudent.Name}</p>
-                                        <p className="text-brand">{currentStudent.Major} ({currentStudent.StudentID})</p>
+                                <div className="space-y-8 animate-fade-in-up">
+                                    <div className="bg-gradient-to-br from-dark-800 to-dark-900 p-6 rounded-2xl border border-slate-700/50 shadow-inner relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                                        <div className="flex items-start justify-between relative z-10">
+                                            <div>
+                                                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">ข้อมูลนักศึกษา</p>
+                                                <p className="text-xl font-bold text-white">{currentStudent.Name}</p>
+                                                <p className="text-brand mt-1 flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
+                                                    {currentStudent.Major}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="bg-slate-800 text-slate-300 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700">{currentStudent.StudentID}</span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm text-slate-400 mb-2">เลือกกิจกรรมที่เข้าร่วม</label>
-                                        <select 
-                                            className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white appearance-none"
-                                            onChange={(e) => setSelectedActId(e.target.value)}
-                                            value={selectedActId || ''}
-                                        >
-                                            <option value="" disabled>-- กรุณาเลือกกิจกรรม --</option>
-                                            {activeActs.map(act => (
-                                                <option key={act.ActID} value={act.ActID}>{act.ActName}</option>
-                                            ))}
-                                        </select>
+                                        <label className="block text-sm font-medium text-slate-300 mb-3">เลือกกิจกรรมที่ต้องการลงทะเบียน</label>
+                                        <div className="relative">
+                                            <select 
+                                                className="w-full input-premium rounded-xl px-4 py-4 text-white appearance-none cursor-pointer"
+                                                onChange={(e) => setSelectedActId(e.target.value)}
+                                                value={selectedActId || ''}
+                                            >
+                                                <option value="" disabled>-- กรุณาเลือกกิจกรรม --</option>
+                                                {activeActs.map(act => (
+                                                    <option key={act.ActID} value={act.ActID} className="bg-dark-900">{act.ActName}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <button 
                                         onClick={handleSubmit}
-                                        className="w-full bg-brand hover:bg-brand-dark text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition transform hover:scale-[1.02]"
+                                        className="w-full bg-gradient-to-r from-brand to-brand-dark hover:from-brand-light hover:to-brand text-white py-4 rounded-xl font-bold text-lg shadow-[0_10px_20px_-10px_rgba(255,107,0,0.5)] transition-all transform hover:scale-[1.01]"
                                     >
-                                        ยืนยันลงทะเบียน
+                                        ยืนยันการลงทะเบียน
                                     </button>
                                 </div>
                             )}
@@ -283,15 +412,20 @@
                 );
             };
 
-            // 3. Survey View
             const SurveyView = () => {
-                const questions = Array.from({length: 13}, (_, i) => `คำถามข้อที่ ${i + 1}: ความพึงพอใจด้านการจัดกิจกรรมและการนำไปใช้ประโยชน์`);
+                const questions = [
+                    "การประชาสัมพันธ์กิจกรรมมีความชัดเจนและทั่วถึง",
+                    "ระยะเวลาในการจัดกิจกรรมมีความเหมาะสม",
+                    "สถานที่และสิ่งอำนวยความสะดวกมีความพร้อม",
+                    "รูปแบบการจัดกิจกรรมน่าสนใจและสร้างสรรค์",
+                    "กิจกรรมนี้มีประโยชน์ต่อการพัฒนาตนเอง",
+                ]; // ย่อให้เหลือ 5 ข้อเพื่อ Demo
                 
                 const submitSurvey = (e) => {
                     e.preventDefault();
                     showLoading('กำลังส่งแบบประเมิน...');
                     setTimeout(() => {
-                        showSuccess('ขอบคุณสำหรับข้อเสนอแนะ!');
+                        showSuccess('บันทึกข้อมูลเรียบร้อย ขอบคุณครับ!');
                         setCurrentStudent(null);
                         setSelectedActId(null);
                         setView('home');
@@ -299,35 +433,49 @@
                 };
 
                 return (
-                    <div className="max-w-3xl mx-auto mt-10 p-6">
-                        <div className="glass-card p-8 rounded-2xl">
-                            <div className="text-center mb-8">
-                                <h2 className="text-2xl font-bold text-white">แบบประเมินความพึงพอใจ</h2>
-                                <p className="text-brand">กรุณาประเมินเพื่อเสร็จสิ้นการลงทะเบียน</p>
+                    <div className="max-w-3xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
+                        <div className="glass-card p-8 md:p-10 rounded-3xl">
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 text-green-400 mb-4 shadow-inner shadow-green-500/20">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <h2 className="text-3xl font-bold text-white mb-2">เช็คชื่อสำเร็จ</h2>
+                                <p className="text-brand">ขั้นตอนสุดท้าย: กรุณาทำแบบประเมินความพึงพอใจ</p>
                             </div>
 
                             <form onSubmit={submitSurvey} className="space-y-6">
                                 {questions.map((q, idx) => (
-                                    <div key={idx} className="bg-dark-800/50 p-4 rounded-lg border border-slate-700/50">
-                                        <p className="mb-3 text-sm">{q}</p>
-                                        <div className="flex justify-between md:justify-start md:gap-8">
-                                            {[5, 4, 3, 2, 1].map(score => (
-                                                <label key={score} className="flex flex-col items-center gap-1 cursor-pointer group">
-                                                    <input type="radio" name={`q${idx}`} value={score} required className="text-brand focus:ring-brand accent-brand w-5 h-5" />
-                                                    <span className="text-xs text-slate-400 group-hover:text-brand">{score}</span>
+                                    <div key={idx} className="bg-dark-800/40 p-6 rounded-2xl border border-slate-700/50 hover:border-slate-600/50 transition-colors">
+                                        <p className="mb-4 text-slate-200 font-medium">{idx+1}. {q}</p>
+                                        
+                                        {/* Custom Radio Buttons UX */}
+                                        <div className="flex justify-between md:justify-start gap-2 md:gap-4">
+                                            {[1, 2, 3, 4, 5].map(score => (
+                                                <label key={score} className="cursor-pointer relative flex-1 md:flex-none">
+                                                    <input type="radio" name={`q${idx}`} value={score} required className="peer sr-only" />
+                                                    <div className="w-full md:w-12 h-12 rounded-xl flex items-center justify-center bg-dark-900 border border-slate-700 text-slate-400 font-semibold peer-checked:bg-brand peer-checked:border-brand peer-checked:text-white hover:bg-dark-700 transition-all shadow-sm">
+                                                        {score}
+                                                    </div>
                                                 </label>
                                             ))}
+                                        </div>
+                                        <div className="flex justify-between text-[10px] text-slate-500 mt-2 px-1 md:w-72">
+                                            <span>ควรปรับปรุง</span>
+                                            <span>ดีเยี่ยม</span>
                                         </div>
                                     </div>
                                 ))}
                                 
                                 <div className="pt-4">
-                                    <label className="block text-sm mb-2">ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</label>
-                                    <textarea className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" rows="3"></textarea>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">ข้อเสนอแนะเพิ่มเติม (ทางเลือก)</label>
+                                    <textarea 
+                                        className="w-full input-premium rounded-xl p-4 text-white resize-none h-28" 
+                                        placeholder="พิมพ์ข้อเสนอแนะของคุณที่นี่..."
+                                    ></textarea>
                                 </div>
 
-                                <button type="submit" className="w-full bg-brand hover:bg-brand-dark text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition">
-                                    ส่งแบบประเมิน
+                                <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_10px_20px_-10px_rgba(16,185,129,0.5)] transition-all transform hover:scale-[1.01] mt-4">
+                                    ส่งแบบประเมินและเสร็จสิ้น
                                 </button>
                             </form>
                         </div>
@@ -335,68 +483,97 @@
                 );
             };
 
-            // 4. History View
             const HistoryView = () => {
                 const [searchId, setSearchId] = useState('');
                 const [history, setHistory] = useState(null);
 
-                const handleSearch = () => {
-                    const student = MOCK_STUDENTS.find(s => s.StudentID === searchId || s.IDCard === searchId);
+                const handleSearch = (e) => {
+                    e?.preventDefault();
+                    if(!searchId) return;
+                    // ค้นหาจาก State ข้อมูลจริงที่ดึงมา
+                    const student = students.find(s => s.StudentID === searchId || s.IDCard === searchId);
                     if (student) {
-                        // Mock History Data
                         setHistory({
                             student: student,
                             records: [
-                                { actName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', date: '15 มิ.ย. 2026', time: '08:30 น.' },
-                                { actName: 'กีฬาสานสัมพันธ์ 69', date: '10 พ.ค. 2026', time: '13:15 น.' }
+                                { actName: 'อบรมสัมมนา AI & Data Science', date: '20 มิ.ย. 2026', time: '10:00 น.', status: 'เข้าร่วม' },
+                                { actName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', date: '15 มิ.ย. 2026', time: '08:30 น.', status: 'เข้าร่วม' },
+                                { actName: 'กีฬาสานสัมพันธ์ 69', date: '10 พ.ค. 2026', time: '13:15 น.', status: 'เข้าร่วม' }
                             ]
                         });
                     } else {
-                        showError('ไม่พบข้อมูล', 'ไม่พบประวัติการเข้าร่วมกิจกรรม');
+                        showError('ไม่พบข้อมูล', 'ไม่พบประวัติการเข้าร่วมกิจกรรมในระบบ');
                         setHistory(null);
                     }
                 };
 
                 return (
-                    <div className="max-w-4xl mx-auto mt-10 p-6">
-                        <button onClick={() => setView('home')} className="text-brand flex items-center gap-2 mb-6 hover:underline">← กลับหน้าหลัก</button>
+                    <div className="max-w-4xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
+                        <button onClick={() => setView('home')} className="text-slate-400 hover:text-blue-400 flex items-center gap-2 mb-8 transition-colors text-sm font-medium">
+                            ← กลับหน้าหลัก
+                        </button>
                         
-                        <div className="glass-card p-8 rounded-2xl mb-8">
-                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Icons.History/> ตรวจสอบประวัติกิจกรรม</h2>
-                            <div className="flex gap-4">
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white"
-                                    placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช..."
-                                    value={searchId}
-                                    onChange={(e) => setSearchId(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                />
-                                <button onClick={handleSearch} className="bg-brand hover:bg-brand-dark px-6 py-3 rounded-lg font-semibold transition">ตรวจสอบ</button>
-                            </div>
+                        <div className="glass-card p-8 rounded-3xl mb-8 border-t-4 border-t-blue-500">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+                                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400"><Icons.History/></div>
+                                ตรวจสอบประวัติกิจกรรม
+                            </h2>
+                            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+                                <div className="relative flex-1">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                                        <Icons.Search />
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        className="w-full input-premium rounded-xl pl-11 pr-4 py-3.5 text-white"
+                                        placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช..."
+                                        value={searchId}
+                                        onChange={(e) => setSearchId(e.target.value)}
+                                    />
+                                </div>
+                                <button type="submit" className="bg-blue-600 hover:bg-blue-500 px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all whitespace-nowrap">
+                                    ตรวจสอบ
+                                </button>
+                            </form>
                         </div>
 
                         {history && (
-                            <div className="bg-dark-800 rounded-2xl border border-slate-700 overflow-hidden animate-fade-in">
-                                <div className="p-6 border-b border-slate-700 bg-slate-800/50">
-                                    <h3 className="text-xl font-bold text-white">{history.student.Name}</h3>
-                                    <p className="text-brand">{history.student.Major} | รหัส: {history.student.StudentID}</p>
+                            <div className="glass-card rounded-3xl overflow-hidden animate-fade-in-up shadow-2xl">
+                                <div className="p-6 md:p-8 bg-gradient-to-r from-slate-800/80 to-dark-900/80 border-b border-slate-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-white mb-1">{history.student.Name}</h3>
+                                        <p className="text-blue-400 flex items-center gap-2">
+                                            {history.student.Major} <span className="text-slate-600">|</span> <span className="text-slate-300 font-mono">{history.student.StudentID}</span>
+                                        </p>
+                                    </div>
+                                    <div className="bg-dark-900 border border-slate-700 px-4 py-2 rounded-xl text-center">
+                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">เข้าร่วมทั้งหมด</p>
+                                        <p className="text-2xl font-bold text-white">{history.records.length} <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
+                                    </div>
                                 </div>
-                                <div className="p-0">
+                                <div className="p-0 overflow-x-auto">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
-                                            <tr className="bg-dark-900 text-slate-400 text-sm">
-                                                <th className="p-4 font-medium">วันที่</th>
-                                                <th className="p-4 font-medium">เวลา</th>
-                                                <th className="p-4 font-medium">ชื่อกิจกรรม</th>
+                                            <tr className="bg-dark-900/50 text-slate-400 text-sm border-b border-slate-700/50">
+                                                <th className="p-5 font-medium whitespace-nowrap">วันที่เข้าร่วม</th>
+                                                <th className="p-5 font-medium">ชื่อกิจกรรม</th>
+                                                <th className="p-5 font-medium text-center">สถานะ</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {history.records.map((rec, i) => (
-                                                <tr key={i} className="border-b border-slate-800 hover:bg-slate-800/50 transition">
-                                                    <td className="p-4 whitespace-nowrap">{rec.date}</td>
-                                                    <td className="p-4 whitespace-nowrap text-brand">{rec.time}</td>
-                                                    <td className="p-4">{rec.actName}</td>
+                                                <tr key={i} className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors">
+                                                    <td className="p-5 whitespace-nowrap text-sm">
+                                                        <div className="text-white font-medium">{rec.date}</div>
+                                                        <div className="text-slate-500 text-xs mt-1">{rec.time}</div>
+                                                    </td>
+                                                    <td className="p-5 font-medium text-slate-200">{rec.actName}</td>
+                                                    <td className="p-5 text-center">
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                                                            {rec.status}
+                                                        </span>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -409,7 +586,7 @@
             };
 
             // ==========================================
-            // 🛡️ ADMIN VIEWS (Dashboard)
+            // 🛡️ ADMIN VIEWS
             // ==========================================
             
             const AdminLogin = () => {
@@ -421,32 +598,36 @@
                     if(user === 'admin' && pass === '0000') {
                         setIsAdmin(true);
                         setView('admin');
-                        showSuccess('เข้าสู่ระบบสำเร็จ');
+                        showSuccess('ยินดีต้อนรับเข้าสู่ระบบจัดการ');
                     } else {
-                        showError('ผิดพลาด', 'Username หรือ Password ไม่ถูกต้อง');
+                        showError('Access Denied', 'Username หรือ Password ไม่ถูกต้อง');
                     }
                 }
 
                 return (
-                    <div className="flex items-center justify-center min-h-[70vh]">
-                        <div className="glass-card p-8 rounded-2xl w-full max-w-md">
-                            <div className="text-center mb-8">
-                                <div className="w-16 h-16 bg-brand/20 text-brand rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="flex items-center justify-center flex-1 p-6 animate-fade-in-up">
+                        <div className="glass-card p-10 rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden">
+                            <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand/20 blur-[50px] rounded-full"></div>
+                            <div className="text-center mb-8 relative z-10">
+                                <div className="w-16 h-16 bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 text-brand rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
                                     <Icons.Login />
                                 </div>
-                                <h2 className="text-2xl font-bold">Staff Login</h2>
+                                <h2 className="text-3xl font-bold text-white">Staff Login</h2>
+                                <p className="text-slate-400 text-sm mt-2">ลงชื่อเข้าใช้สำหรับเจ้าหน้าที่ดูแลระบบ</p>
                             </div>
-                            <form onSubmit={handleLogin} className="space-y-4">
+                            <form onSubmit={handleLogin} className="space-y-5 relative z-10">
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-1">Username</label>
-                                    <input type="text" value={user} onChange={e=>setUser(e.target.value)} className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" required />
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Username</label>
+                                    <input type="text" value={user} onChange={e=>setUser(e.target.value)} className="w-full input-premium rounded-xl p-3.5 text-white" required placeholder="admin" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-slate-400 mb-1">Password</label>
-                                    <input type="password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" required />
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                                    <input type="password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full input-premium rounded-xl p-3.5 text-white" required placeholder="••••" />
                                 </div>
-                                <button type="submit" className="w-full bg-brand hover:bg-brand-dark py-3 rounded-lg font-bold mt-4">Login</button>
-                                <button type="button" onClick={()=>setView('home')} className="w-full text-slate-400 hover:text-white py-2 text-sm">กลับหน้าหลัก</button>
+                                <div className="pt-2">
+                                    <button type="submit" className="w-full bg-brand hover:bg-brand-dark text-white py-3.5 rounded-xl font-bold shadow-lg shadow-brand/30 transition-all">Sign In</button>
+                                </div>
+                                <button type="button" onClick={()=>setView('home')} className="w-full text-slate-500 hover:text-white py-2 text-sm transition-colors mt-2">← กลับหน้าหลัก</button>
                             </form>
                         </div>
                     </div>
@@ -457,54 +638,40 @@
                 const [adminTab, setAdminTab] = useState('overview');
 
                 const menuItems = [
-                    { id: 'overview', name: '1. ภาพรวม (Overview)', icon: <Icons.Dashboard /> },
-                    { id: 'majors', name: '2. สัดส่วนสาขาวิชา', icon: <Icons.Dashboard /> },
-                    { id: 'exec', name: '3. รายงานผู้บริหาร', icon: <Icons.Report /> },
-                    { id: 'activities', name: '4. จัดการกิจกรรม', icon: <Icons.CheckIn /> },
-                    { id: 'realtime', name: '5. ยอดเช็คชื่อ (Real-time)', icon: <Icons.History /> },
-                    { id: 'spss', name: '6. รายงาน SPSS', icon: <Icons.Report /> },
-                    { id: 'users', name: '7. จัดการสิทธิ์แอดมิน', icon: <Icons.Users /> },
-                    { id: 'settings', name: '8. ตั้งค่าระบบ', icon: <Icons.Settings /> },
+                    { id: 'overview', name: 'ภาพรวม (Overview)', icon: <Icons.Dashboard /> },
+                    { id: 'majors', name: 'สัดส่วนสาขาวิชา', icon: <Icons.Dashboard /> },
+                    { id: 'activities', name: 'จัดการกิจกรรม', icon: <Icons.CheckIn /> },
+                    { id: 'realtime', name: 'ยอดเช็คชื่อ Real-time', icon: <Icons.History /> },
+                    { id: 'spss', name: 'รายงาน SPSS', icon: <Icons.Report /> },
+                    { id: 'settings', name: 'ตั้งค่าระบบ', icon: <Icons.Settings /> },
                 ];
 
-                // Sub-components for Dashboard Tabs
                 const TabOverview = () => (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold">ภาพรวมระบบ (KPIs)</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-brand">
-                                <p className="text-slate-400 text-sm">ยอดขึ้นทะเบียนรวม</p>
-                                <p className="text-4xl font-bold mt-2">1,245 <span className="text-sm font-normal text-slate-500">คน</span></p>
-                            </div>
-                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-blue-500">
-                                <p className="text-slate-400 text-sm">กิจกรรมที่เปิดอยู่</p>
-                                <p className="text-4xl font-bold mt-2">2 <span className="text-sm font-normal text-slate-500">กิจกรรม</span></p>
-                            </div>
-                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-green-500">
-                                <p className="text-slate-400 text-sm">ประเมินแล้ว</p>
-                                <p className="text-4xl font-bold mt-2">1,180 <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
+                    <div className="space-y-6 animate-fade-in-up">
+                        <div className="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 className="text-3xl font-bold text-white mb-1">Dashboard Overview</h2>
+                                <p className="text-slate-400">ภาพรวมสถิติการใช้งานระบบทั้งหมด</p>
                             </div>
                         </div>
-                    </div>
-                );
-
-                const TabMajors = () => (
-                    <div>
-                        <h2 className="text-2xl font-bold mb-6">สัดส่วนตามสาขาวิชา</h2>
-                        <div className="glass-card p-8 rounded-xl flex flex-col items-center">
-                            {/* CSS Only Pie Chart representation for standalone React without external heavy libs */}
-                            <div className="relative w-64 h-64 rounded-full" style={{ background: 'conic-gradient(#FF6B00 0% 40%, #3b82f6 40% 75%, #22c55e 75% 100%)' }}>
-                                <div className="absolute inset-4 bg-dark-900 rounded-full flex items-center justify-center">
-                                    <div className="text-center">
-                                        <p className="text-3xl font-bold text-white">100%</p>
-                                        <p className="text-xs text-slate-400">Total Students</p>
-                                    </div>
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-2 h-full bg-brand"></div>
+                                <p className="text-slate-400 text-sm font-medium mb-2">ยอดขึ้นทะเบียนรวม</p>
+                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">1,245 <span className="text-sm font-normal text-slate-500">คน</span></p>
+                                <div className="mt-4 text-xs text-green-400 flex items-center gap-1"><span className="text-lg">↑</span> 12% จากสัปดาห์ก่อน</div>
                             </div>
-                            <div className="flex gap-6 mt-8">
-                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-brand"></span> วิศวกรรมซอฟต์แวร์ (40%)</div>
-                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"></span> วิทยาการคอมพิวเตอร์ (35%)</div>
-                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span> เทคโนโลยีสารสนเทศ (25%)</div>
+                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+                                <p className="text-slate-400 text-sm font-medium mb-2">กิจกรรมที่เปิดอยู่</p>
+                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">2 <span className="text-sm font-normal text-slate-500">กิจกรรม</span></p>
+                                <div className="mt-4 text-xs text-slate-500">สถานะ: กำลังดำเนินการ</div>
+                            </div>
+                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-2 h-full bg-green-500"></div>
+                                <p className="text-slate-400 text-sm font-medium mb-2">ยอดการประเมินผล</p>
+                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">1,180 <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
+                                <div className="mt-4 text-xs text-slate-500">อัตราการตอบกลับ 94%</div>
                             </div>
                         </div>
                     </div>
@@ -513,109 +680,53 @@
                 const TabActivities = () => {
                     const toggleStatus = (id) => {
                         setActivities(activities.map(a => a.ActID === id ? {...a, Status: a.Status === 'open' ? 'closed' : 'open'} : a));
-                        showSuccess('อัปเดตสถานะแล้ว');
+                        showSuccess('อัปเดตสถานะสำเร็จ');
                     }
                     return (
-                        <div>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold">จัดการกิจกรรม</h2>
-                                <button className="bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg text-sm font-bold">+ สร้างกิจกรรมใหม่</button>
+                        <div className="animate-fade-in-up">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white">จัดการกิจกรรม (Activities)</h2>
+                                    <p className="text-slate-400 text-sm mt-1">เพิ่ม/ลบ และเปิด/ปิด การลงทะเบียนของกิจกรรม</p>
+                                </div>
+                                <button className="bg-brand hover:bg-brand-dark px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-brand/20 transition-all flex items-center gap-2">
+                                    <span className="text-lg">+</span> สร้างกิจกรรมใหม่
+                                </button>
                             </div>
-                            <div className="glass-card overflow-hidden rounded-xl">
-                                <table className="w-full text-left border-collapse">
-                                    <thead className="bg-dark-900 border-b border-slate-700">
-                                        <tr>
-                                            <th className="p-4">ชื่อกิจกรรม</th>
-                                            <th className="p-4">วันที่จัด</th>
-                                            <th className="p-4">สถานที่</th>
-                                            <th className="p-4">สถานะ (เปิด/ปิด)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {activities.map(act => (
-                                            <tr key={act.ActID} className="border-b border-slate-800 hover:bg-slate-800/50">
-                                                <td className="p-4">{act.ActName}</td>
-                                                <td className="p-4">{act.Date}</td>
-                                                <td className="p-4">{act.Location}</td>
-                                                <td className="p-4">
-                                                    <button 
-                                                        onClick={() => toggleStatus(act.ActID)}
-                                                        className={`px-3 py-1 rounded-full text-xs font-bold ${act.Status === 'open' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
-                                                    >
-                                                        {act.Status === 'open' ? 'OPEN' : 'CLOSE'}
-                                                    </button>
-                                                </td>
+                            <div className="glass-card overflow-hidden rounded-2xl">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-dark-900/80 border-b border-slate-700">
+                                            <tr>
+                                                <th className="p-5 text-sm font-semibold text-slate-300">ชื่อกิจกรรม</th>
+                                                <th className="p-5 text-sm font-semibold text-slate-300">วันที่จัด</th>
+                                                <th className="p-5 text-sm font-semibold text-slate-300">สถานที่</th>
+                                                <th className="p-5 text-sm font-semibold text-slate-300 text-center">สถานะ</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-700/50">
+                                            {activities.map(act => (
+                                                <tr key={act.ActID} className="hover:bg-slate-800/40 transition-colors">
+                                                    <td className="p-5 font-medium text-slate-200">{act.ActName}</td>
+                                                    <td className="p-5 text-slate-400 text-sm">{act.Date}</td>
+                                                    <td className="p-5 text-slate-400 text-sm">{act.Location}</td>
+                                                    <td className="p-5 text-center">
+                                                        <button 
+                                                            onClick={() => toggleStatus(act.ActID)}
+                                                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${act.Status === 'open' ? 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'}`}
+                                                        >
+                                                            {act.Status === 'open' ? 'กำลังเปิดรับ' : 'ปิดลงทะเบียน'}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     )
                 };
-
-                const TabRealtime = () => (
-                    <div>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">ยอดเช็คชื่อ (Real-time)</h2>
-                            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold">
-                                <Icons.Download /> Export Excel
-                            </button>
-                        </div>
-                        <div className="glass-card p-6 rounded-xl border border-slate-700 space-y-4">
-                            <div className="flex justify-between items-center p-4 bg-dark-900 rounded-lg">
-                                <div>
-                                    <h4 className="font-bold text-lg text-brand">ปฐมนิเทศนักศึกษาใหม่</h4>
-                                    <p className="text-sm text-slate-400">กำลังเปิดรับลงทะเบียน...</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-3xl font-bold">452</p>
-                                    <p className="text-xs text-slate-400">คนลงทะเบียนแล้ว</p>
-                                </div>
-                            </div>
-                            {/* Live Feed Mock */}
-                            <div className="text-sm text-slate-400 space-y-2 mt-4">
-                                <p className="animate-pulse flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> 65123456 นายสมชาย ใจดี เช็คชื่อเมื่อ 10 วินาทีที่แล้ว</p>
-                                <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-slate-500"></span> 66112233 นางสาวสมหญิง สวยงาม เช็คชื่อเมื่อ 1 นาทีที่แล้ว</p>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-                const TabSPSS = () => (
-                    <div>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">รายงานสถิติ SPSS (ความพึงพอใจ)</h2>
-                            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold">
-                                <Icons.Download /> Export Word (.doc)
-                            </button>
-                        </div>
-                        <div className="glass-card overflow-hidden rounded-xl">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-dark-900 border-b border-slate-700">
-                                    <tr>
-                                        <th className="p-4">ประเด็นการประเมิน</th>
-                                        <th className="p-4 text-center">N</th>
-                                        <th className="p-4 text-center">x̄</th>
-                                        <th className="p-4 text-center">S.D.</th>
-                                        <th className="p-4 text-center">แปลผล</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {[1,2,3,4,5].map(i => (
-                                        <tr key={i} className="border-b border-slate-800">
-                                            <td className="p-4">คำถามข้อที่ {i}: ด้านการจัดกิจกรรม</td>
-                                            <td className="p-4 text-center">452</td>
-                                            <td className="p-4 text-center text-brand font-bold">4.6{i}</td>
-                                            <td className="p-4 text-center">0.5{i}</td>
-                                            <td className="p-4 text-center text-green-400">มากที่สุด</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
 
                 const TabSettings = () => {
                     const handleToggleSys = () => {
@@ -626,18 +737,20 @@
                     };
 
                     return (
-                        <div className="max-w-xl">
-                            <h2 className="text-2xl font-bold mb-6">ตั้งค่าระบบ (Settings)</h2>
-                            <div className="glass-card p-6 rounded-xl flex justify-between items-center">
+                        <div className="max-w-2xl animate-fade-in-up">
+                            <h2 className="text-2xl font-bold text-white mb-2">ตั้งค่าระบบ (System Settings)</h2>
+                            <p className="text-slate-400 text-sm mb-8">ตั้งค่าการทำงานหลักของเว็บแอปพลิเคชัน</p>
+                            
+                            <div className="glass-card p-6 rounded-2xl flex justify-between items-center border border-slate-700/50 hover:border-brand/30 transition-colors">
                                 <div>
-                                    <h4 className="font-bold text-lg">1. ระบบลงทะเบียนนักศึกษา</h4>
-                                    <p className="text-sm text-slate-400">เปิด/ปิด เมนูลงทะเบียนในหน้าหลัก (ใช้อำพรางเมื่อหมดเขต)</p>
+                                    <h4 className="font-bold text-lg text-white mb-1">ระบบลงทะเบียนนักศึกษา</h4>
+                                    <p className="text-sm text-slate-400">สวิตช์เปิด/ปิด เมนูลงทะเบียนในหน้าหลัก (ใช้กรณีหมดเวลาหรือปรับปรุงระบบ)</p>
                                 </div>
                                 <button 
                                     onClick={handleToggleSys}
-                                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${systemOpen ? 'bg-brand' : 'bg-slate-600'}`}
+                                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-2 focus:ring-offset-dark-900 ${systemOpen ? 'bg-brand' : 'bg-slate-600'}`}
                                 >
-                                    <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${systemOpen ? 'translate-x-7' : 'translate-x-1'}`}/>
+                                    <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${systemOpen ? 'translate-x-7' : 'translate-x-1'}`}/>
                                 </button>
                             </div>
                         </div>
@@ -645,39 +758,44 @@
                 };
 
                 return (
-                    <div className="flex h-[calc(100vh-80px)] overflow-hidden">
+                    <div className="flex h-[calc(100vh-76px)] overflow-hidden">
                         {/* Sidebar */}
-                        <div className="w-64 glass border-r border-slate-700/50 flex flex-col">
-                            <div className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Admin Menu</div>
-                            <div className="flex-1 overflow-y-auto px-3 space-y-1">
+                        <div className="w-64 glass border-r border-slate-700/50 flex flex-col z-20 shadow-[10px_0_30px_rgba(0,0,0,0.2)]">
+                            <div className="p-6">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Admin Menu</p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto px-4 space-y-2">
                                 {menuItems.map(item => (
                                     <button
                                         key={item.id}
                                         onClick={() => setAdminTab(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all ${adminTab === item.id ? 'bg-brand/10 text-brand border border-brand/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all ${adminTab === item.id ? 'bg-gradient-to-r from-brand/20 to-transparent text-brand border-l-2 border-brand shadow-inner' : 'text-slate-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent'}`}
                                     >
-                                        {item.icon} {item.name}
+                                        <span className={adminTab === item.id ? 'opacity-100' : 'opacity-70'}>{item.icon}</span> 
+                                        {item.name}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         {/* Content Area */}
-                        <div className="flex-1 overflow-y-auto p-8 bg-dark-900/50">
-                            {adminTab === 'overview' && <TabOverview />}
-                            {adminTab === 'majors' && <TabMajors />}
-                            {adminTab === 'exec' && <TabOverview /> /* ใช้ร่วมกันไปก่อนสำหรับ Demo */}
-                            {adminTab === 'activities' && <TabActivities />}
-                            {adminTab === 'realtime' && <TabRealtime />}
-                            {adminTab === 'spss' && <TabSPSS />}
-                            {adminTab === 'users' && <div className="p-6">ระบบจัดการสิทธิ์ผู้ใช้งาน (สำหรับ Super Admin)</div>}
-                            {adminTab === 'settings' && <TabSettings />}
+                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-dark-900/60 relative">
+                            {/* Ambient background glow inside content area */}
+                            <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand/5 blur-[120px] rounded-full pointer-events-none"></div>
+                            
+                            <div className="relative z-10 max-w-6xl mx-auto">
+                                {adminTab === 'overview' && <TabOverview />}
+                                {adminTab === 'majors' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI กราฟสัดส่วนสาขาวิชา...</div>}
+                                {adminTab === 'activities' && <TabActivities />}
+                                {adminTab === 'realtime' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI รายงานแบบ Real-time...</div>}
+                                {adminTab === 'spss' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI รายงานสถิติ SPSS...</div>}
+                                {adminTab === 'settings' && <TabSettings />}
+                            </div>
                         </div>
                     </div>
                 );
             };
 
-            // View Renderer
             return (
                 <div className="flex flex-col min-h-screen">
                     <Navbar />
@@ -693,9 +811,6 @@
             );
         }
 
-        // ==========================================
-        // Initialize App
-        // ==========================================
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
