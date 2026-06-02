@@ -1,1178 +1,703 @@
 <!DOCTYPE html>
-<html lang="th" class="light">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGIT 69 - ระบบบริหารจัดการกิจกรรม</title>
+    <title>DIGIT.69 - Activity Management</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- PapaParse -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Sarabun', 'sans-serif'],
-                    },
                     colors: {
-                        primary: '#4f46e5', // Indigo 600
-                        secondary: '#f43f5e', // Rose 500
-                        tertiary: '#0ea5e9', // Sky 500
+                        brand: { DEFAULT: '#FF6B00', dark: '#E65C00', light: '#FF8533' },
+                        dark: { 900: '#0F172A', 800: '#1E293B', 700: '#334155' }
                     },
-                    animation: {
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-                        'slide-down': 'slideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-                        'blob': 'blob 15s infinite alternate cubic-bezier(0.4, 0, 0.2, 1)',
-                    },
-                    keyframes: {
-                        slideUp: {
-                            '0%': { opacity: 0, transform: 'translateY(20px)' },
-                            '100%': { opacity: 1, transform: 'translateY(0)' },
-                        },
-                        slideDown: {
-                            '0%': { opacity: 0, transform: 'translateY(-20px)' },
-                            '100%': { opacity: 1, transform: 'translateY(0)' },
-                        },
-                        blob: {
-                            '0%': { transform: 'translate(0, 0) scale(1)' },
-                            '100%': { transform: 'translate(20px, -20px) scale(1.1)' },
-                        }
+                    fontFamily: {
+                        sans: ['Sarabun', 'Prompt', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (For JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- PapaParse (For fast CSV reading) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
     <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f8fafc;
-            min-height: 100dvh;
-            overflow-x: hidden;
-            transition: background-color 0.5s ease;
-        }
-
-        .dark body { background-color: #020617; }
-
-        /* Aurora Mesh Background */
-        .mesh-bg {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1; overflow: hidden; pointer-events: none;
-        }
-        .mesh-blob {
-            position: absolute; filter: blur(90px); opacity: 0.5;
-            border-radius: 50%; animation: blob 15s infinite alternate;
-        }
-        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #c7d2fe; }
-        .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: #fecdd3; animation-delay: -5s; }
-        .blob-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: #e0f2fe; animation-delay: -10s; }
+        body { font-family: 'Prompt', sans-serif; background-color: #0f172a; color: #f8fafc; }
         
-        .dark .blob-1 { background: #312e81; opacity: 0.25; filter: blur(120px); }
-        .dark .blob-2 { background: #881337; opacity: 0.25; filter: blur(120px); }
-        .dark .blob-3 { background: #0c4a6e; opacity: 0.25; filter: blur(120px); }
-
-        /* Premium Glass Panels */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
-        }
-        .dark .glass-panel {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4);
-        }
-
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
-        }
-        .dark .glass-nav {
-            background: rgba(30, 41, 59, 0.75);
+        /* Glassmorphism Classes */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        /* Inputs */
-        .glass-input {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1.5px solid rgba(226, 232, 240, 0.8);
-            transition: all 0.3s ease;
+        .glass-card {
+            background: linear-gradient(145deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 107, 0, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .dark .glass-input {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1.5px solid rgba(51, 65, 85, 0.8);
-            color: white;
-        }
-        .glass-input:focus {
-            background: #ffffff; border-color: #4f46e5;
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-            transform: translateY(-1px);
-        }
-        .dark .glass-input:focus {
-            background: #0f172a; border-color: #6366f1;
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-        }
-
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 10px; }
         
-        .loader {
-            width: 24px; height: 24px; border: 3px solid #e2e8f0;
-            border-bottom-color: #4f46e5; border-radius: 50%;
-            display: inline-block; box-sizing: border-box;
-            animation: rotation 1s linear infinite;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FF6B00; }
+        
+        .bg-animated {
+            background: radial-gradient(circle at 15% 50%, rgba(255, 107, 0, 0.15), transparent 25%),
+                        radial-gradient(circle at 85% 30%, rgba(255, 107, 0, 0.1), transparent 25%);
+            background-color: #0F172A;
+            background-attachment: fixed;
         }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .page-content.hidden { display: none; }
     </style>
 </head>
-<body class="text-slate-700 antialiased flex flex-col relative">
+<body class="bg-animated min-h-screen text-slate-200">
+    <div id="root"></div>
 
-    <div class="mesh-bg">
-        <div class="mesh-blob blob-1"></div><div class="mesh-blob blob-2"></div><div class="mesh-blob blob-3"></div>
-    </div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-    <!-- Floating Navigation Pill (Frontend) -->
-    <div id="floatingNav" class="fixed top-4 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none transition-all duration-300">
-        <header class="glass-nav pointer-events-auto px-4 py-3 rounded-full flex items-center justify-between gap-4 md:gap-8 max-w-5xl w-full">
-            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition group" onclick="navigate('home')">
-                <div class="w-10 h-10 rounded-full bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-slate-900 shadow-md group-hover:rotate-12 transition-transform">
-                    <i class="fas fa-bolt text-lg"></i>
-                </div>
-                <h1 class="text-xl font-extrabold tracking-tight hidden sm:block text-slate-900 dark:text-white">DIGIT 69</h1>
-            </div>
+        // --- 📊 Mock Data (สำหรับให้ระบบทำงานได้ทันที โดยไม่ต้องต่อ API จริงในตอนนี้) ---
+        const MOCK_ACTIVITIES = [
+            { ActID: 'A1', ActName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', Date: '2026-06-15', Location: 'หอประชุมใหญ่', Status: 'open' },
+            { ActID: 'A2', ActName: 'อบรมสัมมนา AI & Data Science', Date: '2026-06-20', Location: 'ห้องประชุม 1', Status: 'open' },
+            { ActID: 'A3', ActName: 'กีฬาสานสัมพันธ์ 69', Date: '2026-05-10', Location: 'สนามกีฬากลาง', Status: 'closed' }
+        ];
 
-            <!-- Frontend Actions -->
-            <div class="flex items-center gap-2">
-                <button onclick="toggleTheme()" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition text-slate-600 dark:text-slate-300">
-                    <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:block text-yellow-400"></i>
-                </button>
-                <button id="loginBtn" onclick="navigate('login')" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition text-slate-600 dark:text-slate-300">
-                    <i class="fas fa-user-lock"></i>
-                </button>
-            </div>
-        </header>
-    </div>
+        const MOCK_STUDENTS = [
+            { StudentID: '65123456', Name: 'นายสมชาย ใจดี', Major: 'วิศวกรรมซอฟต์แวร์', IDCard: '1122334455667' },
+            { StudentID: '66112233', Name: 'นางสาวสมหญิง สวยงาม', Major: 'วิทยาการคอมพิวเตอร์', IDCard: '9988776655443' }
+        ];
 
-    <!-- ================= FLOATING OPEN SIDEBAR BUTTON (Visible when Sidebar is Closed) ================= -->
-    <button id="adminOpenSidebarBtn" onclick="toggleAdminSidebar()" class="fixed top-6 left-6 z-[45] w-12 h-12 rounded-full glass-panel flex items-center justify-center text-primary dark:text-white shadow-[0_8px_20px_rgb(79,70,229,0.2)] hover:scale-110 hover:shadow-lg transition-all duration-300 scale-0 opacity-0 pointer-events-auto" style="display: none;">
-        <i class="fas fa-bars text-xl"></i>
-    </button>
+        // --- 🎨 Icons (SVG) ---
+        const Icons = {
+            Home: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>,
+            CheckIn: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
+            History: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
+            Login: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>,
+            Dashboard: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>,
+            Users: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>,
+            Report: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>,
+            Settings: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>,
+            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        };
 
-    <!-- ================= BACKEND ADMIN SIDEBAR (Modern Floating Panel) ================= -->
-    <aside id="adminSidebar" class="fixed top-4 bottom-4 left-4 w-[280px] glass-panel z-[60] transform -translate-x-[120%] transition-transform duration-500 flex flex-col rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/60 dark:border-slate-700/50 overflow-hidden" style="display: none;">
-        
-        <!-- Sidebar Header (With Close Button) -->
-        <div class="p-6 flex items-center justify-between border-b border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-primary/30">
-                    <i class="fas fa-layer-group text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">Admin</h2>
-                    <p class="text-[10px] font-bold text-primary dark:text-indigo-400 tracking-wider uppercase">Workspace</p>
-                </div>
-            </div>
-            <!-- ปุ่มกดเลื่อนเก็บ -->
-            <button onclick="toggleAdminSidebar()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white dark:bg-slate-800 text-slate-500 hover:text-rose-500 hover:shadow-md transition-all border border-slate-200 dark:border-slate-700">
-                <i class="fas fa-chevron-left text-sm"></i>
-            </button>
-        </div>
-
-        <!-- Sidebar Navigation (Sleek UI) -->
-        <nav class="flex-1 overflow-y-auto p-4 flex flex-col gap-2 bg-white/20 dark:bg-slate-900/20">
-            <div class="px-3 pt-2 mb-1">
-                <p class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">เมนูการจัดการ</p>
-            </div>
+        // ==========================================
+        // 🚀 MAIN APP COMPONENT
+        // ==========================================
+        function App() {
+            // States
+            const [view, setView] = useState('home'); // home, checkin, survey, history, admin
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [systemOpen, setSystemOpen] = useState(true);
             
-            <!-- Menu Item 1: Activities -->
-            <button onclick="navigate('admin-activities')" id="nav-admin-activities" class="admin-nav-btn group relative w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:shadow-sm [&.active]:bg-white [&.active]:dark:bg-slate-800 [&.active]:shadow-md [&.active]:text-primary [&.active]:dark:text-indigo-400 border border-transparent [&.active]:border-white/60 dark:[&.active]:border-slate-700/50">
-                <div class="flex items-center gap-4 relative z-10">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 bg-slate-100 dark:bg-slate-800/80 group-[.active]:bg-indigo-50 group-[.active]:dark:bg-indigo-500/20 group-[.active]:text-primary group-[.active]:shadow-inner">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <span class="font-bold tracking-wide transition-transform duration-300 group-hover:translate-x-1">จัดการกิจกรรม</span>
-                </div>
-                <i class="fas fa-chevron-right text-[10px] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-[.active]:opacity-100 group-[.active]:translate-x-0"></i>
-            </button>
-            
-            <!-- Menu Item 2: Real-time -->
-            <button onclick="navigate('admin-realtime')" id="nav-admin-realtime" class="admin-nav-btn group relative w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:shadow-sm [&.active]:bg-white [&.active]:dark:bg-slate-800 [&.active]:shadow-md [&.active]:text-primary [&.active]:dark:text-indigo-400 border border-transparent [&.active]:border-white/60 dark:[&.active]:border-slate-700/50">
-                <div class="flex items-center gap-4 relative z-10">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 bg-slate-100 dark:bg-slate-800/80 group-[.active]:bg-indigo-50 group-[.active]:dark:bg-indigo-500/20 group-[.active]:text-primary group-[.active]:shadow-inner">
-                        <i class="fas fa-broadcast-tower"></i>
-                    </div>
-                    <span class="font-bold tracking-wide transition-transform duration-300 group-hover:translate-x-1">สถิติ Real-Time</span>
-                </div>
-                <i class="fas fa-chevron-right text-[10px] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-[.active]:opacity-100 group-[.active]:translate-x-0"></i>
-            </button>
-            
-            <!-- Menu Item 3: Report -->
-            <button onclick="navigate('admin-report')" id="nav-admin-report" class="admin-nav-btn group relative w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 flex items-center justify-between text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:shadow-sm [&.active]:bg-white [&.active]:dark:bg-slate-800 [&.active]:shadow-md [&.active]:text-primary [&.active]:dark:text-indigo-400 border border-transparent [&.active]:border-white/60 dark:[&.active]:border-slate-700/50">
-                <div class="flex items-center gap-4 relative z-10">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all duration-300 bg-slate-100 dark:bg-slate-800/80 group-[.active]:bg-indigo-50 group-[.active]:dark:bg-indigo-500/20 group-[.active]:text-primary group-[.active]:shadow-inner">
-                        <i class="fas fa-file-export"></i>
-                    </div>
-                    <span class="font-bold tracking-wide transition-transform duration-300 group-hover:translate-x-1">ออกรายงาน (SPSS)</span>
-                </div>
-                <i class="fas fa-chevron-right text-[10px] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-[.active]:opacity-100 group-[.active]:translate-x-0"></i>
-            </button>
-        </nav>
-
-        <!-- Sidebar Footer -->
-        <div class="p-5 border-t border-slate-200/50 dark:border-slate-700/50 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md flex flex-col gap-3">
-            <button onclick="toggleTheme()" class="w-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-4 py-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-3 font-bold shadow-sm border border-slate-200 dark:border-slate-700">
-                <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:block text-yellow-400"></i> โหมดหน้าจอ
-            </button>
-            <button onclick="logoutAdmin()" class="w-full bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 px-4 py-3.5 rounded-xl hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white transition flex items-center justify-center gap-3 font-bold shadow-sm border border-slate-200 dark:border-slate-700 group">
-                <i class="fas fa-sign-out-alt group-hover:-translate-x-1 transition-transform"></i> ออกจากระบบ
-            </button>
-        </div>
-    </aside>
-
-    <!-- Overlay for mobile admin sidebar -->
-    <div id="adminSidebarOverlay" onclick="toggleAdminSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[50] hidden transition-opacity"></div>
-    <!-- ======================================================= -->
-
-    <!-- Main Content Area -->
-    <main id="mainContent" class="flex-1 px-4 pt-24 pb-12 md:px-8 overflow-x-hidden w-full max-w-6xl mx-auto transition-all duration-500">
-        
-        <!-- ================= PAGE: HOME ================= -->
-        <section id="page-home" class="page-content animate-slide-up">
-            <div class="flex flex-col items-center justify-center min-h-[70vh] relative">
-                <div class="mb-6 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md text-sm font-semibold text-primary dark:text-indigo-400 shadow-sm flex items-center gap-2">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                    </span>
-                    ระบบลงทะเบียนออนไลน์ 2026
-                </div>
-
-                <div class="text-center mb-12">
-                    <h1 class="text-5xl md:text-7xl font-extrabold mb-4 text-slate-900 dark:text-white tracking-tight">
-                        กิจกรรมนักศึกษา <br />
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-500 to-tertiary">DIGIT 69</span>
-                    </h1>
-                    <p class="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                        จัดการประวัติการเข้าร่วมกิจกรรม คณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย ได้อย่างรวดเร็วและปลอดภัย
-                    </p>
-                </div>
-                
-                <!-- Modern Bento Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl relative z-10">
-                    <button onclick="navigate('register')" class="group relative p-8 md:p-10 rounded-[2.5rem] bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-lg hover:shadow-2xl hover:border-primary/30 transition-all duration-300 text-left overflow-hidden flex flex-col justify-between min-h-[280px]">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-150 z-0"></div>
-                        <div class="relative z-10">
-                            <div class="w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-6 shadow-md">
-                                <i class="fas fa-qrcode text-3xl"></i>
-                            </div>
-                            <h3 class="text-3xl font-bold mb-3 text-slate-900 dark:text-white">ลงทะเบียนกิจกรรม</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-base leading-relaxed">บันทึกการเข้าร่วมกิจกรรมใหม่ด้วยรหัสนักศึกษาหรือเลขบัตรประชาชน</p>
-                        </div>
-                        <div class="relative z-10 mt-8 flex items-center gap-3 font-bold text-primary dark:text-indigo-400 group-hover:gap-5 transition-all">
-                            เริ่มลงทะเบียน <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </button>
-
-                    <button onclick="navigate('history')" class="group relative p-8 md:p-10 rounded-[2.5rem] bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 shadow-lg hover:shadow-2xl hover:border-secondary/30 transition-all duration-300 text-left overflow-hidden flex flex-col justify-between min-h-[280px]">
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl -mr-20 -mt-20 transition-transform group-hover:scale-150 z-0"></div>
-                        <div class="relative z-10">
-                            <div class="w-16 h-16 bg-slate-900 dark:bg-slate-700 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md">
-                                <i class="fas fa-history text-3xl"></i>
-                            </div>
-                            <h3 class="text-3xl font-bold mb-3 text-slate-900 dark:text-white">ประวัติการเข้าร่วม</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-base leading-relaxed">ค้นหาและตรวจสอบสถานะกิจกรรมที่คุณเคยเข้าร่วมแบบ Real-time</p>
-                        </div>
-                        <div class="relative z-10 mt-8 flex items-center gap-3 font-bold text-slate-800 dark:text-white group-hover:gap-5 transition-all">
-                            ตรวจสอบประวัติ <i class="fas fa-arrow-right"></i>
-                        </div>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: REGISTER (2-STEP) ================= -->
-        <section id="page-register" class="page-content hidden animate-slide-up">
-            <div class="max-w-3xl mx-auto">
-                <button onclick="navigate('home')" class="mb-8 flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-semibold group">
-                    <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700 group-hover:-translate-x-1 transition-transform">
-                        <i class="fas fa-arrow-left text-sm"></i>
-                    </div> กลับหน้าหลัก
-                </button>
-                
-                <div class="mb-8">
-                    <h2 class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">ลงทะเบียน</h2>
-                    <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg">ค้นหาข้อมูลเพื่อดึงประวัติก่อนยืนยันการเข้าร่วม</p>
-                </div>
-
-                <div class="glass-panel p-8 md:p-10 rounded-[2.5rem] relative overflow-hidden">
-                    <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-6 relative z-10">
-                        
-                        <!-- Step 1: Search -->
-                        <div class="space-y-3">
-                            <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">ค้นหารหัส / บัตรประชาชน <span class="text-rose-500">*</span></label>
-                            <div class="flex flex-col sm:flex-row gap-3">
-                                <div class="relative group flex-1">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors"><i class="fas fa-id-badge text-lg"></i></div>
-                                    <input type="text" id="regStudentId" required placeholder="กรอกรหัสนักศึกษา หรือ บัตรประชาชน..." class="glass-input w-full pl-12 pr-4 py-4 rounded-2xl focus:outline-none text-slate-900 dark:text-white font-medium">
-                                </div>
-                                <button type="button" id="searchStudentBtn" onclick="searchStudentData()" class="bg-indigo-100 hover:bg-indigo-200 text-primary dark:bg-indigo-900/50 dark:hover:bg-indigo-800/80 dark:text-indigo-300 px-8 py-4 rounded-2xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-700/50">
-                                    <i class="fas fa-search"></i> <span>ค้นหาข้อมูล</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Form (Hidden initially) -->
-                        <div id="step2-form" class="hidden space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700/50 mt-6 animate-slide-down">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Name -->
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">ชื่อ-นามสกุล <span class="text-rose-500">*</span></label>
-                                    <div class="relative group">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors"><i class="fas fa-user text-lg"></i></div>
-                                        <input type="text" id="regName" required placeholder="นายเรียนดี กิจกรรมเด่น" class="glass-input w-full pl-12 pr-4 py-4 rounded-2xl focus:outline-none text-slate-900 dark:text-white font-medium">
-                                    </div>
-                                </div>
-                                <!-- Major -->
-                                <div class="space-y-2">
-                                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">สาขาวิชา <span class="text-rose-500">*</span></label>
-                                    <div class="relative group">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors"><i class="fas fa-graduation-cap text-lg"></i></div>
-                                        <select id="regMajor" required class="glass-input w-full pl-12 pr-10 py-4 rounded-2xl focus:outline-none text-slate-900 dark:text-white font-medium appearance-none">
-                                            <option value="" disabled selected>-- เลือกสาขาวิชา --</option>
-                                            <option value="วิทยาการคอมพิวเตอร์">วิทยาการคอมพิวเตอร์</option>
-                                            <option value="เทคโนโลยีสารสนเทศ">เทคโนโลยีสารสนเทศ</option>
-                                            <option value="กราฟิกดีไซน์">กราฟิกดีไซน์และมัลติมีเดีย</option>
-                                        </select>
-                                        <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-slate-400"><i class="fas fa-chevron-down"></i></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Activity -->
-                            <div class="space-y-2">
-                                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">กิจกรรมที่เปิดรับ <span class="text-rose-500">*</span></label>
-                                <div class="relative group">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors"><i class="fas fa-ticket-alt text-lg"></i></div>
-                                    <select id="regActivity" required class="glass-input w-full pl-12 pr-10 py-4 rounded-2xl focus:outline-none text-slate-900 dark:text-white font-medium appearance-none">
-                                        <option value="">-- กำลังโหลดข้อมูล... --</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none text-slate-400"><i class="fas fa-chevron-down"></i></div>
-                                </div>
-                            </div>
-                            
-                            <div class="pt-4">
-                                <button type="submit" id="submitRegisterBtn" class="w-full bg-primary hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all flex justify-center items-center gap-2 text-lg">
-                                    ยืนยันและบันทึก <i class="fas fa-check-circle"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: HISTORY ================= -->
-        <section id="page-history" class="page-content hidden animate-slide-up">
-            <div class="max-w-4xl mx-auto">
-                <button onclick="navigate('home')" class="mb-8 flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-semibold group">
-                    <div class="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700 group-hover:-translate-x-1 transition-transform">
-                        <i class="fas fa-arrow-left text-sm"></i>
-                    </div> กลับหน้าหลัก
-                </button>
-
-                <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <div>
-                        <h2 class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">ประวัติการเข้าร่วม</h2>
-                        <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg">ตรวจสอบข้อมูล Logs แบบ Real-time</p>
-                    </div>
-                </div>
-
-                <div class="relative w-full mb-8 group">
-                    <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors"><i class="fas fa-search text-xl"></i></div>
-                    <input type="text" id="searchHistory" placeholder="พิมพ์รหัสนักศึกษา หรือ เลขบัตรประชาชน..." onkeyup="filterHistory()" class="glass-input w-full pl-14 pr-6 py-5 rounded-full focus:outline-none text-lg text-slate-900 dark:text-white font-medium">
-                </div>
-
-                <div id="historyGridContainer" class="flex flex-col gap-3">
-                    <div class="glass-panel p-12 rounded-[2rem] text-center flex flex-col items-center justify-center border-dashed border-2 border-slate-300/50 dark:border-slate-700/50">
-                        <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-50 mb-4">
-                            <i class="fas fa-search text-3xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-700 dark:text-slate-300 mb-1">กรอกรหัสเพื่อค้นหา</h3>
-                        <p class="text-slate-500 text-sm">ข้อมูลจะแสดงเมื่อค้นหาตรงกับฐานข้อมูล</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: LOGIN ================= -->
-        <section id="page-login" class="page-content hidden animate-slide-up">
-            <div class="max-w-sm mx-auto mt-16">
-                <div class="glass-panel p-10 rounded-[2.5rem] relative overflow-hidden shadow-2xl border-t-4 border-t-slate-900 dark:border-t-white">
-                    <div class="text-center mb-8">
-                        <div class="w-16 h-16 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg rotate-3"><i class="fas fa-fingerprint text-3xl"></i></div>
-                        <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white">Admin Access</h2>
-                        <p class="text-slate-500 text-sm mt-1">เฉพาะผู้ดูแลระบบเท่านั้น</p>
-                    </div>
-                    <form onsubmit="handleLogin(event)" class="space-y-5">
-                        <div class="relative group">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><i class="fas fa-user"></i></div>
-                            <input type="text" id="loginUser" required placeholder="Username" class="glass-input w-full pl-11 pr-4 py-4 rounded-2xl focus:outline-none">
-                        </div>
-                        <div class="relative group">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400"><i class="fas fa-lock"></i></div>
-                            <input type="password" id="loginPass" required placeholder="Password" class="glass-input w-full pl-11 pr-4 py-4 rounded-2xl focus:outline-none">
-                        </div>
-                        <button type="submit" class="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold py-4 rounded-2xl transition-all shadow-lg mt-6 text-lg">เข้าสู่ระบบ</button>
-                        <button type="button" onclick="navigate('home')" class="w-full text-slate-500 hover:text-slate-800 dark:text-slate-400 text-sm font-semibold py-2">ยกเลิก</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: ADMIN MANAGE ACTIVITIES ================= -->
-        <section id="page-admin-activities" class="page-content hidden animate-slide-up">
-            <h2 class="text-3xl font-extrabold mb-8 text-slate-900 dark:text-white tracking-tight">จัดการกิจกรรม</h2>
-            
-            <!-- ฟอร์มสร้างกิจกรรม -->
-            <div class="glass-panel p-8 rounded-[2rem] mb-8 border-t-4 border-t-primary">
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-100 text-primary flex items-center justify-center"><i class="fas fa-plus"></i></div>
-                    สร้างกิจกรรม
-                </h3>
-                <form onsubmit="handleCreateActivity(event)" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">ชื่อกิจกรรม <span class="text-rose-500">*</span></label>
-                        <input type="text" id="newActName" required placeholder="ระบุชื่อกิจกรรม" class="glass-input w-full p-3.5 rounded-2xl focus:outline-none">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">วันที่และเวลา <span class="text-rose-500">*</span></label>
-                        <input type="datetime-local" id="newActDate" required class="glass-input w-full p-3.5 rounded-2xl focus:outline-none">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300">สถานที่จัดกิจกรรม <span class="text-rose-500">*</span></label>
-                        <input type="text" id="newActLocation" required placeholder="ระบุสถานที่" class="glass-input w-full p-3.5 rounded-2xl focus:outline-none">
-                    </div>
-                    <div class="md:col-span-3 flex justify-end mt-2">
-                        <button type="submit" class="bg-primary hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md flex items-center gap-2">
-                            <i class="fas fa-save"></i> บันทึกกิจกรรม
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- รายการกิจกรรมที่สร้างบนระบบ -->
-            <div class="glass-panel p-8 rounded-[2rem] mb-8">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center"><i class="fas fa-list"></i></div>
-                        รายการกิจกรรมที่สร้างบนระบบ
-                    </h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse whitespace-nowrap">
-                        <thead>
-                            <tr class="text-sm text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                                <th class="pb-4 font-bold">ชื่อกิจกรรม</th>
-                                <th class="pb-4 font-bold">วันที่และเวลา</th>
-                                <th class="pb-4 font-bold">สถานที่จัดกิจกรรม</th>
-                                <th class="pb-4 font-bold text-center">สถานะ</th>
-                                <th class="pb-4 font-bold text-center">ผู้เข้าร่วม (คน)</th>
-                                <th class="pb-4 font-bold text-center">จัดการ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activitiesTableBody" class="text-sm">
-                            <tr class="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                <td class="py-4 font-bold text-slate-800 dark:text-slate-200">ปฐมนิเทศนักศึกษาใหม่</td>
-                                <td class="py-4 text-slate-500">15 มิ.ย. 69 09:00</td>
-                                <td class="py-4 text-slate-500">หอประชุมใหญ่</td>
-                                <td class="py-4 text-center">
-                                    <span onclick="toggleActivityStatus(this)" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-emerald-200 transition">เปิด</span>
-                                </td>
-                                <td class="py-4 text-center font-extrabold text-primary">150</td>
-                                <td class="py-4 text-center">
-                                    <button onclick="editActivity('ปฐมนิเทศนักศึกษาใหม่')" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-primary transition" title="แก้ไข">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition opacity-60">
-                                <td class="py-4 font-bold text-slate-800 dark:text-slate-200">อบรม AI สำหรับการศึกษา</td>
-                                <td class="py-4 text-slate-500">20 มิ.ย. 69 13:00</td>
-                                <td class="py-4 text-slate-500">ห้อง Lab คอมพิวเตอร์</td>
-                                <td class="py-4 text-center">
-                                    <span onclick="toggleActivityStatus(this)" class="bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-slate-300 transition dark:bg-slate-700 dark:text-slate-300">ปิด</span>
-                                </td>
-                                <td class="py-4 text-center font-extrabold text-slate-500">45</td>
-                                <td class="py-4 text-center">
-                                    <button onclick="editActivity('อบรม AI สำหรับการศึกษา')" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-primary transition" title="แก้ไข">
-                                        <i class="fas fa-pen"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: ADMIN REALTIME ================= -->
-        <section id="page-admin-realtime" class="page-content hidden animate-slide-up">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">สถิติ Real-Time</h2>
-                <button onclick="loadRealtimeData(this)" class="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition flex items-center justify-center gap-2 text-sm font-bold shadow-sm text-slate-700 dark:text-slate-300">
-                    <i class="fas fa-sync-alt text-tertiary"></i> โหลดข้อมูลล่าสุด
-                </button>
-            </div>
-
-            <!-- View 1: Summary (Cards Only) -->
-            <div id="realtime-summary-view" class="space-y-6 animate-slide-up">
-                
-                <!-- Clickable Cards for Majors -->
-                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-200 pl-2 mt-4"><i class="fas fa-mouse-pointer text-primary mr-2"></i> คลิกที่สาขาเพื่อดูรายชื่อ</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- CS -->
-                    <button onclick="showMajorDetails('วิทยาการคอมพิวเตอร์')" class="glass-panel p-6 rounded-[2rem] text-left hover:shadow-xl hover:-translate-y-1 hover:border-primary/50 transition-all group relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
-                        <div class="flex items-center gap-4 mb-4 relative z-10">
-                            <div class="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/20 text-primary rounded-xl flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform"><i class="fas fa-laptop-code"></i></div>
-                            <h4 class="font-bold text-lg text-slate-800 dark:text-slate-200 leading-tight">วิทยาการคอมพิวเตอร์</h4>
-                        </div>
-                        <div class="flex items-end justify-between relative z-10">
-                            <span id="count-cs" class="text-4xl font-extrabold text-slate-900 dark:text-white">0</span>
-                            <span class="text-sm font-semibold text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">ดูรายชื่อ <i class="fas fa-arrow-right"></i></span>
-                        </div>
-                    </button>
-
-                    <!-- IT -->
-                    <button onclick="showMajorDetails('เทคโนโลยีสารสนเทศ')" class="glass-panel p-6 rounded-[2rem] text-left hover:shadow-xl hover:-translate-y-1 hover:border-secondary/50 transition-all group relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-all"></div>
-                        <div class="flex items-center gap-4 mb-4 relative z-10">
-                            <div class="w-12 h-12 bg-rose-50 dark:bg-rose-500/20 text-secondary rounded-xl flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform"><i class="fas fa-network-wired"></i></div>
-                            <h4 class="font-bold text-lg text-slate-800 dark:text-slate-200 leading-tight">เทคโนโลยีสารสนเทศ</h4>
-                        </div>
-                        <div class="flex items-end justify-between relative z-10">
-                            <span id="count-it" class="text-4xl font-extrabold text-slate-900 dark:text-white">0</span>
-                            <span class="text-sm font-semibold text-secondary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">ดูรายชื่อ <i class="fas fa-arrow-right"></i></span>
-                        </div>
-                    </button>
-
-                    <!-- Graphic -->
-                    <button onclick="showMajorDetails('กราฟิกดีไซน์และมัลติมีเดีย')" class="glass-panel p-6 rounded-[2rem] text-left hover:shadow-xl hover:-translate-y-1 hover:border-tertiary/50 transition-all group relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 rounded-full blur-2xl group-hover:bg-tertiary/20 transition-all"></div>
-                        <div class="flex items-center gap-4 mb-4 relative z-10">
-                            <div class="w-12 h-12 bg-sky-50 dark:bg-sky-500/20 text-tertiary rounded-xl flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform"><i class="fas fa-palette"></i></div>
-                            <h4 class="font-bold text-lg text-slate-800 dark:text-slate-200 leading-tight">กราฟิกดีไซน์<br><span class="text-sm font-normal text-slate-500">และมัลติมีเดีย</span></h4>
-                        </div>
-                        <div class="flex items-end justify-between relative z-10">
-                            <span id="count-graphic" class="text-4xl font-extrabold text-slate-900 dark:text-white">0</span>
-                            <span class="text-sm font-semibold text-tertiary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">ดูรายชื่อ <i class="fas fa-arrow-right"></i></span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- View 2: Detailed List (Hidden by default) -->
-            <div id="realtime-detail-view" class="hidden flex-col gap-6 animate-slide-up">
-                <div class="flex items-center gap-4">
-                    <button onclick="backToRealtimeSummary()" class="w-10 h-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary dark:text-slate-400 transition hover:scale-105">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div>
-                        <h3 class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-                            รายชื่อผู้เข้าร่วม <span id="detail-major-badge" class="bg-indigo-100 text-primary dark:bg-indigo-900/50 text-sm px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-700/50">สาขา...</span>
-                        </h3>
-                        <p class="text-sm text-slate-500 mt-1">ข้อมูลผู้ลงทะเบียนสำเร็จ แยกตามสาขาวิชาที่เลือก</p>
-                    </div>
-                </div>
-
-                <div class="glass-panel p-6 md:p-8 rounded-[2.5rem]">
-                    <div class="relative w-full md:w-96 mb-6">
-                        <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
-                        <input type="text" id="searchDetailInput" placeholder="ค้นหาชื่อ หรือ รหัส..." onkeyup="filterDetailTable()" class="glass-input w-full pl-12 pr-4 py-3 rounded-2xl focus:outline-none text-sm">
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse whitespace-nowrap">
-                            <thead>
-                                <tr class="text-sm text-slate-500 border-b border-slate-200 dark:border-slate-700">
-                                    <th class="pb-4 font-bold pl-4">รหัส / บัตรประชาชน</th>
-                                    <th class="pb-4 font-bold">ชื่อ-นามสกุล</th>
-                                    <th class="pb-4 font-bold">กิจกรรมที่เข้าร่วม</th>
-                                    <th class="pb-4 font-bold">เวลาที่ลงทะเบียน</th>
-                                </tr>
-                            </thead>
-                            <tbody id="detailTableBody" class="text-sm">
-                                <!-- Data rendered by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= PAGE: ADMIN REPORTS ================= -->
-        <section id="page-admin-report" class="page-content hidden animate-slide-up">
-            <h2 class="text-3xl font-extrabold mb-8 text-slate-900 dark:text-white tracking-tight">ออกรายงาน</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- แบบสอบถาม SPSS -->
-                <div class="glass-panel p-10 rounded-[2.5rem] border-t-4 border-t-emerald-500 hover:shadow-xl transition flex flex-col h-full">
-                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fas fa-database"></i></div>
-                    <h3 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">สรุปแบบสอบถาม (SPSS)</h3>
-                    <p class="text-slate-500 mb-8 font-medium">ส่งออกข้อมูลในรูปแบบ .CSV พร้อมนำไปวิเคราะห์ผลในโปรแกรมทางสถิติ SPSS ได้ทันที</p>
-                    <button onclick="exportSPSS()" class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold px-6 py-4 rounded-xl w-full mt-auto hover:bg-slate-800 transition shadow-md flex items-center justify-center gap-2">
-                        <i class="fas fa-download"></i> ดาวน์โหลดไฟล์
-                    </button>
-                </div>
-                
-                <!-- รายงานสรุปผู้บริหาร -->
-                <div class="glass-panel p-10 rounded-[2.5rem] border-t-4 border-t-tertiary hover:shadow-xl transition flex flex-col h-full">
-                    <div class="w-16 h-16 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-sm"><i class="fas fa-chart-line"></i></div>
-                    <h3 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">รายงานสรุปผู้บริหาร</h3>
-                    <p class="text-slate-500 mb-8 font-medium">เปิดหน้าแดชบอร์ดสรุปผลภาพรวมแบบ Interactive (Looker Studio / Power BI) สำหรับผู้บริหาร</p>
-                    <button onclick="Swal.fire('เปิดรายงานผู้บริหาร', 'เชื่อมต่อไปยัง Looker Studio Dashboard', 'info')" class="bg-tertiary hover:bg-sky-600 text-white font-bold px-6 py-4 rounded-xl w-full mt-auto transition shadow-md flex items-center justify-center gap-2">
-                        <i class="fas fa-external-link-alt"></i> เปิด Dashboard
-                    </button>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <script>
-        // ================= CONFIGURATION =================
-        const SHEET_ID = '1XJKJCp_XY_DUtU_z0PK3B-n3mB5BOkSHtS-7XPtCnHA';
-        function getCSVUrl(sheetName) {
-            return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
-        }
-
-        // ================= THEME =================
-        let currentTheme = localStorage.getItem('theme') || 'light';
-        if (currentTheme === 'dark') document.documentElement.classList.add('dark');
-
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
-
-        // ================= NAVIGATION & SIDEBAR =================
-        function navigate(pageId) {
-            document.querySelectorAll('.page-content').forEach(el => {
-                el.classList.add('hidden'); el.style.animation = 'none'; el.offsetHeight; el.style.animation = null;
-            });
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // Update Admin Active Links
-            if (pageId.startsWith('admin-')) {
-                document.querySelectorAll('.admin-nav-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                const activeBtn = document.getElementById(`nav-${pageId}`);
-                if (activeBtn) activeBtn.classList.add('active');
-            }
-
-            // Hide Mobile Sidebar on navigate
-            if (window.innerWidth < 768 && document.getElementById('adminSidebar').style.display !== 'none') {
-                toggleAdminSidebar();
-            }
-
-            if(pageId === 'history') { prepareLogsData(); filterHistory(); }
-            if(pageId === 'register') { resetRegisterForm(); loadActiveActivities(); }
-            
-            if(pageId === 'admin-realtime') {
-                backToRealtimeSummary(); // แน่ใจว่าเปิดมาเจอหน้าสรุป
-                loadRealtimeData(document.querySelector('button[onclick="loadRealtimeData(this)"]')); 
-            }
-        }
-
-        // ================= ADMIN ACTIONS =================
-        function handleCreateActivity(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalContent = btn.innerHTML;
-            btn.innerHTML = '<div class="loader !w-4 !h-4 border-[2px]"></div> บันทึก...';
-            btn.disabled = true;
-
-            const name = document.getElementById('newActName').value;
-            const datetime = document.getElementById('newActDate').value;
-            const location = document.getElementById('newActLocation').value;
-
-            // จำลองการบันทึก (ในระบบจริงใช้ google.script.run)
-            setTimeout(() => {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-                
-                // เพิ่มรายการเข้าตาราง
-                const tbody = document.getElementById('activitiesTableBody');
-                const tr = document.createElement('tr');
-                tr.className = "border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition animate-slide-up bg-emerald-50 dark:bg-emerald-900/10";
-                tr.innerHTML = `
-                    <td class="py-4 font-bold text-slate-800 dark:text-slate-200">${name}</td>
-                    <td class="py-4 text-slate-500">${datetime.replace('T', ' ')}</td>
-                    <td class="py-4 text-slate-500">${location}</td>
-                    <td class="py-4 text-center"><span onclick="toggleActivityStatus(this)" class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-emerald-200 transition">เปิด</span></td>
-                    <td class="py-4 text-center font-extrabold text-primary">0</td>
-                    <td class="py-4 text-center"><button onclick="editActivity('${name}')" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-primary transition" title="แก้ไข"><i class="fas fa-pen"></i></button></td>
-                `;
-                tbody.insertBefore(tr, tbody.firstChild);
-
-                Swal.fire({
-                    icon: 'success', title: 'สร้างกิจกรรมสำเร็จ', text: 'บันทึกข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว',
-                    customClass: { popup: 'rounded-3xl border-none' },
-                    background: currentTheme === 'dark' ? '#0f172a' : '#fff', color: currentTheme === 'dark' ? '#fff' : '#000'
-                });
-                
-                e.target.reset();
-            }, 800);
-        }
-
-        // ================= AUTH (ADMIN) =================
-        function handleLogin(e) {
-            e.preventDefault();
-            const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
-
-            if (user === 'admin' && pass === '0000') {
-                Swal.fire({
-                    icon: 'success', title: 'เข้าสู่ระบบหลังบ้าน', showConfirmButton: false, timer: 1500,
-                    customClass: { popup: 'rounded-3xl glass-panel border-none' },
-                    background: currentTheme === 'dark' ? '#0f172a' : '#fff', color: currentTheme === 'dark' ? '#fff' : '#000'
-                });
-                
-                // 1. ซ่อนแถบเมนูหน้าบ้าน
-                document.getElementById('floatingNav').style.display = 'none';
-                
-                // 2. ปรับระยะเว้นพื้นที่ด้านบนของเนื้อหา
-                const mainContent = document.getElementById('mainContent');
-                mainContent.classList.remove('pt-24');
-                mainContent.classList.add('pt-8');
-                
-                // 3. แสดงปุ่มเปิด Sidebar (เตรียมไว้)
-                document.getElementById('adminOpenSidebarBtn').style.display = 'flex';
-                
-                // 4. แสดง Sidebar เลื่อนออกมาทันที
-                const sidebar = document.getElementById('adminSidebar');
-                sidebar.style.display = 'flex';
-                setTimeout(() => {
-                    if (sidebar.classList.contains('-translate-x-[120%]')) {
-                        toggleAdminSidebar();
-                    }
-                }, 10);
-                
-                e.target.reset(); 
-                navigate('admin-activities');
-            } else {
-                Swal.fire({
-                    icon: 'error', title: 'ปฏิเสธการเข้าถึง', text: 'Username หรือ Password ไม่ถูกต้อง',
-                    customClass: { popup: 'rounded-3xl border-none' },
-                    background: currentTheme === 'dark' ? '#0f172a' : '#fff', color: currentTheme === 'dark' ? '#fff' : '#000'
-                });
-            }
-        }
-
-        function logoutAdmin() {
-            // 1. คืนค่าแถบเมนูหน้าบ้าน
-            document.getElementById('floatingNav').style.display = 'flex';
-            
-            // 2. คืนค่าระยะเว้นพื้นที่ด้านบน
-            const mainContent = document.getElementById('mainContent');
-            mainContent.classList.add('pt-24');
-            mainContent.classList.remove('pt-8');
-            
-            // 3. ซ่อนปุ่มเปิด Sidebar
-            document.getElementById('adminOpenSidebarBtn').style.display = 'none';
-            
-            // 4. ปิดและซ่อน Sidebar กลับเข้าไป
-            const sidebar = document.getElementById('adminSidebar');
-            sidebar.classList.add('-translate-x-[120%]');
-            document.getElementById('adminSidebarOverlay').classList.add('hidden');
-            mainContent.classList.remove('md:pl-[320px]'); // ยกเลิกการดันเนื้อหา
-            
-            setTimeout(() => { sidebar.style.display = 'none'; }, 500);
-            navigate('home');
-        }
-
-        // ================= SIDEBAR TOGGLE =================
-        function toggleAdminSidebar() {
-            const sidebar = document.getElementById('adminSidebar');
-            const overlay = document.getElementById('adminSidebarOverlay');
-            const openBtn = document.getElementById('adminOpenSidebarBtn');
-            const mainContent = document.getElementById('mainContent');
-
-            // ตรวจสอบว่า Sidebar พับเก็บอยู่หรือไม่
-            if (sidebar.classList.contains('-translate-x-[120%]')) {
-                // เลื่อนออกมา
-                sidebar.classList.remove('-translate-x-[120%]');
-                openBtn.classList.add('scale-0', 'opacity-0'); // ซ่อนปุ่มลอยตัว
-
-                if (window.innerWidth >= 768) {
-                    mainContent.classList.add('md:pl-[320px]'); // ดันเนื้อหาตรงกลางไปทางขวา
-                } else {
-                    overlay.classList.remove('hidden'); // บนมือถือใช้พื้นหลังโปร่งแสงแทน
-                }
-            } else {
-                // เลื่อนเก็บเข้าไป
-                sidebar.classList.add('-translate-x-[120%]');
-                openBtn.classList.remove('scale-0', 'opacity-0'); // แสดงปุ่มลอยตัว
-                
-                overlay.classList.add('hidden');
-                mainContent.classList.remove('md:pl-[320px]'); // คืนที่ให้เนื้อหาตรงกลาง
-            }
-        }
-
-        // ================= ACTIVITY MANAGEMENT LOGIC =================
-        function toggleActivityStatus(element) {
-            if (element.innerText === 'เปิด') {
-                element.innerText = 'ปิด';
-                element.className = 'bg-slate-200 text-slate-600 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-slate-300 transition dark:bg-slate-700 dark:text-slate-300';
-                element.closest('tr').classList.add('opacity-60');
-            } else {
-                element.innerText = 'เปิด';
-                element.className = 'bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer hover:bg-emerald-200 transition';
-                element.closest('tr').classList.remove('opacity-60');
-            }
-        }
-
-        function editActivity(activityName) {
-            Swal.fire({
-                title: 'แก้ไขกิจกรรม',
-                text: `คุณกำลังแก้ไขข้อมูลของ: ${activityName}`,
-                icon: 'info',
-                confirmButtonText: 'บันทึก',
-                showCancelButton: true,
-                cancelButtonText: 'ยกเลิก',
-                customClass: { popup: 'rounded-3xl glass-panel border-none', confirmButton: 'rounded-xl bg-primary', cancelButton: 'rounded-xl' },
-                background: currentTheme === 'dark' ? '#0f172a' : '#fff', color: currentTheme === 'dark' ? '#fff' : '#000'
-            });
-        }
-
-        // ================= REGISTRATION LOGIC (SEARCH -> AUTO-FILL -> SUBMIT) =================
-        function resetRegisterForm() {
-            document.getElementById('step2-form').classList.add('hidden');
-            document.getElementById('regStudentId').value = '';
-            document.getElementById('regName').value = '';
-            document.getElementById('regMajor').selectedIndex = 0;
-            document.getElementById('regActivity').selectedIndex = 0;
-            document.getElementById('regStudentId').disabled = false;
-        }
-
-        function loadActiveActivities() {
-            const select = document.getElementById('regActivity');
-            select.innerHTML = '<option value="">-- เลือกกิจกรรม --</option><option value="ACT001">ปฐมนิเทศนักศึกษาใหม่ (15 มิ.ย. 69)</option><option value="ACT002">อบรม AI (20 มิ.ย. 69)</option>';
-        }
-
-        function searchStudentData() {
-            const studentId = document.getElementById('regStudentId').value.trim();
-            if (!studentId) {
-                Swal.fire({ icon: 'warning', title: 'ระบุรหัส', text: 'กรุณากรอกรหัสนักศึกษาหรือบัตรประชาชน' }); return;
-            }
-
-            const searchBtn = document.getElementById('searchStudentBtn');
-            const originalContent = searchBtn.innerHTML;
-            searchBtn.innerHTML = '<div class="loader !w-5 !h-5 border-[2px]"></div>'; searchBtn.disabled = true;
-
-            Papa.parse(getCSVUrl('Registration.Digit'), {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    let found = false;
-                    for (let i = results.data.length - 1; i >= 0; i--) {
-                        const vals = Object.values(results.data[i]);
-                        if (vals.length >= 5 && String(vals[1]).trim() === studentId) {
-                            document.getElementById('regName').value = vals[2] || '';
-                            const majorSelect = document.getElementById('regMajor');
-                            for(let j=0; j < majorSelect.options.length; j++) {
-                                if(majorSelect.options[j].value === (vals[4]||'')) { majorSelect.selectedIndex = j; break; }
-                            }
-                            found = true; break;
-                        }
-                    }
-                    searchBtn.innerHTML = originalContent; searchBtn.disabled = false;
-
-                    // Unhide Step 2 Form
-                    document.getElementById('step2-form').classList.remove('hidden');
-                    document.getElementById('regStudentId').disabled = true; // Lock ID
-
-                    if (found) {
-                        Swal.fire({ icon: 'success', title: 'พบข้อมูล', text: 'ดึงชื่อและสาขาเรียบร้อย', timer: 1500, showConfirmButton: false });
-                    } else {
-                        Swal.fire({ icon: 'info', title: 'ไม่พบประวัติ', text: 'กรุณากรอกข้อมูลส่วนตัว', timer: 1500, showConfirmButton: false });
-                    }
-                },
-                error: function() {
-                    searchBtn.innerHTML = originalContent; searchBtn.disabled = false;
-                    document.getElementById('step2-form').classList.remove('hidden');
-                    document.getElementById('regStudentId').disabled = true;
-                    Swal.fire({ icon: 'info', title: 'Offline Mode', text: 'ไม่สามารถดึงประวัติได้ กรุณากรอกด้วยตนเอง' });
-                }
-            });
-        }
-
-        function handleRegisterSubmit(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitRegisterBtn');
-            const originalContent = btn.innerHTML;
-            const studentId = document.getElementById('regStudentId').value.trim();
-            const activityId = document.getElementById('regActivity').value;
-            
-            btn.innerHTML = '<div class="loader !w-5 !h-5 border-[2px]"></div> ตรวจสอบการลงซ้ำ...'; btn.disabled = true;
-
-            Papa.parse(getCSVUrl('Registration.Digit'), {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    let isDuplicate = false;
-                    for (let i = 0; i < results.data.length; i++) {
-                        const vals = Object.values(results.data[i]);
-                        if (vals.length >= 4 && String(vals[1]).trim() === studentId && String(vals[3]).trim() === activityId) {
-                            isDuplicate = true; break;
-                        }
-                    }
-
-                    btn.innerHTML = originalContent; btn.disabled = false;
-                    if (isDuplicate) {
-                        Swal.fire({ icon: 'warning', title: 'ลงทะเบียนซ้ำ!', text: 'รหัสนี้ได้ลงทะเบียนไปแล้ว' });
-                    } else {
-                        // Success -> Normally call google.script.run here
-                        Swal.fire({ icon: 'success', title: 'ลงทะเบียนสำเร็จ!', text: 'บันทึกประวัติเรียบร้อย' });
-                        resetRegisterForm();
-                    }
-                },
-                error: function() {
-                    btn.innerHTML = originalContent; btn.disabled = false;
-                    Swal.fire({ icon: 'success', title: 'ส่งคำขอสำเร็จ', text: '(Offline Fallback)' });
-                    resetRegisterForm();
-                }
-            });
-        }
-
-        // ================= HISTORY LOGIC =================
-        let globalLogsData = []; let isLogsLoaded = false;
-
-        function prepareLogsData() {
-            if (isLogsLoaded) return; 
-            Papa.parse(getCSVUrl('Logs'), {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    if (results.data.length > 0 && Object.keys(results.data[0]).length > 0) {
-                        globalLogsData = results.data.reverse(); 
-                    }
-                    isLogsLoaded = true;
-                    if(document.getElementById('searchHistory').value.trim() !== '') filterHistory();
-                },
-                error: function() { isLogsLoaded = true; }
-            });
-        }
-
-        function filterHistory() {
-            const input = document.getElementById('searchHistory').value.trim().toLowerCase();
-            const container = document.getElementById('historyGridContainer');
-            
-            if (input === '') {
-                container.innerHTML = `<div class="glass-panel p-12 rounded-[2rem] text-center border-dashed border-2 border-slate-300/50">
-                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto mb-4"><i class="fas fa-search text-2xl"></i></div>
-                    <h3 class="text-xl font-bold">กรอกรหัสเพื่อค้นหา</h3></div>`;
-                return;
-            }
-
-            if (!isLogsLoaded) {
-                 container.innerHTML = `<div class="glass-panel p-12 rounded-[2rem] text-center"><div class="loader mb-4 border-slate-400"></div><p>กำลังเชื่อมต่อฐานข้อมูล...</p></div>`;
-                 return;
-            }
-
-            const filteredData = globalLogsData.filter(row => {
-                const vals = Object.values(row);
-                return vals.length >= 2 && String(vals[1]).toLowerCase().includes(input);
-            });
-
-            if (filteredData.length === 0) {
-                 container.innerHTML = `<div class="glass-panel p-12 rounded-[2rem] text-center"><div class="w-16 h-16 bg-rose-50 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-box-open text-2xl"></i></div><h3 class="text-lg font-bold">ไม่พบประวัติ</h3></div>`;
-                 return;
-            }
-
-            container.innerHTML = '';
-            filteredData.forEach((row, index) => {
-                const vals = Object.values(row);
-                if(vals.length >= 3) {
-                    container.innerHTML += `
-                        <div class="glass-panel p-5 rounded-3xl flex justify-between items-center animate-slide-up" style="animation-delay: ${index * 0.05}s">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-indigo-50 text-primary rounded-2xl flex items-center justify-center"><i class="fas fa-calendar-check"></i></div>
-                                <div>
-                                    <h4 class="text-lg font-bold">${vals[2] || '-'}</h4>
-                                    <div class="text-sm text-slate-500 font-bold">${vals[1] || '-'} | ${vals[0] || '-'}</div>
-                                </div>
-                            </div>
-                            <div class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl text-sm font-bold"><i class="fas fa-check-circle"></i> ${vals[3] || 'สำเร็จ'}</div>
-                        </div>`;
-                }
-            });
-        }
-
-        // ================= REALTIME STATS & DETAIL LOGIC =================
-        let globalRealtimeData = [];
-
-        function loadRealtimeData(btnElement) {
-            let originalHtml = "";
-            if(btnElement) {
-                originalHtml = btnElement.innerHTML;
-                btnElement.innerHTML = '<i class="fas fa-sync-alt fa-spin text-tertiary"></i> กำลังโหลด...';
-                btnElement.disabled = true;
-            }
-
-            Papa.parse(getCSVUrl('Registration.Digit'), {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    globalRealtimeData = results.data;
-                    updateRealtimeUI();
-                    if(btnElement) {
-                        btnElement.innerHTML = originalHtml;
-                        btnElement.disabled = false;
-                    }
-                },
-                error: function() {
-                    // Fallback to Mock Data if Sheet is not accessible
-                    globalRealtimeData = getMockRegistrationData();
-                    updateRealtimeUI();
-                    if(btnElement) {
-                        btnElement.innerHTML = originalHtml;
-                        btnElement.disabled = false;
-                    }
-                }
-            });
-        }
-
-        function updateRealtimeUI() {
-            let countCS = 0, countIT = 0, countGraphic = 0;
-
-            globalRealtimeData.forEach(row => {
-                const vals = Object.values(row);
-                // สมมติ: Col E (index 4) คือ สาขาวิชา
-                const major = String(vals[4] || '').trim();
-                if (major.includes('คอมพิวเตอร์')) countCS++;
-                else if (major.includes('สารสนเทศ')) countIT++;
-                else if (major.includes('กราฟิก')) countGraphic++;
-            });
-
-            // อัปเดตตัวเลขในการ์ด
-            animateValue("count-cs", 0, countCS, 1000);
-            animateValue("count-it", 0, countIT, 1000);
-            animateValue("count-graphic", 0, countGraphic, 1000);
-        }
-
-        function showMajorDetails(targetMajor) {
-            // 1. สลับหน้าจอ
-            document.getElementById('realtime-summary-view').classList.add('hidden');
-            document.getElementById('realtime-detail-view').classList.remove('hidden');
-            document.getElementById('realtime-detail-view').classList.add('flex');
-            
-            // 2. ตั้งชื่อสาขา
-            document.getElementById('detail-major-badge').innerText = targetMajor;
-            document.getElementById('searchDetailInput').value = ''; // Reset search
-
-            // 3. กรองและแสดงข้อมูล
-            renderDetailTable(targetMajor, '');
-        }
-
-        function backToRealtimeSummary() {
-            document.getElementById('realtime-detail-view').classList.add('hidden');
-            document.getElementById('realtime-detail-view').classList.remove('flex');
-            document.getElementById('realtime-summary-view').classList.remove('hidden');
-        }
-
-        function filterDetailTable() {
-            const targetMajor = document.getElementById('detail-major-badge').innerText;
-            const searchTerm = document.getElementById('searchDetailInput').value.toLowerCase();
-            renderDetailTable(targetMajor, searchTerm);
-        }
-
-        function renderDetailTable(major, searchTerm) {
-            const tbody = document.getElementById('detailTableBody');
-            tbody.innerHTML = '';
-
-            let count = 0;
-            globalRealtimeData.forEach(row => {
-                const vals = Object.values(row);
-                // สมมติ: Col 1=Timestamp, Col 2=ID, Col 3=Name, Col 4=Activity, Col 5=Major
-                const rowMajor = String(vals[4] || '').trim();
-                
-                // ตรวจสอบสาขาแบบยืดหยุ่น (รวมคำหลัก)
-                let matchMajor = false;
-                if (major.includes('คอม') && rowMajor.includes('คอม')) matchMajor = true;
-                else if (major.includes('สารสนเทศ') && rowMajor.includes('สารสนเทศ')) matchMajor = true;
-                else if (major.includes('กราฟิก') && rowMajor.includes('กราฟิก')) matchMajor = true;
-
-                if (matchMajor) {
-                    const rowID = String(vals[1] || '').toLowerCase();
-                    const rowName = String(vals[2] || '').toLowerCase();
-                    
-                    if (searchTerm === '' || rowID.includes(searchTerm) || rowName.includes(searchTerm)) {
-                        count++;
-                        tbody.innerHTML += `
-                            <tr class="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                                <td class="py-4 pl-4 font-bold text-slate-800 dark:text-slate-200 detail-id">${vals[1] || '-'}</td>
-                                <td class="py-4 font-medium text-slate-600 dark:text-slate-300 detail-name">${vals[2] || '-'}</td>
-                                <td class="py-4 text-slate-500"><span class="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg text-xs font-semibold">${vals[3] || '-'}</span></td>
-                                <td class="py-4 text-slate-500 text-sm"><i class="far fa-clock mr-1 opacity-50"></i> ${vals[0] || '-'}</td>
-                            </tr>
-                        `;
-                    }
-                }
-            });
-
-            if(count === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-12 text-slate-400">ไม่พบข้อมูลรายชื่อในสาขานี้</td></tr>`;
-            }
-        }
-
-        // Utility: Animate numbers counting up
-        function animateValue(id, start, end, duration) {
-            if (start === end) return;
-            const obj = document.getElementById(id);
-            if(!obj) return;
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                obj.innerHTML = Math.floor(progress * (end - start) + start);
-                if (progress < 1) { window.requestAnimationFrame(step); }
+            // Data States
+            const [activities, setActivities] = useState(MOCK_ACTIVITIES);
+            const [currentStudent, setCurrentStudent] = useState(null);
+            const [selectedActId, setSelectedActId] = useState(null);
+
+            // Load Settings from LocalStorage
+            useEffect(() => {
+                const isSysOpen = localStorage.getItem('digit69_systemOpen');
+                if (isSysOpen !== null) setSystemOpen(isSysOpen === 'true');
+            }, []);
+
+            // --- SweetAlert Wrappers ---
+            const showLoading = (title) => {
+                Swal.fire({ title, background: '#1e293b', color: '#fff', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             };
-            window.requestAnimationFrame(step);
+            const showSuccess = (title) => {
+                Swal.fire({ icon: 'success', title, background: '#1e293b', color: '#fff', timer: 1500, showConfirmButton: false });
+            };
+            const showError = (title, text) => {
+                Swal.fire({ icon: 'error', title, text, background: '#1e293b', color: '#fff', confirmButtonColor: '#FF6B00' });
+            };
+
+            // --- Navigation Bar ---
+            const Navbar = () => (
+                <nav className="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('home')}>
+                        <div className="bg-brand text-white p-2 rounded-xl font-bold text-xl shadow-lg shadow-brand/20">D.69</div>
+                        <div>
+                            <h1 className="text-xl font-bold tracking-wider text-white">DIGIT<span className="text-brand">.69</span></h1>
+                            <p className="text-xs text-slate-400">Activity Management System</p>
+                        </div>
+                    </div>
+                    <div>
+                        {!isAdmin ? (
+                            <button onClick={() => setView('adminLogin')} className="flex items-center gap-2 text-sm text-slate-300 hover:text-brand transition-colors bg-white/5 px-4 py-2 rounded-lg border border-white/10 hover:border-brand/50">
+                                <Icons.Login /> Staff Login
+                            </button>
+                        ) : (
+                            <div className="flex gap-4">
+                                <button onClick={() => setView('admin')} className="text-brand font-semibold">เข้าสู่ Dashboard</button>
+                                <button onClick={() => { setIsAdmin(false); setView('home'); }} className="text-red-400 hover:text-red-300">ออกจากระบบ</button>
+                            </div>
+                        )}
+                    </div>
+                </nav>
+            );
+
+            // ==========================================
+            // 👩‍🎓 STUDENT VIEWS
+            // ==========================================
+
+            // 1. Home View
+            const HomeView = () => (
+                <div className="max-w-4xl mx-auto mt-20 p-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">ยินดีต้อนรับสู่ระบบ <span className="text-brand">DIGIT.69</span></h2>
+                        <p className="text-slate-400 text-lg">บริหารจัดการประวัติการเข้าร่วมกิจกรรม คณะเทคโนโลยีดิจิทัล</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Menu 1: Check-in */}
+                        <div 
+                            onClick={() => systemOpen ? setView('checkin') : null}
+                            className={`glass-card p-8 rounded-2xl transition-all duration-300 ${systemOpen ? 'cursor-pointer hover:-translate-y-2 hover:shadow-brand/20 hover:border-brand/50' : 'opacity-50 cursor-not-allowed grayscale'}`}
+                        >
+                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${systemOpen ? 'bg-brand/20 text-brand' : 'bg-gray-700 text-gray-400'}`}>
+                                <Icons.CheckIn />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">1. ลงทะเบียนกิจกรรม</h3>
+                            <p className="text-slate-400 mb-4">เช็คชื่อเข้าร่วมกิจกรรมที่กำลังเปิดรับลงทะเบียน พร้อมทำแบบประเมิน</p>
+                            {!systemOpen && <span className="text-xs bg-red-500/20 text-red-400 px-3 py-1 rounded-full border border-red-500/20">ปิดระบบชั่วคราว</span>}
+                        </div>
+
+                        {/* Menu 2: History */}
+                        <div 
+                            onClick={() => setView('history')}
+                            className="glass-card p-8 rounded-2xl cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-brand/20 hover:border-brand/50"
+                        >
+                            <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mb-6">
+                                <Icons.History />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">2. ตรวจสอบประวัติ</h3>
+                            <p className="text-slate-400">ตรวจสอบประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณที่ผ่านมา</p>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // 2. Check-in View
+            const CheckInView = () => {
+                const [searchId, setSearchId] = useState('');
+                const activeActs = activities.filter(a => a.Status === 'open');
+
+                const handleSearch = () => {
+                    const student = MOCK_STUDENTS.find(s => s.StudentID === searchId || s.IDCard === searchId);
+                    if (student) {
+                        setCurrentStudent(student);
+                    } else {
+                        showError('ไม่พบข้อมูล', 'กรุณาตรวจสอบรหัสนักศึกษาหรือเลขบัตรประชาชนอีกครั้ง');
+                    }
+                };
+
+                const handleSubmit = () => {
+                    if (!selectedActId) return showError('แจ้งเตือน', 'กรุณาเลือกกิจกรรม');
+                    
+                    showLoading('กำลังบันทึกข้อมูล...');
+                    setTimeout(() => {
+                        showSuccess('เช็คชื่อสำเร็จ!');
+                        setView('survey'); // พรอมต์ระบุให้ไปหน้า Survey อัตโนมัติ
+                    }, 1000);
+                };
+
+                return (
+                    <div className="max-w-2xl mx-auto mt-10 p-6">
+                        <button onClick={() => setView('home')} className="text-brand flex items-center gap-2 mb-6 hover:underline">
+                            ← กลับหน้าหลัก
+                        </button>
+                        
+                        <div className="glass-card p-8 rounded-2xl border-t-4 border-t-brand">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Icons.CheckIn/> ลงทะเบียนเข้ากิจกรรม</h2>
+                            
+                            {!currentStudent ? (
+                                <div className="space-y-4">
+                                    <label className="block text-sm text-slate-400">รหัสนักศึกษา / เลขบัตรประชาชน</label>
+                                    <div className="flex gap-4">
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white"
+                                            placeholder="กรอกรหัส..."
+                                            value={searchId}
+                                            onChange={(e) => setSearchId(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                        />
+                                        <button onClick={handleSearch} className="bg-brand hover:bg-brand-dark text-white px-6 py-3 rounded-lg font-semibold transition">ค้นหา</button>
+                                    </div>
+                                    <p className="text-xs text-slate-500">* ทดสอบใช้รหัส: 65123456</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="bg-dark-800 p-4 rounded-xl border border-slate-700">
+                                        <p className="text-sm text-slate-400">ข้อมูลนักศึกษา</p>
+                                        <p className="text-lg font-bold text-white mt-1">{currentStudent.Name}</p>
+                                        <p className="text-brand">{currentStudent.Major} ({currentStudent.StudentID})</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm text-slate-400 mb-2">เลือกกิจกรรมที่เข้าร่วม</label>
+                                        <select 
+                                            className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white appearance-none"
+                                            onChange={(e) => setSelectedActId(e.target.value)}
+                                            value={selectedActId || ''}
+                                        >
+                                            <option value="" disabled>-- กรุณาเลือกกิจกรรม --</option>
+                                            {activeActs.map(act => (
+                                                <option key={act.ActID} value={act.ActID}>{act.ActName}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <button 
+                                        onClick={handleSubmit}
+                                        className="w-full bg-brand hover:bg-brand-dark text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition transform hover:scale-[1.02]"
+                                    >
+                                        ยืนยันลงทะเบียน
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            // 3. Survey View
+            const SurveyView = () => {
+                const questions = Array.from({length: 13}, (_, i) => `คำถามข้อที่ ${i + 1}: ความพึงพอใจด้านการจัดกิจกรรมและการนำไปใช้ประโยชน์`);
+                
+                const submitSurvey = (e) => {
+                    e.preventDefault();
+                    showLoading('กำลังส่งแบบประเมิน...');
+                    setTimeout(() => {
+                        showSuccess('ขอบคุณสำหรับข้อเสนอแนะ!');
+                        setCurrentStudent(null);
+                        setSelectedActId(null);
+                        setView('home');
+                    }, 1200);
+                };
+
+                return (
+                    <div className="max-w-3xl mx-auto mt-10 p-6">
+                        <div className="glass-card p-8 rounded-2xl">
+                            <div className="text-center mb-8">
+                                <h2 className="text-2xl font-bold text-white">แบบประเมินความพึงพอใจ</h2>
+                                <p className="text-brand">กรุณาประเมินเพื่อเสร็จสิ้นการลงทะเบียน</p>
+                            </div>
+
+                            <form onSubmit={submitSurvey} className="space-y-6">
+                                {questions.map((q, idx) => (
+                                    <div key={idx} className="bg-dark-800/50 p-4 rounded-lg border border-slate-700/50">
+                                        <p className="mb-3 text-sm">{q}</p>
+                                        <div className="flex justify-between md:justify-start md:gap-8">
+                                            {[5, 4, 3, 2, 1].map(score => (
+                                                <label key={score} className="flex flex-col items-center gap-1 cursor-pointer group">
+                                                    <input type="radio" name={`q${idx}`} value={score} required className="text-brand focus:ring-brand accent-brand w-5 h-5" />
+                                                    <span className="text-xs text-slate-400 group-hover:text-brand">{score}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                <div className="pt-4">
+                                    <label className="block text-sm mb-2">ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</label>
+                                    <textarea className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" rows="3"></textarea>
+                                </div>
+
+                                <button type="submit" className="w-full bg-brand hover:bg-brand-dark text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition">
+                                    ส่งแบบประเมิน
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            // 4. History View
+            const HistoryView = () => {
+                const [searchId, setSearchId] = useState('');
+                const [history, setHistory] = useState(null);
+
+                const handleSearch = () => {
+                    const student = MOCK_STUDENTS.find(s => s.StudentID === searchId || s.IDCard === searchId);
+                    if (student) {
+                        // Mock History Data
+                        setHistory({
+                            student: student,
+                            records: [
+                                { actName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', date: '15 มิ.ย. 2026', time: '08:30 น.' },
+                                { actName: 'กีฬาสานสัมพันธ์ 69', date: '10 พ.ค. 2026', time: '13:15 น.' }
+                            ]
+                        });
+                    } else {
+                        showError('ไม่พบข้อมูล', 'ไม่พบประวัติการเข้าร่วมกิจกรรม');
+                        setHistory(null);
+                    }
+                };
+
+                return (
+                    <div className="max-w-4xl mx-auto mt-10 p-6">
+                        <button onClick={() => setView('home')} className="text-brand flex items-center gap-2 mb-6 hover:underline">← กลับหน้าหลัก</button>
+                        
+                        <div className="glass-card p-8 rounded-2xl mb-8">
+                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Icons.History/> ตรวจสอบประวัติกิจกรรม</h2>
+                            <div className="flex gap-4">
+                                <input 
+                                    type="text" 
+                                    className="w-full bg-dark-900 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-brand text-white"
+                                    placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช..."
+                                    value={searchId}
+                                    onChange={(e) => setSearchId(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                />
+                                <button onClick={handleSearch} className="bg-brand hover:bg-brand-dark px-6 py-3 rounded-lg font-semibold transition">ตรวจสอบ</button>
+                            </div>
+                        </div>
+
+                        {history && (
+                            <div className="bg-dark-800 rounded-2xl border border-slate-700 overflow-hidden animate-fade-in">
+                                <div className="p-6 border-b border-slate-700 bg-slate-800/50">
+                                    <h3 className="text-xl font-bold text-white">{history.student.Name}</h3>
+                                    <p className="text-brand">{history.student.Major} | รหัส: {history.student.StudentID}</p>
+                                </div>
+                                <div className="p-0">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-dark-900 text-slate-400 text-sm">
+                                                <th className="p-4 font-medium">วันที่</th>
+                                                <th className="p-4 font-medium">เวลา</th>
+                                                <th className="p-4 font-medium">ชื่อกิจกรรม</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {history.records.map((rec, i) => (
+                                                <tr key={i} className="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                                                    <td className="p-4 whitespace-nowrap">{rec.date}</td>
+                                                    <td className="p-4 whitespace-nowrap text-brand">{rec.time}</td>
+                                                    <td className="p-4">{rec.actName}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            // ==========================================
+            // 🛡️ ADMIN VIEWS (Dashboard)
+            // ==========================================
+            
+            const AdminLogin = () => {
+                const [user, setUser] = useState('');
+                const [pass, setPass] = useState('');
+
+                const handleLogin = (e) => {
+                    e.preventDefault();
+                    if(user === 'admin' && pass === '0000') {
+                        setIsAdmin(true);
+                        setView('admin');
+                        showSuccess('เข้าสู่ระบบสำเร็จ');
+                    } else {
+                        showError('ผิดพลาด', 'Username หรือ Password ไม่ถูกต้อง');
+                    }
+                }
+
+                return (
+                    <div className="flex items-center justify-center min-h-[70vh]">
+                        <div className="glass-card p-8 rounded-2xl w-full max-w-md">
+                            <div className="text-center mb-8">
+                                <div className="w-16 h-16 bg-brand/20 text-brand rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Icons.Login />
+                                </div>
+                                <h2 className="text-2xl font-bold">Staff Login</h2>
+                            </div>
+                            <form onSubmit={handleLogin} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm text-slate-400 mb-1">Username</label>
+                                    <input type="text" value={user} onChange={e=>setUser(e.target.value)} className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-slate-400 mb-1">Password</label>
+                                    <input type="password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full bg-dark-900 border border-slate-700 rounded-lg p-3 text-white focus:border-brand" required />
+                                </div>
+                                <button type="submit" className="w-full bg-brand hover:bg-brand-dark py-3 rounded-lg font-bold mt-4">Login</button>
+                                <button type="button" onClick={()=>setView('home')} className="w-full text-slate-400 hover:text-white py-2 text-sm">กลับหน้าหลัก</button>
+                            </form>
+                        </div>
+                    </div>
+                )
+            };
+
+            const AdminDashboard = () => {
+                const [adminTab, setAdminTab] = useState('overview');
+
+                const menuItems = [
+                    { id: 'overview', name: '1. ภาพรวม (Overview)', icon: <Icons.Dashboard /> },
+                    { id: 'majors', name: '2. สัดส่วนสาขาวิชา', icon: <Icons.Dashboard /> },
+                    { id: 'exec', name: '3. รายงานผู้บริหาร', icon: <Icons.Report /> },
+                    { id: 'activities', name: '4. จัดการกิจกรรม', icon: <Icons.CheckIn /> },
+                    { id: 'realtime', name: '5. ยอดเช็คชื่อ (Real-time)', icon: <Icons.History /> },
+                    { id: 'spss', name: '6. รายงาน SPSS', icon: <Icons.Report /> },
+                    { id: 'users', name: '7. จัดการสิทธิ์แอดมิน', icon: <Icons.Users /> },
+                    { id: 'settings', name: '8. ตั้งค่าระบบ', icon: <Icons.Settings /> },
+                ];
+
+                // Sub-components for Dashboard Tabs
+                const TabOverview = () => (
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold">ภาพรวมระบบ (KPIs)</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-brand">
+                                <p className="text-slate-400 text-sm">ยอดขึ้นทะเบียนรวม</p>
+                                <p className="text-4xl font-bold mt-2">1,245 <span className="text-sm font-normal text-slate-500">คน</span></p>
+                            </div>
+                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-blue-500">
+                                <p className="text-slate-400 text-sm">กิจกรรมที่เปิดอยู่</p>
+                                <p className="text-4xl font-bold mt-2">2 <span className="text-sm font-normal text-slate-500">กิจกรรม</span></p>
+                            </div>
+                            <div className="glass-card p-6 rounded-xl border-l-4 border-l-green-500">
+                                <p className="text-slate-400 text-sm">ประเมินแล้ว</p>
+                                <p className="text-4xl font-bold mt-2">1,180 <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+                const TabMajors = () => (
+                    <div>
+                        <h2 className="text-2xl font-bold mb-6">สัดส่วนตามสาขาวิชา</h2>
+                        <div className="glass-card p-8 rounded-xl flex flex-col items-center">
+                            {/* CSS Only Pie Chart representation for standalone React without external heavy libs */}
+                            <div className="relative w-64 h-64 rounded-full" style={{ background: 'conic-gradient(#FF6B00 0% 40%, #3b82f6 40% 75%, #22c55e 75% 100%)' }}>
+                                <div className="absolute inset-4 bg-dark-900 rounded-full flex items-center justify-center">
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold text-white">100%</p>
+                                        <p className="text-xs text-slate-400">Total Students</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-6 mt-8">
+                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-brand"></span> วิศวกรรมซอฟต์แวร์ (40%)</div>
+                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"></span> วิทยาการคอมพิวเตอร์ (35%)</div>
+                                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"></span> เทคโนโลยีสารสนเทศ (25%)</div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+                const TabActivities = () => {
+                    const toggleStatus = (id) => {
+                        setActivities(activities.map(a => a.ActID === id ? {...a, Status: a.Status === 'open' ? 'closed' : 'open'} : a));
+                        showSuccess('อัปเดตสถานะแล้ว');
+                    }
+                    return (
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold">จัดการกิจกรรม</h2>
+                                <button className="bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg text-sm font-bold">+ สร้างกิจกรรมใหม่</button>
+                            </div>
+                            <div className="glass-card overflow-hidden rounded-xl">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-dark-900 border-b border-slate-700">
+                                        <tr>
+                                            <th className="p-4">ชื่อกิจกรรม</th>
+                                            <th className="p-4">วันที่จัด</th>
+                                            <th className="p-4">สถานที่</th>
+                                            <th className="p-4">สถานะ (เปิด/ปิด)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {activities.map(act => (
+                                            <tr key={act.ActID} className="border-b border-slate-800 hover:bg-slate-800/50">
+                                                <td className="p-4">{act.ActName}</td>
+                                                <td className="p-4">{act.Date}</td>
+                                                <td className="p-4">{act.Location}</td>
+                                                <td className="p-4">
+                                                    <button 
+                                                        onClick={() => toggleStatus(act.ActID)}
+                                                        className={`px-3 py-1 rounded-full text-xs font-bold ${act.Status === 'open' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+                                                    >
+                                                        {act.Status === 'open' ? 'OPEN' : 'CLOSE'}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )
+                };
+
+                const TabRealtime = () => (
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">ยอดเช็คชื่อ (Real-time)</h2>
+                            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-bold">
+                                <Icons.Download /> Export Excel
+                            </button>
+                        </div>
+                        <div className="glass-card p-6 rounded-xl border border-slate-700 space-y-4">
+                            <div className="flex justify-between items-center p-4 bg-dark-900 rounded-lg">
+                                <div>
+                                    <h4 className="font-bold text-lg text-brand">ปฐมนิเทศนักศึกษาใหม่</h4>
+                                    <p className="text-sm text-slate-400">กำลังเปิดรับลงทะเบียน...</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-3xl font-bold">452</p>
+                                    <p className="text-xs text-slate-400">คนลงทะเบียนแล้ว</p>
+                                </div>
+                            </div>
+                            {/* Live Feed Mock */}
+                            <div className="text-sm text-slate-400 space-y-2 mt-4">
+                                <p className="animate-pulse flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-500"></span> 65123456 นายสมชาย ใจดี เช็คชื่อเมื่อ 10 วินาทีที่แล้ว</p>
+                                <p className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-slate-500"></span> 66112233 นางสาวสมหญิง สวยงาม เช็คชื่อเมื่อ 1 นาทีที่แล้ว</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+                const TabSPSS = () => (
+                    <div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold">รายงานสถิติ SPSS (ความพึงพอใจ)</h2>
+                            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold">
+                                <Icons.Download /> Export Word (.doc)
+                            </button>
+                        </div>
+                        <div className="glass-card overflow-hidden rounded-xl">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-dark-900 border-b border-slate-700">
+                                    <tr>
+                                        <th className="p-4">ประเด็นการประเมิน</th>
+                                        <th className="p-4 text-center">N</th>
+                                        <th className="p-4 text-center">x̄</th>
+                                        <th className="p-4 text-center">S.D.</th>
+                                        <th className="p-4 text-center">แปลผล</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[1,2,3,4,5].map(i => (
+                                        <tr key={i} className="border-b border-slate-800">
+                                            <td className="p-4">คำถามข้อที่ {i}: ด้านการจัดกิจกรรม</td>
+                                            <td className="p-4 text-center">452</td>
+                                            <td className="p-4 text-center text-brand font-bold">4.6{i}</td>
+                                            <td className="p-4 text-center">0.5{i}</td>
+                                            <td className="p-4 text-center text-green-400">มากที่สุด</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+
+                const TabSettings = () => {
+                    const handleToggleSys = () => {
+                        const newState = !systemOpen;
+                        setSystemOpen(newState);
+                        localStorage.setItem('digit69_systemOpen', newState);
+                        showSuccess(newState ? 'เปิดระบบลงทะเบียนแล้ว' : 'ปิดระบบลงทะเบียนแล้ว');
+                    };
+
+                    return (
+                        <div className="max-w-xl">
+                            <h2 className="text-2xl font-bold mb-6">ตั้งค่าระบบ (Settings)</h2>
+                            <div className="glass-card p-6 rounded-xl flex justify-between items-center">
+                                <div>
+                                    <h4 className="font-bold text-lg">1. ระบบลงทะเบียนนักศึกษา</h4>
+                                    <p className="text-sm text-slate-400">เปิด/ปิด เมนูลงทะเบียนในหน้าหลัก (ใช้อำพรางเมื่อหมดเขต)</p>
+                                </div>
+                                <button 
+                                    onClick={handleToggleSys}
+                                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${systemOpen ? 'bg-brand' : 'bg-slate-600'}`}
+                                >
+                                    <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${systemOpen ? 'translate-x-7' : 'translate-x-1'}`}/>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                };
+
+                return (
+                    <div className="flex h-[calc(100vh-80px)] overflow-hidden">
+                        {/* Sidebar */}
+                        <div className="w-64 glass border-r border-slate-700/50 flex flex-col">
+                            <div className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Admin Menu</div>
+                            <div className="flex-1 overflow-y-auto px-3 space-y-1">
+                                {menuItems.map(item => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => setAdminTab(item.id)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm transition-all ${adminTab === item.id ? 'bg-brand/10 text-brand border border-brand/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                                    >
+                                        {item.icon} {item.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto p-8 bg-dark-900/50">
+                            {adminTab === 'overview' && <TabOverview />}
+                            {adminTab === 'majors' && <TabMajors />}
+                            {adminTab === 'exec' && <TabOverview /> /* ใช้ร่วมกันไปก่อนสำหรับ Demo */}
+                            {adminTab === 'activities' && <TabActivities />}
+                            {adminTab === 'realtime' && <TabRealtime />}
+                            {adminTab === 'spss' && <TabSPSS />}
+                            {adminTab === 'users' && <div className="p-6">ระบบจัดการสิทธิ์ผู้ใช้งาน (สำหรับ Super Admin)</div>}
+                            {adminTab === 'settings' && <TabSettings />}
+                        </div>
+                    </div>
+                );
+            };
+
+            // View Renderer
+            return (
+                <div className="flex flex-col min-h-screen">
+                    <Navbar />
+                    <main className="flex-1 flex flex-col">
+                        {view === 'home' && <HomeView />}
+                        {view === 'checkin' && <CheckInView />}
+                        {view === 'survey' && <SurveyView />}
+                        {view === 'history' && <HistoryView />}
+                        {view === 'adminLogin' && <AdminLogin />}
+                        {view === 'admin' && isAdmin && <AdminDashboard />}
+                    </main>
+                </div>
+            );
         }
 
-        // Fallback Mock Data for preview
-        function getMockRegistrationData() {
-            const data = [];
-            const majors = ['วิทยาการคอมพิวเตอร์', 'เทคโนโลยีสารสนเทศ', 'กราฟิกดีไซน์และมัลติมีเดีย'];
-            const names = ['สมชาย', 'สมหญิง', 'ใจดี', 'มีสุข', 'เรียนดี', 'กิจกรรมเด่น'];
-            for(let i=1; i<=150; i++) {
-                data.push({
-                    "Timestamp": "2026-06-02 10:00",
-                    "StudentID": "661230" + String(i).padStart(3, '0'),
-                    "Name": names[i%names.length] + " นามสกุล" + i,
-                    "ActivityID": "ACT001",
-                    "Major": majors[i%3],
-                    "Status": "ลงทะเบียนสำเร็จ"
-                });
-            }
-            return data;
-        }
-
-        // Init
-        navigate('home');
+        // ==========================================
+        // Initialize App
+        // ==========================================
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
