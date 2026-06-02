@@ -3,408 +3,754 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGIT.69 - Activity Management</title>
+    <title>DIGIT.69 - Activity Management System</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { DEFAULT: '#FF6B00', dark: '#E65C00', light: '#FF8A33', glow: 'rgba(255, 107, 0, 0.5)' },
-                        dark: { 900: '#0B1121', 800: '#131C31', 700: '#1E293B', 600: '#334155' }
-                    },
-                    fontFamily: {
-                        sans: ['Prompt', 'sans-serif'],
-                    },
-                    animation: {
-                        'fade-in-up': 'fadeInUp 0.6s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel (For JSX) -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- PapaParse -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Recharts (for Dashboard Charts) -->
+    <script src="https://unpkg.com/react-is@18.2.0/umd/react-is.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.1.12/umd/Recharts.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        body { 
-            font-family: 'Prompt', sans-serif; 
-            background-color: #0B1121; 
-            color: #f8fafc; 
-            overflow-x: hidden;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; color: white; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
         
-        /* Premium Glassmorphism */
-        .glass {
-            background: rgba(19, 28, 49, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .glass-card {
-            background: linear-gradient(160deg, rgba(30,41,59,0.7) 0%, rgba(11,17,33,0.8) 100%);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-        }
-        
-        /* Custom Input Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #FF6B00; }
-        
-        /* Animated Background Gradients */
-        .bg-animated {
-            background-color: #0B1121;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(255, 107, 0, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(255, 107, 0, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
-            background-attachment: fixed;
-        }
-
-        /* Gradient Text Utility */
-        .text-gradient {
-            background: linear-gradient(135deg, #FFB073 0%, #FF6B00 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Custom Input Fields */
-        .input-premium {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .input-premium:focus {
-            background: rgba(15, 23, 42, 0.9);
-            border-color: #FF6B00;
-            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
-            outline: none;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
     </style>
 </head>
-<body class="bg-animated min-h-screen">
+<body class="bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')] bg-cover bg-center bg-fixed min-h-screen overflow-x-hidden text-slate-800">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[-1]"></div>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
+        const { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } = window.Recharts || {};
 
-        // --- 📊 Mock Data ---
-        const MOCK_ACTIVITIES = [
-            { ActID: 'A1', ActName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', Date: '2026-06-15', Location: 'หอประชุมใหญ่', Status: 'open' },
-            { ActID: 'A2', ActName: 'อบรมสัมมนา AI & Data Science', Date: '2026-06-20', Location: 'ห้องประชุม 1', Status: 'open' },
-            { ActID: 'A3', ActName: 'กีฬาสานสัมพันธ์ 69', Date: '2026-05-10', Location: 'สนามกีฬากลาง', Status: 'closed' }
+        // ==========================================
+        // 🔴 นำ URL ของ Web App จาก Google Script มาใส่ที่นี่
+        // ==========================================
+        const GAS_API_URL = ""; 
+        
+        // Mock Data for demonstration when URL is empty
+        const mockStudent = { studentId: "64010101", idCard: "1103900000000", name: "สมชาย ใจดี", major: "เทคโนโลยีสารสนเทศ" };
+        const mockActivities = [{ id: "A01", name: "สัมมนาเทคโนโลยี AI", date: "2026-06-15", location: "ห้องประชุม 1" }];
+
+        const surveyQuestions = [
+            "1. เนื้อหาของกิจกรรมมีความน่าสนใจ", "2. วิทยากรมีความรู้ความสามารถ", "3. ระยะเวลาการจัดกิจกรรมเหมาะสม",
+            "4. สถานที่จัดกิจกรรมมีความเหมาะสม", "5. การประชาสัมพันธ์ทั่วถึง", "6. เจ้าหน้าที่ให้บริการด้วยความสุภาพ",
+            "7. อุปกรณ์และสื่อที่ใช้มีความพร้อม", "8. อาหารและเครื่องดื่มเหมาะสม", "9. สามารถนำความรู้ไปประยุกต์ใช้ได้",
+            "10. รูปแบบการจัดกิจกรรมมีความน่าสนใจ", "11. การลำดับขั้นตอนของกิจกรรมเหมาะสม", "12. ภาพรวมความพึงพอใจต่อกิจกรรม", "13. ท่านจะเข้าร่วมกิจกรรมลักษณะนี้อีกในอนาคต"
         ];
 
-        const MOCK_STUDENTS = [
-            { StudentID: '65123456', Name: 'นายสมชาย ใจดี', Major: 'วิศวกรรมซอฟต์แวร์', IDCard: '1122334455667' },
-            { StudentID: '66112233', Name: 'นางสาวสมหญิง สวยงาม', Major: 'วิทยาการคอมพิวเตอร์', IDCard: '9988776655443' }
-        ];
+        // API Helper
+        const apiCall = async (action, data = {}) => {
+            if(!GAS_API_URL) {
+                // Mock responses if no API URL is provided
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        if(action === 'getStudent') resolve({ status: 'success', data: mockStudent });
+                        if(action === 'getActiveActivities') resolve({ status: 'success', data: mockActivities });
+                        if(action === 'checkIn' || action === 'submitSurvey') resolve({ status: 'success' });
+                        if(action === 'adminLogin') resolve(data.username === 'admin' ? { status: 'success', role: 'SuperAdmin' } : { status: 'error', message: 'รหัสผิด' });
+                        if(action === 'getHistory') resolve({ status: 'success', profile: mockStudent, history: [{ timestamp: '01/06/2026 09:00', activityName: 'ปฐมนิเทศนักศึกษา' }] });
+                    }, 800);
+                });
+            }
 
-        // --- 🎨 Icons (SVG) ---
-        const Icons = {
-            Home: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>,
-            CheckIn: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
-            History: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>,
-            Login: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>,
-            Dashboard: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>,
-            Users: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>,
-            Report: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>,
-            Settings: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>,
-            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>,
-            ChevronRight: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>,
-            Search: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, data })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error("API Error:", error);
+                return { status: 'error', message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' };
+            }
         };
 
-        // ==========================================
-        // 🚀 MAIN APP COMPONENT
-        // ==========================================
-        function App() {
-            const [view, setView] = useState('home'); 
-            const [isAdmin, setIsAdmin] = useState(false);
-            const [systemOpen, setSystemOpen] = useState(true);
-            
-            const [activities, setActivities] = useState(MOCK_ACTIVITIES);
-            const [students, setStudents] = useState(MOCK_STUDENTS); // เปลี่ยนเป็น State เพื่อรองรับข้อมูลจริง
-            const [currentStudent, setCurrentStudent] = useState(null);
-            const [selectedActId, setSelectedActId] = useState(null);
+        // --- COMPONENTS ---
 
-            useEffect(() => {
-                const isSysOpen = localStorage.getItem('digit69_systemOpen');
-                if (isSysOpen !== null) setSystemOpen(isSysOpen === 'true');
+        // 1. Home / Menu Selection
+        const Home = ({ setView, adminLogout, adminRole }) => {
+            const isRegOpen = localStorage.getItem('regOpen') !== 'false'; // Default true
 
-                // --- 📥 ดึงข้อมูลจริงจาก Google Sheets ---
-                const SHEET_ID = '1XJKJCp_XY_DUtU_z0PK3B-n3mB5BOkSHtS-7XPtCnHA';
-                const actsUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Activities`;
-                const studentsUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Students`;
-
-                // 1. ดึงข้อมูลกิจกรรม
-                Papa.parse(actsUrl, {
-                    download: true,
-                    header: true,
-                    complete: (results) => {
-                        if(results.data && results.data.length > 0 && results.data[0].ActID) {
-                            setActivities(results.data.filter(row => row.ActID !== "")); // กรองแถวว่างทิ้ง
-                        }
-                    }
-                });
-
-                // 2. ดึงข้อมูลนักศึกษา
-                Papa.parse(studentsUrl, {
-                    download: true,
-                    header: true,
-                    complete: (results) => {
-                        if(results.data && results.data.length > 0 && results.data[0].StudentID) {
-                            setStudents(results.data.filter(row => row.StudentID !== "")); // กรองแถวว่างทิ้ง
-                        }
-                    }
-                });
-            }, []);
-
-            // UI Helpers
-            const customSwal = Swal.mixin({
-                background: '#131C31',
-                color: '#f8fafc',
-                customClass: {
-                    popup: 'border border-slate-700/50 rounded-2xl shadow-2xl',
-                    confirmButton: 'bg-brand hover:bg-brand-dark px-6 py-2 rounded-lg font-bold transition-all',
-                }
-            });
-
-            const showLoading = (title) => customSwal.fire({ title, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            const showSuccess = (title) => customSwal.fire({ icon: 'success', title, timer: 1500, showConfirmButton: false });
-            const showError = (title, text) => customSwal.fire({ icon: 'error', title, text });
-
-            // --- Navigation Bar ---
-            const Navbar = () => (
-                <nav className="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center transition-all">
-                    <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setView('home')}>
-                        <div className="bg-gradient-to-br from-brand-light to-brand text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-lg shadow-lg shadow-brand/30 group-hover:scale-105 transition-transform">D.</div>
-                        <div>
-                            <h1 className="text-xl font-bold tracking-wider text-white group-hover:text-brand-light transition-colors">DIGIT<span className="text-brand">.69</span></h1>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-widest">Activity System</p>
-                        </div>
-                    </div>
-                    <div>
-                        {!isAdmin ? (
-                            <button onClick={() => setView('adminLogin')} className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-all bg-white/5 hover:bg-brand/10 px-5 py-2.5 rounded-xl border border-white/10 hover:border-brand/40 shadow-sm">
-                                <Icons.Login /> Staff Login
+            return (
+                <div class="min-h-screen flex flex-col items-center justify-center p-4">
+                    <div class="absolute top-4 right-4">
+                        {adminRole ? 
+                            <button onClick={() => setView('admin')} class="glass px-4 py-2 rounded-lg text-white hover:bg-white/20 transition flex items-center gap-2">
+                                <i data-lucide="layout-dashboard"></i> Dashboard
                             </button>
-                        ) : (
-                            <div className="flex items-center gap-4">
-                                <button onClick={() => setView('admin')} className="text-brand font-semibold hover:text-brand-light transition-colors">เข้าสู่ Dashboard</button>
-                                <div className="w-px h-5 bg-slate-700"></div>
-                                <button onClick={() => { setIsAdmin(false); setView('home'); }} className="text-slate-400 hover:text-red-400 transition-colors text-sm">ออกจากระบบ</button>
+                            :
+                            <button onClick={() => setView('login')} class="glass px-4 py-2 rounded-lg text-white hover:bg-white/20 transition flex items-center gap-2">
+                                <i data-lucide="lock"></i> Staff Login
+                            </button>
+                        }
+                    </div>
+                    
+                    <div class="text-center mb-10 text-white animate-fade-in">
+                        <div class="inline-block p-4 rounded-full glass mb-4">
+                            <i data-lucide="fingerprint" class="w-16 h-16 text-blue-400"></i>
+                        </div>
+                        <h1 class="text-5xl font-bold mb-2 tracking-wider">DIGIT<span class="text-blue-400">.69</span></h1>
+                        <p class="text-xl text-gray-300">ระบบจัดการกิจกรรมและลงทะเบียนนักศึกษา</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+                        <button 
+                            onClick={() => isRegOpen ? setView('checkin') : null} 
+                            class={`glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-4 transition-all duration-300 ${isRegOpen ? 'hover:scale-105 hover:bg-white/20 cursor-pointer text-white' : 'opacity-50 cursor-not-allowed text-gray-400 grayscale'}`}
+                        >
+                            <div class={`p-4 rounded-full ${isRegOpen ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20'}`}>
+                                <i data-lucide="scan-line" class="w-12 h-12"></i>
+                            </div>
+                            <h2 class="text-2xl font-semibold">1. เช็คชื่อเข้ากิจกรรม</h2>
+                            <p class="text-sm text-center">สแกน/กรอกรหัส เพื่อลงทะเบียนและประเมินผลกิจกรรม</p>
+                            {!isRegOpen && <span class="bg-red-500/80 text-white text-xs px-2 py-1 rounded">ปิดรับลงทะเบียน</span>}
+                        </button>
+
+                        <button onClick={() => setView('history')} class="glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-4 text-white hover:scale-105 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+                            <div class="p-4 rounded-full bg-purple-500/20 text-purple-400">
+                                <i data-lucide="history" class="w-12 h-12"></i>
+                            </div>
+                            <h2 class="text-2xl font-semibold">2. ตรวจสอบประวัติ</h2>
+                            <p class="text-sm text-center">ดูประวัติการเข้าร่วมกิจกรรมย้อนหลังทั้งหมด</p>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. Check-in Flow
+        const CheckInFlow = ({ setView }) => {
+            const [step, setStep] = useState(1);
+            const [query, setQuery] = useState('');
+            const [student, setStudent] = useState(null);
+            const [activities, setActivities] = useState([]);
+            const [selectedAct, setSelectedAct] = useState(null);
+
+            const handleSearch = async (e) => {
+                e.preventDefault();
+                if(!query) return;
+                
+                Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await apiCall('getStudent', { query });
+                
+                if(res.status === 'success') {
+                    setStudent(res.data);
+                    const actRes = await apiCall('getActiveActivities');
+                    setActivities(actRes.data || []);
+                    Swal.close();
+                    setStep(2);
+                } else {
+                    Swal.fire('ไม่พบข้อมูล', 'กรุณาตรวจสอบรหัสนักศึกษา หรือ เลขบัตร ปชช. อีกครั้ง', 'error');
+                }
+            };
+
+            const handleConfirm = async () => {
+                if(!selectedAct) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกกิจกรรม', 'warning');
+                
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await apiCall('checkIn', { studentId: student.studentId, activityId: selectedAct.id, activityName: selectedAct.name });
+                
+                if(res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'ลงทะเบียนสำเร็จ!', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => setStep(3), 1500); // Go to survey
+                } else {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                }
+            };
+
+            return (
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="glass-card w-full max-w-2xl rounded-2xl p-8 relative text-white">
+                        <button onClick={() => setView('home')} class="absolute top-4 left-4 p-2 hover:bg-white/10 rounded-full transition"><i data-lucide="arrow-left"></i></button>
+                        
+                        {step === 1 && (
+                            <div class="text-center mt-6">
+                                <h2 class="text-3xl font-bold mb-6">เช็คชื่อเข้ากิจกรรม</h2>
+                                <form onSubmit={handleSearch} class="flex flex-col gap-4">
+                                    <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช." class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-center text-lg" required autoFocus />
+                                    <button type="submit" class="w-full py-3 bg-blue-500 hover:bg-blue-600 rounded-xl font-semibold transition shadow-lg">ค้นหาข้อมูล</button>
+                                </form>
                             </div>
                         )}
-                    </div>
-                </nav>
-            );
 
-            // ==========================================
-            // 👩‍🎓 STUDENT VIEWS
-            // ==========================================
-
-            const HomeView = () => (
-                <div className="max-w-5xl mx-auto mt-16 p-6 animate-fade-in-up flex-1 flex flex-col justify-center pb-20">
-                    <div className="text-center mb-16 relative">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-brand/20 blur-[100px] rounded-full pointer-events-none"></div>
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-brand/10 border border-brand/20 text-brand text-xs font-bold tracking-widest mb-6">FACULTY OF DIGITAL TECHNOLOGY</span>
-                        <h2 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight text-white">
-                            Welcome to <br className="md:hidden" /><span className="text-gradient drop-shadow-sm">DIGIT.69</span>
-                        </h2>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto font-light leading-relaxed">
-                            ระบบบริหารจัดการประวัติการเข้าร่วมกิจกรรม สำหรับนักศึกษาคณะเทคโนโลยีดิจิทัล สะดวก รวดเร็ว และตรวจสอบประวัติได้แบบเรียลไทม์
-                        </p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full relative z-10">
-                        {/* Menu 1 */}
-                        <div 
-                            onClick={() => systemOpen ? setView('checkin') : null}
-                            className={`group relative glass-card p-10 rounded-3xl transition-all duration-500 ${systemOpen ? 'cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand/20 hover:border-brand/40' : 'opacity-50 cursor-not-allowed grayscale'}`}
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
-                            <div className="relative z-10">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${systemOpen ? 'bg-gradient-to-br from-brand/20 to-brand/5 text-brand border border-brand/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}`}>
-                                    <Icons.CheckIn />
+                        {step === 2 && (
+                            <div class="mt-6">
+                                <div class="bg-white/10 p-4 rounded-xl border border-white/20 mb-6 flex items-center gap-4">
+                                    <div class="w-16 h-16 bg-blue-500/30 rounded-full flex items-center justify-center"><i data-lucide="user" class="w-8 h-8"></i></div>
+                                    <div>
+                                        <h3 class="text-xl font-bold">{student.name}</h3>
+                                        <p class="text-gray-300 text-sm">รหัส: {student.studentId} | สาขา: {student.major}</p>
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-brand transition-colors">ลงทะเบียนกิจกรรม</h3>
-                                <p className="text-slate-400 text-sm leading-relaxed mb-6">เช็คชื่อเข้าร่วมกิจกรรมที่กำลังเปิดรับลงทะเบียน พร้อมทำแบบประเมินความพึงพอใจอย่างรวดเร็ว</p>
                                 
-                                <div className="flex items-center justify-between">
-                                    {!systemOpen ? (
-                                        <span className="text-xs bg-red-500/10 text-red-400 px-3 py-1 rounded-full border border-red-500/20 flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ปิดระบบชั่วคราว
-                                        </span>
-                                    ) : (
-                                        <span className="text-brand text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">คลิกเพื่อเริ่มต้น <Icons.ChevronRight/></span>
-                                    )}
+                                <h4 class="font-semibold mb-3">เลือกกิจกรรมที่เปิดรับลงทะเบียน:</h4>
+                                <div class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2">
+                                    {activities.length === 0 ? <p class="text-center text-red-300 py-4">ไม่มีกิจกรรมที่เปิดรับลงทะเบียนขณะนี้</p> : null}
+                                    {activities.map(act => (
+                                        <div key={act.id} onClick={() => setSelectedAct(act)} class={`p-4 rounded-xl border cursor-pointer transition ${selectedAct?.id === act.id ? 'bg-blue-500/40 border-blue-400' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
+                                            <div class="font-semibold">{act.name}</div>
+                                            <div class="text-xs text-gray-400 mt-1"><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>{act.date} | <i data-lucide="map-pin" class="inline w-3 h-3 mx-1"></i>{act.location}</div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Menu 2 */}
-                        <div 
-                            onClick={() => setView('history')}
-                            className="group relative glass-card p-10 rounded-3xl cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 hover:border-blue-500/40 transition-all duration-500"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
-                            <div className="relative z-10">
-                                <div className="w-16 h-16 bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-400 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
-                                    <Icons.History />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">ตรวจสอบประวัติ</h3>
-                                <p className="text-slate-400 text-sm leading-relaxed mb-6">เช็คประวัติการเข้าร่วมกิจกรรมทั้งหมดของคุณที่ผ่านมา รวมถึงจำนวนชั่วโมงกิจกรรมที่สะสมไว้</p>
-                                <span className="text-blue-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">ตรวจสอบเลย <Icons.ChevronRight/></span>
+                                <button onClick={handleConfirm} disabled={!selectedAct} class="w-full py-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition shadow-lg">ยืนยันลงทะเบียน</button>
                             </div>
+                        )}
+
+                        {step === 3 && <SurveyForm student={student} activity={selectedAct} onFinish={() => setView('home')} />}
+                    </div>
+                </div>
+            );
+        };
+
+        // 2.1 Survey Form
+        const SurveyForm = ({ student, activity, onFinish }) => {
+            const [answers, setAnswers] = useState(Array(13).fill(0));
+            const [comment, setComment] = useState('');
+
+            const handleSubmit = async () => {
+                if(answers.includes(0)) return Swal.fire('แจ้งเตือน', 'กรุณาประเมินให้ครบทุกข้อ', 'warning');
+
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const res = await apiCall('submitSurvey', { studentId: student.studentId, activityId: activity.id, answers, comment });
+                
+                if(res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'ขอบคุณสำหรับการประเมิน!', text: 'ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว', confirmButtonText: 'กลับหน้าหลัก' }).then(() => onFinish());
+                }
+            };
+
+            return (
+                <div class="mt-4 animate-fade-in text-white">
+                    <h2 class="text-2xl font-bold mb-2 text-center text-blue-300">แบบประเมินความพึงพอใจ</h2>
+                    <p class="text-center text-sm text-gray-300 mb-6">กิจกรรม: {activity.name}</p>
+                    
+                    <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                        {surveyQuestions.map((q, idx) => (
+                            <div key={idx} class="bg-white/5 p-4 rounded-lg border border-white/10">
+                                <p class="mb-3 text-sm">{q}</p>
+                                <div class="flex justify-between max-w-sm mx-auto">
+                                    {[1,2,3,4,5].map(score => (
+                                        <button key={score} onClick={() => { const newAns = [...answers]; newAns[idx] = score; setAnswers(newAns); }} 
+                                            class={`w-10 h-10 rounded-full flex items-center justify-center transition border ${answers[idx] === score ? 'bg-blue-500 border-blue-400 text-white scale-110' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}>
+                                            {score}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-400 mt-1 max-w-sm mx-auto px-1"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>
+                            </div>
+                        ))}
+                        <div class="bg-white/5 p-4 rounded-lg border border-white/10">
+                            <p class="mb-3 text-sm">ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</p>
+                            <textarea value={comment} onChange={e=>setComment(e.target.value)} class="w-full bg-black/20 border border-white/20 rounded p-3 text-white focus:outline-none focus:ring-1 focus:ring-blue-400" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <button onClick={handleSubmit} class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 mt-6 rounded-xl font-semibold transition shadow-lg">ส่งแบบประเมิน</button>
+                </div>
+            );
+        }
+
+        // 3. History
+        const HistoryFlow = ({ setView }) => {
+            const [query, setQuery] = useState('');
+            const [data, setData] = useState(null);
+
+            const handleSearch = async (e) => {
+                e.preventDefault();
+                Swal.fire({ title: 'กำลังค้นหา...', didOpen: () => Swal.showLoading() });
+                const res = await apiCall('getHistory', { query });
+                if(res.status === 'success') setData(res);
+                else Swal.fire('ไม่พบข้อมูล', '', 'error');
+                if(res.status === 'success') Swal.close();
+            };
+
+            return (
+                <div class="min-h-screen flex flex-col items-center p-4 pt-10 text-white">
+                    <div class="w-full max-w-3xl">
+                        <button onClick={() => setView('home')} class="glass px-4 py-2 rounded-lg mb-6 hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="arrow-left"></i> กลับหน้าหลัก</button>
+                        
+                        <div class="glass-card rounded-2xl p-8">
+                            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3"><i data-lucide="history" class="text-purple-400"></i> ตรวจสอบประวัติกิจกรรม</h2>
+                            <form onSubmit={handleSearch} class="flex gap-4 mb-8">
+                                <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="รหัสนักศึกษา / เลขบัตร ปชช." class="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-400" required />
+                                <button type="submit" class="px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-xl font-semibold transition">ค้นหา</button>
+                            </form>
+
+                            {data && (
+                                <div class="animate-fade-in">
+                                    <div class="bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6 rounded-xl border border-white/20 mb-6 flex gap-6 items-center">
+                                        <div class="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-10 h-10"></i></div>
+                                        <div>
+                                            <h3 class="text-2xl font-bold text-blue-200">{data.profile.name}</h3>
+                                            <p class="text-gray-300 mt-1">รหัส: {data.profile.studentId} | สาขา: {data.profile.major}</p>
+                                            <p class="text-sm text-gray-400 mt-1">จำนวนกิจกรรมที่เข้าร่วม: <span class="text-white font-bold text-lg">{data.history.length}</span> ครั้ง</p>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="text-lg font-semibold mb-4 border-b border-white/10 pb-2">รายการกิจกรรมที่เข้าร่วม</h4>
+                                    <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                                        {data.history.length === 0 ? <p class="text-center text-gray-400 py-4">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</p> : null}
+                                        {data.history.map((h, i) => (
+                                            <div key={i} class="bg-white/5 p-4 rounded-lg border border-white/10 flex items-center justify-between hover:bg-white/10 transition">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="p-2 bg-green-500/20 rounded-full text-green-400"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+                                                    <span class="font-medium text-lg">{h.activityName}</span>
+                                                </div>
+                                                <div class="text-sm text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> {h.timestamp}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             );
+        };
 
-            const CheckInView = () => {
-                const [searchId, setSearchId] = useState('');
-                const activeActs = activities.filter(a => a.Status === 'open' || a.Status === 'OPEN');
+        // 4. Admin Login
+        const AdminLogin = ({ setView, setAdminRole }) => {
+            const [user, setUser] = useState('');
+            const [pass, setPass] = useState('');
 
-                const handleSearch = (e) => {
-                    e?.preventDefault();
-                    if(!searchId) return;
-                    // ค้นหาจาก State ข้อมูลจริงที่ดึงมา
-                    const student = students.find(s => s.StudentID === searchId || s.IDCard === searchId);
-                    if (student) {
-                        setCurrentStudent(student);
-                    } else {
-                        showError('ไม่พบข้อมูล', 'กรุณาตรวจสอบรหัสนักศึกษาหรือเลขบัตรประชาชนอีกครั้ง');
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                Swal.fire({ title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading() });
+                
+                // Fallback for demo if no API
+                if(!GAS_API_URL && user === 'admin' && pass === '0000') {
+                    setAdminRole('SuperAdmin');
+                    Swal.close();
+                    setView('admin');
+                    return;
+                }
+
+                const res = await apiCall('adminLogin', { username: user, password: pass });
+                if(res.status === 'success') {
+                    setAdminRole(res.role);
+                    Swal.close();
+                    setView('admin');
+                } else {
+                    Swal.fire('เข้าสู่ระบบล้มเหลว', res.message, 'error');
+                }
+            };
+
+            return (
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="glass-card w-full max-w-md rounded-2xl p-8 text-white relative">
+                        <button onClick={() => setView('home')} class="absolute top-4 left-4 p-2 hover:bg-white/10 rounded-full transition"><i data-lucide="x"></i></button>
+                        <div class="text-center mb-8 mt-4">
+                            <div class="inline-flex p-4 rounded-full bg-blue-500/20 text-blue-400 mb-4"><i data-lucide="shield-check" class="w-10 h-10"></i></div>
+                            <h2 class="text-2xl font-bold">Staff Login</h2>
+                            <p class="text-gray-400 text-sm mt-1">DIGIT.69 Admin Panel</p>
+                        </div>
+                        <form onSubmit={handleLogin} class="space-y-4">
+                            <div><input type="text" value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" class="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400" required /></div>
+                            <div><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400" required /></div>
+                            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition mt-4">เข้าสู่ระบบ</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // 5. Admin Dashboard
+        const AdminDashboard = ({ setView, adminRole }) => {
+            const [activeMenu, setActiveMenu] = useState('overview');
+            const [dbData, setDbData] = useState({ students: [], checkins: [], activities: [], surveys: [] });
+            const [loading, setLoading] = useState(true);
+
+            // Fetch all data for dashboard
+            const fetchData = async () => {
+                setLoading(true);
+                if(!GAS_API_URL) {
+                    // Mock data for Dashboard visualization
+                    setTimeout(() => {
+                        setDbData({
+                            students: [
+                                ["6401", "1", "A", "IT"], ["6402", "2", "B", "IT"], ["6403", "3", "C", "Accounting"], ["6404", "4", "D", "Marketing"]
+                            ],
+                            checkins: [
+                                ["01/01/26", "6401", "A01", "Act 1"], ["01/01/26", "6402", "A01", "Act 1"], ["02/01/26", "6403", "A02", "Act 2"]
+                            ],
+                            activities: [
+                                ["A01", "สัมมนา AI", "2026-06-15", "Room 1", "Open"], ["A02", "กีฬาสี", "2026-07-01", "Field", "Close"]
+                            ],
+                            surveys: [
+                                ["Ts", "6401", "A01", 5,4,5,4,5,4,5,4,5,4,5,4,5, "ดีมาก"],
+                                ["Ts", "6402", "A01", 3,3,4,4,3,3,4,4,3,3,4,4,3, "พอใช้"]
+                            ]
+                        });
+                        setLoading(false);
+                    }, 1000);
+                    return;
+                }
+
+                const res = await apiCall('getDashboardData');
+                if(res.status === 'success') setDbData(res.data);
+                setLoading(false);
+            };
+
+            useEffect(() => { fetchData(); }, []);
+
+            // Dashboard Components
+            const Overview = () => {
+                const totalStudents = dbData.students.length;
+                const totalCheckins = dbData.checkins.length;
+                const activeActs = dbData.activities.filter(a => a[4] === 'Open').length;
+
+                return (
+                    <div class="animate-fade-in text-white">
+                        <h2 class="text-2xl font-bold mb-6">ภาพรวมระบบ (Overview)</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="glass-card p-6 rounded-xl border-l-4 border-blue-500">
+                                <div class="text-gray-400 text-sm mb-1">ยอดนักศึกษาในระบบ</div>
+                                <div class="text-4xl font-bold text-blue-400">{totalStudents}</div>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl border-l-4 border-green-500">
+                                <div class="text-gray-400 text-sm mb-1">รายการเช็คชื่อทั้งหมด</div>
+                                <div class="text-4xl font-bold text-green-400">{totalCheckins}</div>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl border-l-4 border-purple-500">
+                                <div class="text-gray-400 text-sm mb-1">กิจกรรมที่กำลังเปิดรับ</div>
+                                <div class="text-4xl font-bold text-purple-400">{activeActs}</div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const Majors = () => {
+                // Calculate Majors data
+                const majorCounts = {};
+                dbData.students.forEach(s => {
+                    const major = s[3] || 'ไม่ระบุ';
+                    majorCounts[major] = (majorCounts[major] || 0) + 1;
+                });
+                const pieData = Object.keys(majorCounts).map(k => ({ name: k, value: majorCounts[k] }));
+                const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+
+                return (
+                    <div class="animate-fade-in text-white h-full flex flex-col">
+                        <h2 class="text-2xl font-bold mb-6">สัดส่วนสาขาวิชา (Majors)</h2>
+                        <div class="glass-card p-6 rounded-xl flex-1 flex flex-col md:flex-row items-center justify-center">
+                            {pieData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <PieChart>
+                                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
+                                            {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                                        </Pie>
+                                        <Tooltip contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white'}} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : <p class="text-gray-400">ยังไม่มีข้อมูล</p>}
+                        </div>
+                    </div>
+                );
+            };
+
+            const ExecReport = () => {
+                const [filter, setFilter] = useState('All');
+                
+                // Get unique majors for dropdown
+                const majors = [...new Set(dbData.students.map(s => s[3]))].filter(Boolean);
+                
+                // Filter Checkins
+                const filteredCheckins = dbData.checkins.filter(c => {
+                    if(filter === 'All') return true;
+                    const student = dbData.students.find(s => s[0] == c[1]);
+                    return student && student[3] === filter;
+                });
+
+                // Prepare Bar Chart Data (Top Activities)
+                const actCounts = {};
+                filteredCheckins.forEach(c => {
+                    actCounts[c[3]] = (actCounts[c[3]] || 0) + 1;
+                });
+                const barData = Object.keys(actCounts).map(k => ({ name: k.substring(0,15)+'...', 'ผู้เข้าร่วม': actCounts[k] })).sort((a,b) => b.ผู้เข้าร่วม - a.ผู้เข้าร่วม).slice(0,5);
+
+                return (
+                    <div class="animate-fade-in text-white">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">รายงานสรุปผู้บริหาร</h2>
+                            <select value={filter} onChange={e=>setFilter(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none">
+                                <option value="All">ทุกสาขาวิชา</option>
+                                {majors.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-6 rounded-xl">
+                                <h3 class="text-lg mb-4 text-gray-300">5 อันดับกิจกรรมยอดนิยม ({filter})</h3>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={barData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#cbd5e1" fontSize={12} />
+                                        <YAxis stroke="#cbd5e1" />
+                                        <Tooltip cursor={{fill: '#ffffff10'}} contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white'}} />
+                                        <Bar dataKey="ผู้เข้าร่วม" fill="#8b5cf6" radius={[4,4,0,0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div class="glass-card p-6 rounded-xl flex flex-col justify-center items-center text-center">
+                                <h3 class="text-lg mb-2 text-gray-300">ยอดการเข้าร่วมรวม</h3>
+                                <div class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">{filteredCheckins.length}</div>
+                                <p class="text-gray-400">ครั้ง</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const ManageActivity = () => {
+                const [showForm, setShowForm] = useState(false);
+                const [form, setForm] = useState({ name: '', date: '', location: '' });
+
+                const handleCreate = async (e) => {
+                    e.preventDefault();
+                    Swal.fire({ title: 'กำลังสร้าง...', didOpen:()=>Swal.showLoading()});
+                    const res = await apiCall('createActivity', form);
+                    if(res.status === 'success') {
+                        Swal.fire('สำเร็จ', 'สร้างกิจกรรมเรียบร้อย', 'success');
+                        setForm({name:'', date:'', location:''});
+                        setShowForm(false);
+                        fetchData();
                     }
                 };
 
-                const handleSubmit = () => {
-                    if (!selectedActId) return showError('แจ้งเตือน', 'กรุณาเลือกกิจกรรมที่ต้องการลงทะเบียน');
-                    
-                    showLoading('กำลังบันทึกข้อมูล...');
-                    setTimeout(() => {
-                        showSuccess('เช็คชื่อเบื้องต้นสำเร็จ!');
-                        setView('survey');
-                    }, 1000);
+                const handleToggle = async (id, currentStatus) => {
+                    const newStatus = currentStatus === 'Open' ? 'Close' : 'Open';
+                    Swal.fire({ title: 'กำลังอัปเดต...', didOpen:()=>Swal.showLoading()});
+                    const res = await apiCall('toggleActivity', { id, status: newStatus });
+                    if(res.status === 'success') fetchData();
+                    Swal.close();
                 };
 
                 return (
-                    <div className="max-w-2xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
-                        <button onClick={() => setView('home')} className="text-slate-400 hover:text-brand flex items-center gap-2 mb-8 transition-colors text-sm font-medium">
-                            ← กลับหน้าหลัก
-                        </button>
+                    <div class="animate-fade-in text-white">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">จัดการกิจกรรม</h2>
+                            <button onClick={() => setShowForm(!showForm)} class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2">
+                                <i data-lucide={showForm ? "x" : "plus"}></i> {showForm ? 'ยกเลิก' : 'สร้างกิจกรรมใหม่'}
+                            </button>
+                        </div>
+
+                        {showForm && (
+                            <form onSubmit={handleCreate} class="glass-card p-6 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in border-l-4 border-blue-500">
+                                <div><label class="text-xs text-gray-400">ชื่อกิจกรรม</label><input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
+                                <div><label class="text-xs text-gray-400">วันเวลา</label><input type="datetime-local" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
+                                <div><label class="text-xs text-gray-400">สถานที่</label><input type="text" value={form.location} onChange={e=>setForm({...form, location:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
+                                <div class="md:col-span-3 flex justify-end"><button type="submit" class="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg transition">บันทึก</button></div>
+                            </form>
+                        )}
+
+                        <div class="glass-card rounded-xl overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-white/10 text-gray-300">
+                                    <tr><th class="p-4">ชื่อกิจกรรม</th><th class="p-4">วันเวลา</th><th class="p-4">สถานที่</th><th class="p-4 text-center">สถานะ</th><th class="p-4 text-center">จัดการ</th></tr>
+                                </thead>
+                                <tbody>
+                                    {dbData.activities.map((a, i) => (
+                                        <tr key={i} class="border-t border-white/10 hover:bg-white/5">
+                                            <td class="p-4 font-medium">{a[1]}</td><td class="p-4 text-gray-400">{a[2]}</td><td class="p-4 text-gray-400">{a[3]}</td>
+                                            <td class="p-4 text-center">
+                                                <span class={`px-2 py-1 rounded text-xs ${a[4] === 'Open' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{a[4] === 'Open' ? 'เปิดรับ' : 'ปิดแล้ว'}</span>
+                                            </td>
+                                            <td class="p-4 text-center">
+                                                <button onClick={() => handleToggle(a[0], a[4])} class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition">สลับสถานะ</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            };
+
+            const RealTimeRecord = () => {
+                const [selectedAct, setSelectedAct] = useState('');
+                const activeActs = dbData.activities.filter(a => a[4] === 'Open');
+                
+                // Realtime simulation
+                useEffect(() => {
+                    const timer = setInterval(() => { if(GAS_API_URL) fetchData(); }, 30000); // refresh every 30s
+                    return () => clearInterval(timer);
+                }, []);
+
+                const attendees = dbData.checkins.filter(c => selectedAct ? c[2] === selectedAct : c[2] === (activeActs[0]?.[0] || ''));
+                
+                const exportExcel = () => {
+                    // Simple CSV Export mapping full student data
+                    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                    csvContent += "รหัสนักศึกษา,เลขบัตรประชาชน,ชื่อ-สกุล,สาขาวิชา,กิจกรรม,เวลาที่ลงทะเบียน\n";
+                    
+                    attendees.forEach(row => {
+                        const std = dbData.students.find(s => s[0] == row[1]) || ['','','ไม่พบข้อมูล',''];
+                        const actName = row[3];
+                        csvContent += `="${std[0]}",="${std[1]}","${std[2]}","${std[3]}","${actName}","${row[0]}"\n`;
+                    });
+
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "รายชื่อเข้าร่วมกิจกรรม.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+
+                return (
+                    <div class="animate-fade-in text-white">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                            <h2 class="text-2xl font-bold flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div> ยอดเช็คชื่อเรียลไทม์</h2>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select value={selectedAct} onChange={e=>setSelectedAct(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white flex-1 md:w-64">
+                                    {activeActs.map(a => <option key={a[0]} value={a[0]}>{a[1]}</option>)}
+                                    {activeActs.length === 0 && <option value="">ไม่มีกิจกรรมที่เปิดอยู่</option>}
+                                </select>
+                                <button onClick={exportExcel} disabled={attendees.length===0} class="bg-green-600 hover:bg-green-700 disabled:opacity-50 px-4 py-2 rounded-lg flex items-center gap-2 transition"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 rounded-xl text-center mb-6 border border-white/20">
+                            <div class="text-gray-400 mb-2">ยอดผู้เข้าร่วมขณะนี้</div>
+                            <div class="text-6xl font-bold text-white">{attendees.length} <span class="text-2xl text-gray-400 font-normal">คน</span></div>
+                        </div>
                         
-                        <div className="glass-card p-8 md:p-10 rounded-3xl relative overflow-visible">
-                            {/* Decorative element */}
-                            <div className="absolute top-0 right-10 w-20 h-1 bg-brand rounded-b-lg shadow-[0_0_20px_rgba(255,107,0,0.5)]"></div>
-                            
-                            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
-                                <div className="p-2 bg-brand/20 rounded-lg text-brand"><Icons.CheckIn/></div>
-                                ลงทะเบียนเข้ากิจกรรม
-                            </h2>
-                            
-                            {!currentStudent ? (
-                                <form onSubmit={handleSearch} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">รหัสนักศึกษา หรือ เลขบัตรประชาชน</label>
-                                        <div className="relative">
-                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
-                                                <Icons.Search />
-                                            </div>
-                                            <input 
-                                                type="text" 
-                                                className="w-full input-premium rounded-xl pl-11 pr-4 py-4 text-white text-lg"
-                                                placeholder="กรอกข้อมูลเพื่อค้นหา..."
-                                                value={searchId}
-                                                onChange={(e) => setSearchId(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <button type="submit" className="w-full bg-gradient-to-r from-brand to-brand-dark hover:from-brand-light hover:to-brand text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-brand/30 transition-all transform hover:scale-[1.01] flex justify-center items-center gap-2">
-                                        ค้นหาข้อมูล
-                                    </button>
-                                    <p className="text-center text-xs text-slate-500 mt-4 bg-dark-800/50 py-2 rounded-lg border border-slate-700/30">* ลองใช้รหัสนักศึกษาทดสอบ: <span className="text-slate-300 font-mono bg-dark-900 px-2 py-1 rounded">65123456</span></p>
-                                </form>
-                            ) : (
-                                <div className="space-y-8 animate-fade-in-up">
-                                    <div className="bg-gradient-to-br from-dark-800 to-dark-900 p-6 rounded-2xl border border-slate-700/50 shadow-inner relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                                        <div className="flex items-start justify-between relative z-10">
-                                            <div>
-                                                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">ข้อมูลนักศึกษา</p>
-                                                <p className="text-xl font-bold text-white">{currentStudent.Name}</p>
-                                                <p className="text-brand mt-1 flex items-center gap-2">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-brand"></span>
-                                                    {currentStudent.Major}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="bg-slate-800 text-slate-300 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700">{currentStudent.StudentID}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                        <div class="glass-card rounded-xl overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-white/10 text-gray-300 sticky top-0 backdrop-blur-md">
+                                    <tr><th class="p-3">เวลา</th><th class="p-3">รหัส</th><th class="p-3">ชื่อ-สกุล</th><th class="p-3">สาขา</th></tr>
+                                </thead>
+                                <tbody>
+                                    {attendees.map((a, i) => {
+                                        const std = dbData.students.find(s => s[0] == a[1]) || ['','','ไม่พบข้อมูล',''];
+                                        return (
+                                            <tr key={i} class="border-t border-white/10 hover:bg-white/5">
+                                                <td class="p-3 text-xs text-gray-400">{a[0]}</td><td class="p-3">{std[0]}</td><td class="p-3">{std[2]}</td><td class="p-3 text-blue-300">{std[3]}</td>
+                                            </tr>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            };
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-3">เลือกกิจกรรมที่ต้องการลงทะเบียน</label>
-                                        <div className="relative">
-                                            <select 
-                                                className="w-full input-premium rounded-xl px-4 py-4 text-white appearance-none cursor-pointer"
-                                                onChange={(e) => setSelectedActId(e.target.value)}
-                                                value={selectedActId || ''}
-                                            >
-                                                <option value="" disabled>-- กรุณาเลือกกิจกรรม --</option>
-                                                {activeActs.map(act => (
-                                                    <option key={act.ActID} value={act.ActID} className="bg-dark-900">{act.ActName}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                            </div>
-                                        </div>
-                                    </div>
+            const SpssReport = () => {
+                const [selectedAct, setSelectedAct] = useState('');
+                const acts = dbData.activities;
+                
+                // Calculate SPSS Logic
+                const actSurveys = dbData.surveys.filter(s => selectedAct ? s[2] === selectedAct : s[2] === (acts[0]?.[0] || ''));
+                const N = actSurveys.length;
+                
+                let stats = [];
+                if(N > 0) {
+                    for(let q=0; q<13; q++) {
+                        let sum = 0;
+                        let scores = [];
+                        actSurveys.forEach(row => {
+                            const score = Number(row[3 + q]);
+                            if(!isNaN(score)) { sum += score; scores.push(score); }
+                        });
+                        const mean = sum / N;
+                        let varianceSum = 0;
+                        scores.forEach(s => { varianceSum += Math.pow(s - mean, 2); });
+                        // Using Sample SD (N-1), fallback to 0 if N<=1
+                        const sd = N > 1 ? Math.sqrt(varianceSum / (N - 1)) : 0; 
+                        
+                        stats.push({ qText: surveyQuestions[q], mean: mean.toFixed(2), sd: sd.toFixed(2) });
+                    }
+                }
 
-                                    <button 
-                                        onClick={handleSubmit}
-                                        className="w-full bg-gradient-to-r from-brand to-brand-dark hover:from-brand-light hover:to-brand text-white py-4 rounded-xl font-bold text-lg shadow-[0_10px_20px_-10px_rgba(255,107,0,0.5)] transition-all transform hover:scale-[1.01]"
-                                    >
-                                        ยืนยันการลงทะเบียน
-                                    </button>
+                const exportWord = () => {
+                    const actName = acts.find(a => a[0] === (selectedAct || acts[0]?.[0]))?.[1] || 'รายงาน';
+                    let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><title>Report</title><style>table {border-collapse: collapse; width: 100%;} th, td {border: 1px solid black; padding: 8px; text-align: left;} th {background-color: #f2f2f2;}</style></head><body>
+                    <h2 style="text-align:center;">รายงานผลการประเมินความพึงพอใจ</h2>
+                    <h3 style="text-align:center;">กิจกรรม: ${actName} (N = ${N})</h3>
+                    <table><tr><th>ข้อที่</th><th>ประเด็นการประเมิน</th><th style="text-align:center;">x̄</th><th style="text-align:center;">S.D.</th><th style="text-align:center;">ระดับ</th></tr>`;
+                    
+                    stats.forEach((s, idx) => {
+                        let level = s.mean >= 4.5 ? 'มากที่สุด' : s.mean >= 3.5 ? 'มาก' : s.mean >= 2.5 ? 'ปานกลาง' : s.mean >= 1.5 ? 'น้อย' : 'น้อยที่สุด';
+                        html += `<tr><td style="text-align:center;">${idx+1}</td><td>${s.qText.substring(3)}</td><td style="text-align:center;">${s.mean}</td><td style="text-align:center;">${s.sd}</td><td style="text-align:center;">${level}</td></tr>`;
+                    });
+                    
+                    html += `</table><br><h4>ข้อเสนอแนะเพิ่มเติม:</h4><ul>`;
+                    actSurveys.forEach(row => { if(row[16]) html += `<li>${row[16]}</li>`; });
+                    html += `</ul></body></html>`;
+
+                    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `Survey_Report_${actName}.doc`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+
+                return (
+                    <div class="animate-fade-in text-white">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">รายงานสถิติ (SPSS Report)</h2>
+                            <button onClick={exportWord} disabled={N===0} class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 rounded-lg flex items-center gap-2 transition"><i data-lucide="file-text" class="w-4 h-4"></i> Export Word</button>
+                        </div>
+
+                        <select value={selectedAct} onChange={e=>setSelectedAct(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white w-full max-w-md mb-6 focus:outline-none">
+                            {acts.map(a => <option key={a[0]} value={a[0]}>{a[1]}</option>)}
+                        </select>
+
+                        <div class="glass-card rounded-xl p-6">
+                            <div class="text-right text-gray-300 mb-4 font-mono text-lg">กลุ่มตัวอย่าง (N) = {N}</div>
+                            {N === 0 ? <p class="text-center text-gray-400 py-10">ยังไม่มีข้อมูลแบบประเมินสำหรับกิจกรรมนี้</p> : (
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-sm border-collapse">
+                                        <thead class="bg-white/10 text-gray-300 border-b border-white/20">
+                                            <tr><th class="p-3 w-12 text-center">ข้อ</th><th class="p-3">ประเด็นการประเมิน</th><th class="p-3 text-center w-24">x̄</th><th class="p-3 text-center w-24">S.D.</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {stats.map((s, i) => (
+                                                <tr key={i} class="border-b border-white/5 hover:bg-white/5">
+                                                    <td class="p-3 text-center text-gray-400">{i+1}</td>
+                                                    <td class="p-3">{s.qText.substring(3)}</td>
+                                                    <td class="p-3 text-center font-bold text-blue-300">{s.mean}</td>
+                                                    <td class="p-3 text-center font-mono text-purple-300">{s.sd}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
                         </div>
@@ -412,404 +758,114 @@
                 );
             };
 
-            const SurveyView = () => {
-                const questions = [
-                    "การประชาสัมพันธ์กิจกรรมมีความชัดเจนและทั่วถึง",
-                    "ระยะเวลาในการจัดกิจกรรมมีความเหมาะสม",
-                    "สถานที่และสิ่งอำนวยความสะดวกมีความพร้อม",
-                    "รูปแบบการจัดกิจกรรมน่าสนใจและสร้างสรรค์",
-                    "กิจกรรมนี้มีประโยชน์ต่อการพัฒนาตนเอง",
-                ]; // ย่อให้เหลือ 5 ข้อเพื่อ Demo
-                
-                const submitSurvey = (e) => {
-                    e.preventDefault();
-                    showLoading('กำลังส่งแบบประเมิน...');
-                    setTimeout(() => {
-                        showSuccess('บันทึกข้อมูลเรียบร้อย ขอบคุณครับ!');
-                        setCurrentStudent(null);
-                        setSelectedActId(null);
-                        setView('home');
-                    }, 1200);
+            const Settings = () => {
+                const [isOpen, setIsOpen] = useState(localStorage.getItem('regOpen') !== 'false');
+
+                const toggleReg = () => {
+                    const newVal = !isOpen;
+                    setIsOpen(newVal);
+                    localStorage.setItem('regOpen', newVal);
+                    Swal.fire({
+                        icon: 'success',
+                        title: newVal ? 'เปิดระบบลงทะเบียนแล้ว' : 'ปิดระบบลงทะเบียนแล้ว',
+                        showConfirmButton: false, timer: 1000
+                    });
                 };
 
                 return (
-                    <div className="max-w-3xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
-                        <div className="glass-card p-8 md:p-10 rounded-3xl">
-                            <div className="text-center mb-10">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500/20 text-green-400 mb-4 shadow-inner shadow-green-500/20">
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                </div>
-                                <h2 className="text-3xl font-bold text-white mb-2">เช็คชื่อสำเร็จ</h2>
-                                <p className="text-brand">ขั้นตอนสุดท้าย: กรุณาทำแบบประเมินความพึงพอใจ</p>
-                            </div>
-
-                            <form onSubmit={submitSurvey} className="space-y-6">
-                                {questions.map((q, idx) => (
-                                    <div key={idx} className="bg-dark-800/40 p-6 rounded-2xl border border-slate-700/50 hover:border-slate-600/50 transition-colors">
-                                        <p className="mb-4 text-slate-200 font-medium">{idx+1}. {q}</p>
-                                        
-                                        {/* Custom Radio Buttons UX */}
-                                        <div className="flex justify-between md:justify-start gap-2 md:gap-4">
-                                            {[1, 2, 3, 4, 5].map(score => (
-                                                <label key={score} className="cursor-pointer relative flex-1 md:flex-none">
-                                                    <input type="radio" name={`q${idx}`} value={score} required className="peer sr-only" />
-                                                    <div className="w-full md:w-12 h-12 rounded-xl flex items-center justify-center bg-dark-900 border border-slate-700 text-slate-400 font-semibold peer-checked:bg-brand peer-checked:border-brand peer-checked:text-white hover:bg-dark-700 transition-all shadow-sm">
-                                                        {score}
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        <div className="flex justify-between text-[10px] text-slate-500 mt-2 px-1 md:w-72">
-                                            <span>ควรปรับปรุง</span>
-                                            <span>ดีเยี่ยม</span>
-                                        </div>
-                                    </div>
-                                ))}
-                                
-                                <div className="pt-4">
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">ข้อเสนอแนะเพิ่มเติม (ทางเลือก)</label>
-                                    <textarea 
-                                        className="w-full input-premium rounded-xl p-4 text-white resize-none h-28" 
-                                        placeholder="พิมพ์ข้อเสนอแนะของคุณที่นี่..."
-                                    ></textarea>
-                                </div>
-
-                                <button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white py-4 rounded-xl font-bold text-lg shadow-[0_10px_20px_-10px_rgba(16,185,129,0.5)] transition-all transform hover:scale-[1.01] mt-4">
-                                    ส่งแบบประเมินและเสร็จสิ้น
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                );
-            };
-
-            const HistoryView = () => {
-                const [searchId, setSearchId] = useState('');
-                const [history, setHistory] = useState(null);
-
-                const handleSearch = (e) => {
-                    e?.preventDefault();
-                    if(!searchId) return;
-                    // ค้นหาจาก State ข้อมูลจริงที่ดึงมา
-                    const student = students.find(s => s.StudentID === searchId || s.IDCard === searchId);
-                    if (student) {
-                        setHistory({
-                            student: student,
-                            records: [
-                                { actName: 'อบรมสัมมนา AI & Data Science', date: '20 มิ.ย. 2026', time: '10:00 น.', status: 'เข้าร่วม' },
-                                { actName: 'ปฐมนิเทศนักศึกษาใหม่ คณะเทคโนโลยีดิจิทัล', date: '15 มิ.ย. 2026', time: '08:30 น.', status: 'เข้าร่วม' },
-                                { actName: 'กีฬาสานสัมพันธ์ 69', date: '10 พ.ค. 2026', time: '13:15 น.', status: 'เข้าร่วม' }
-                            ]
-                        });
-                    } else {
-                        showError('ไม่พบข้อมูล', 'ไม่พบประวัติการเข้าร่วมกิจกรรมในระบบ');
-                        setHistory(null);
-                    }
-                };
-
-                return (
-                    <div className="max-w-4xl mx-auto mt-10 p-6 animate-fade-in-up w-full">
-                        <button onClick={() => setView('home')} className="text-slate-400 hover:text-blue-400 flex items-center gap-2 mb-8 transition-colors text-sm font-medium">
-                            ← กลับหน้าหลัก
-                        </button>
-                        
-                        <div className="glass-card p-8 rounded-3xl mb-8 border-t-4 border-t-blue-500">
-                            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
-                                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400"><Icons.History/></div>
-                                ตรวจสอบประวัติกิจกรรม
-                            </h2>
-                            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-                                <div className="relative flex-1">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
-                                        <Icons.Search />
-                                    </div>
-                                    <input 
-                                        type="text" 
-                                        className="w-full input-premium rounded-xl pl-11 pr-4 py-3.5 text-white"
-                                        placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช..."
-                                        value={searchId}
-                                        onChange={(e) => setSearchId(e.target.value)}
-                                    />
-                                </div>
-                                <button type="submit" className="bg-blue-600 hover:bg-blue-500 px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all whitespace-nowrap">
-                                    ตรวจสอบ
-                                </button>
-                            </form>
-                        </div>
-
-                        {history && (
-                            <div className="glass-card rounded-3xl overflow-hidden animate-fade-in-up shadow-2xl">
-                                <div className="p-6 md:p-8 bg-gradient-to-r from-slate-800/80 to-dark-900/80 border-b border-slate-700/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-white mb-1">{history.student.Name}</h3>
-                                        <p className="text-blue-400 flex items-center gap-2">
-                                            {history.student.Major} <span className="text-slate-600">|</span> <span className="text-slate-300 font-mono">{history.student.StudentID}</span>
-                                        </p>
-                                    </div>
-                                    <div className="bg-dark-900 border border-slate-700 px-4 py-2 rounded-xl text-center">
-                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">เข้าร่วมทั้งหมด</p>
-                                        <p className="text-2xl font-bold text-white">{history.records.length} <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
-                                    </div>
-                                </div>
-                                <div className="p-0 overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="bg-dark-900/50 text-slate-400 text-sm border-b border-slate-700/50">
-                                                <th className="p-5 font-medium whitespace-nowrap">วันที่เข้าร่วม</th>
-                                                <th className="p-5 font-medium">ชื่อกิจกรรม</th>
-                                                <th className="p-5 font-medium text-center">สถานะ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {history.records.map((rec, i) => (
-                                                <tr key={i} className="border-b border-slate-700/30 hover:bg-slate-800/40 transition-colors">
-                                                    <td className="p-5 whitespace-nowrap text-sm">
-                                                        <div className="text-white font-medium">{rec.date}</div>
-                                                        <div className="text-slate-500 text-xs mt-1">{rec.time}</div>
-                                                    </td>
-                                                    <td className="p-5 font-medium text-slate-200">{rec.actName}</td>
-                                                    <td className="p-5 text-center">
-                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                                                            {rec.status}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-            };
-
-            // ==========================================
-            // 🛡️ ADMIN VIEWS
-            // ==========================================
-            
-            const AdminLogin = () => {
-                const [user, setUser] = useState('');
-                const [pass, setPass] = useState('');
-
-                const handleLogin = (e) => {
-                    e.preventDefault();
-                    if(user === 'admin' && pass === '0000') {
-                        setIsAdmin(true);
-                        setView('admin');
-                        showSuccess('ยินดีต้อนรับเข้าสู่ระบบจัดการ');
-                    } else {
-                        showError('Access Denied', 'Username หรือ Password ไม่ถูกต้อง');
-                    }
-                }
-
-                return (
-                    <div className="flex items-center justify-center flex-1 p-6 animate-fade-in-up">
-                        <div className="glass-card p-10 rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden">
-                            <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand/20 blur-[50px] rounded-full"></div>
-                            <div className="text-center mb-8 relative z-10">
-                                <div className="w-16 h-16 bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 text-brand rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner">
-                                    <Icons.Login />
-                                </div>
-                                <h2 className="text-3xl font-bold text-white">Staff Login</h2>
-                                <p className="text-slate-400 text-sm mt-2">ลงชื่อเข้าใช้สำหรับเจ้าหน้าที่ดูแลระบบ</p>
-                            </div>
-                            <form onSubmit={handleLogin} className="space-y-5 relative z-10">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Username</label>
-                                    <input type="text" value={user} onChange={e=>setUser(e.target.value)} className="w-full input-premium rounded-xl p-3.5 text-white" required placeholder="admin" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Password</label>
-                                    <input type="password" value={pass} onChange={e=>setPass(e.target.value)} className="w-full input-premium rounded-xl p-3.5 text-white" required placeholder="••••" />
-                                </div>
-                                <div className="pt-2">
-                                    <button type="submit" className="w-full bg-brand hover:bg-brand-dark text-white py-3.5 rounded-xl font-bold shadow-lg shadow-brand/30 transition-all">Sign In</button>
-                                </div>
-                                <button type="button" onClick={()=>setView('home')} className="w-full text-slate-500 hover:text-white py-2 text-sm transition-colors mt-2">← กลับหน้าหลัก</button>
-                            </form>
-                        </div>
-                    </div>
-                )
-            };
-
-            const AdminDashboard = () => {
-                const [adminTab, setAdminTab] = useState('overview');
-
-                const menuItems = [
-                    { id: 'overview', name: 'ภาพรวม (Overview)', icon: <Icons.Dashboard /> },
-                    { id: 'majors', name: 'สัดส่วนสาขาวิชา', icon: <Icons.Dashboard /> },
-                    { id: 'activities', name: 'จัดการกิจกรรม', icon: <Icons.CheckIn /> },
-                    { id: 'realtime', name: 'ยอดเช็คชื่อ Real-time', icon: <Icons.History /> },
-                    { id: 'spss', name: 'รายงาน SPSS', icon: <Icons.Report /> },
-                    { id: 'settings', name: 'ตั้งค่าระบบ', icon: <Icons.Settings /> },
-                ];
-
-                const TabOverview = () => (
-                    <div className="space-y-6 animate-fade-in-up">
-                        <div className="flex justify-between items-end mb-6">
+                    <div class="animate-fade-in text-white">
+                        <h2 class="text-2xl font-bold mb-6">ตั้งค่าระบบ (Settings)</h2>
+                        <div class="glass-card p-6 rounded-xl flex items-center justify-between max-w-lg border border-white/20">
                             <div>
-                                <h2 className="text-3xl font-bold text-white mb-1">Dashboard Overview</h2>
-                                <p className="text-slate-400">ภาพรวมสถิติการใช้งานระบบทั้งหมด</p>
+                                <h3 class="font-semibold text-lg">เปิด/ปิด เมนูเช็คชื่อเข้ากิจกรรม</h3>
+                                <p class="text-sm text-gray-400">ควบคุมการแสดงผลปุ่มที่หน้าแรก</p>
                             </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-2 h-full bg-brand"></div>
-                                <p className="text-slate-400 text-sm font-medium mb-2">ยอดขึ้นทะเบียนรวม</p>
-                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">1,245 <span className="text-sm font-normal text-slate-500">คน</span></p>
-                                <div className="mt-4 text-xs text-green-400 flex items-center gap-1"><span className="text-lg">↑</span> 12% จากสัปดาห์ก่อน</div>
-                            </div>
-                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
-                                <p className="text-slate-400 text-sm font-medium mb-2">กิจกรรมที่เปิดอยู่</p>
-                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">2 <span className="text-sm font-normal text-slate-500">กิจกรรม</span></p>
-                                <div className="mt-4 text-xs text-slate-500">สถานะ: กำลังดำเนินการ</div>
-                            </div>
-                            <div className="glass-card p-6 rounded-2xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-2 h-full bg-green-500"></div>
-                                <p className="text-slate-400 text-sm font-medium mb-2">ยอดการประเมินผล</p>
-                                <p className="text-4xl font-bold text-white flex items-baseline gap-2">1,180 <span className="text-sm font-normal text-slate-500">ครั้ง</span></p>
-                                <div className="mt-4 text-xs text-slate-500">อัตราการตอบกลับ 94%</div>
-                            </div>
-                        </div>
-                    </div>
-                );
-
-                const TabActivities = () => {
-                    const toggleStatus = (id) => {
-                        setActivities(activities.map(a => a.ActID === id ? {...a, Status: a.Status === 'open' ? 'closed' : 'open'} : a));
-                        showSuccess('อัปเดตสถานะสำเร็จ');
-                    }
-                    return (
-                        <div className="animate-fade-in-up">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white">จัดการกิจกรรม (Activities)</h2>
-                                    <p className="text-slate-400 text-sm mt-1">เพิ่ม/ลบ และเปิด/ปิด การลงทะเบียนของกิจกรรม</p>
-                                </div>
-                                <button className="bg-brand hover:bg-brand-dark px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-brand/20 transition-all flex items-center gap-2">
-                                    <span className="text-lg">+</span> สร้างกิจกรรมใหม่
-                                </button>
-                            </div>
-                            <div className="glass-card overflow-hidden rounded-2xl">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-dark-900/80 border-b border-slate-700">
-                                            <tr>
-                                                <th className="p-5 text-sm font-semibold text-slate-300">ชื่อกิจกรรม</th>
-                                                <th className="p-5 text-sm font-semibold text-slate-300">วันที่จัด</th>
-                                                <th className="p-5 text-sm font-semibold text-slate-300">สถานที่</th>
-                                                <th className="p-5 text-sm font-semibold text-slate-300 text-center">สถานะ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-700/50">
-                                            {activities.map(act => (
-                                                <tr key={act.ActID} className="hover:bg-slate-800/40 transition-colors">
-                                                    <td className="p-5 font-medium text-slate-200">{act.ActName}</td>
-                                                    <td className="p-5 text-slate-400 text-sm">{act.Date}</td>
-                                                    <td className="p-5 text-slate-400 text-sm">{act.Location}</td>
-                                                    <td className="p-5 text-center">
-                                                        <button 
-                                                            onClick={() => toggleStatus(act.ActID)}
-                                                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${act.Status === 'open' ? 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'}`}
-                                                        >
-                                                            {act.Status === 'open' ? 'กำลังเปิดรับ' : 'ปิดลงทะเบียน'}
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                };
-
-                const TabSettings = () => {
-                    const handleToggleSys = () => {
-                        const newState = !systemOpen;
-                        setSystemOpen(newState);
-                        localStorage.setItem('digit69_systemOpen', newState);
-                        showSuccess(newState ? 'เปิดระบบลงทะเบียนแล้ว' : 'ปิดระบบลงทะเบียนแล้ว');
-                    };
-
-                    return (
-                        <div className="max-w-2xl animate-fade-in-up">
-                            <h2 className="text-2xl font-bold text-white mb-2">ตั้งค่าระบบ (System Settings)</h2>
-                            <p className="text-slate-400 text-sm mb-8">ตั้งค่าการทำงานหลักของเว็บแอปพลิเคชัน</p>
-                            
-                            <div className="glass-card p-6 rounded-2xl flex justify-between items-center border border-slate-700/50 hover:border-brand/30 transition-colors">
-                                <div>
-                                    <h4 className="font-bold text-lg text-white mb-1">ระบบลงทะเบียนนักศึกษา</h4>
-                                    <p className="text-sm text-slate-400">สวิตช์เปิด/ปิด เมนูลงทะเบียนในหน้าหลัก (ใช้กรณีหมดเวลาหรือปรับปรุงระบบ)</p>
-                                </div>
-                                <button 
-                                    onClick={handleToggleSys}
-                                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-2 focus:ring-offset-dark-900 ${systemOpen ? 'bg-brand' : 'bg-slate-600'}`}
-                                >
-                                    <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${systemOpen ? 'translate-x-7' : 'translate-x-1'}`}/>
-                                </button>
-                            </div>
-                        </div>
-                    );
-                };
-
-                return (
-                    <div className="flex h-[calc(100vh-76px)] overflow-hidden">
-                        {/* Sidebar */}
-                        <div className="w-64 glass border-r border-slate-700/50 flex flex-col z-20 shadow-[10px_0_30px_rgba(0,0,0,0.2)]">
-                            <div className="p-6">
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Admin Menu</p>
-                            </div>
-                            <div className="flex-1 overflow-y-auto px-4 space-y-2">
-                                {menuItems.map(item => (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => setAdminTab(item.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition-all ${adminTab === item.id ? 'bg-gradient-to-r from-brand/20 to-transparent text-brand border-l-2 border-brand shadow-inner' : 'text-slate-400 hover:bg-white/5 hover:text-white border-l-2 border-transparent'}`}
-                                    >
-                                        <span className={adminTab === item.id ? 'opacity-100' : 'opacity-70'}>{item.icon}</span> 
-                                        {item.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Content Area */}
-                        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-dark-900/60 relative">
-                            {/* Ambient background glow inside content area */}
-                            <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand/5 blur-[120px] rounded-full pointer-events-none"></div>
-                            
-                            <div className="relative z-10 max-w-6xl mx-auto">
-                                {adminTab === 'overview' && <TabOverview />}
-                                {adminTab === 'majors' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI กราฟสัดส่วนสาขาวิชา...</div>}
-                                {adminTab === 'activities' && <TabActivities />}
-                                {adminTab === 'realtime' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI รายงานแบบ Real-time...</div>}
-                                {adminTab === 'spss' && <div className="text-slate-400 animate-fade-in-up">อยู่ระหว่างการพัฒนา UI รายงานสถิติ SPSS...</div>}
-                                {adminTab === 'settings' && <TabSettings />}
-                            </div>
+                            <button onClick={toggleReg} class={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${isOpen ? 'bg-green-500' : 'bg-gray-500'}`}>
+                                <span class={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${isOpen ? 'translate-x-7' : 'translate-x-1'}`} />
+                            </button>
                         </div>
                     </div>
                 );
             };
+
+            // Sidebar Menu Mapping
+            const menus = [
+                { id: 'overview', icon: 'pie-chart', label: '1. ภาพรวม (Overview)' },
+                { id: 'majors', icon: 'users', label: '2. สัดส่วนสาขา (Majors)' },
+                { id: 'report', icon: 'bar-chart-3', label: '3. สรุปผู้บริหาร' },
+                { id: 'activity', icon: 'calendar-plus', label: '4. จัดการกิจกรรม' },
+                { id: 'realtime', icon: 'activity', label: '5. ยอดเช็คชื่อ (Real-time)' },
+                { id: 'spss', icon: 'calculator', label: '6. รายงาน SPSS' },
+                ...(adminRole === 'SuperAdmin' ? [{ id: 'users', icon: 'shield', label: '7. จัดการสิทธิ์แอดมิน' }] : []),
+                { id: 'settings', icon: 'settings', label: '8. ตั้งค่าระบบ' }
+            ];
 
             return (
-                <div className="flex flex-col min-h-screen">
-                    <Navbar />
-                    <main className="flex-1 flex flex-col">
-                        {view === 'home' && <HomeView />}
-                        {view === 'checkin' && <CheckInView />}
-                        {view === 'survey' && <SurveyView />}
-                        {view === 'history' && <HistoryView />}
-                        {view === 'adminLogin' && <AdminLogin />}
-                        {view === 'admin' && isAdmin && <AdminDashboard />}
-                    </main>
+                <div class="flex h-screen overflow-hidden">
+                    {/* Sidebar */}
+                    <div class="w-64 glass-card border-r border-white/10 flex flex-col text-white z-10 shrink-0">
+                        <div class="p-6 border-b border-white/10 flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-wider">DIGIT<span class="text-blue-400">.69</span></h1>
+                                <p class="text-xs text-gray-400">Admin Dashboard ({adminRole})</p>
+                            </div>
+                            <button onClick={() => { setView('home'); }} class="text-gray-400 hover:text-white" title="ออกจากระบบ"><i data-lucide="log-out"></i></button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+                            {menus.map(m => (
+                                <button key={m.id} onClick={() => setActiveMenu(m.id)} class={`w-full flex items-center gap-3 px-6 py-3 text-left transition ${activeMenu === m.id ? 'bg-blue-500/20 text-blue-300 border-r-4 border-blue-400' : 'text-gray-300 hover:bg-white/5'}`}>
+                                    <i data-lucide={m.icon} class="w-5 h-5"></i> {m.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div class="flex-1 overflow-y-auto p-8 relative">
+                        {loading && (
+                            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+                                <div class="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+                                <p class="text-white mt-4 font-mono animate-pulse">Loading Data...</p>
+                            </div>
+                        )}
+                        {!loading && (
+                            <>
+                                {activeMenu === 'overview' && <Overview />}
+                                {activeMenu === 'majors' && <Majors />}
+                                {activeMenu === 'report' && <ExecReport />}
+                                {activeMenu === 'activity' && <ManageActivity />}
+                                {activeMenu === 'realtime' && <RealTimeRecord />}
+                                {activeMenu === 'spss' && <SpssReport />}
+                                {activeMenu === 'users' && <div class="text-white"><h1>7. จัดการสิทธิ์แอดมิน (อยู่ระหว่างการพัฒนา)</h1></div>}
+                                {activeMenu === 'settings' && <Settings />}
+                            </>
+                        )}
+                    </div>
                 </div>
             );
-        }
+        };
+
+
+        // --- MAIN APP ---
+        const App = () => {
+            const [view, setView] = useState('home'); // home, checkin, history, login, admin
+            const [adminRole, setAdminRole] = useState(null);
+
+            // Re-initialize icons when view changes
+            useEffect(() => {
+                if(window.lucide) window.lucide.createIcons();
+            }, [view]);
+
+            return (
+                <div>
+                    {view === 'home' && <Home setView={setView} adminRole={adminRole} />}
+                    {view === 'checkin' && <CheckInFlow setView={setView} />}
+                    {view === 'history' && <HistoryFlow setView={setView} />}
+                    {view === 'login' && <AdminLogin setView={setView} setAdminRole={setAdminRole} />}
+                    {view === 'admin' && <AdminDashboard setView={setView} adminRole={adminRole} />}
+                </div>
+            );
+        };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
