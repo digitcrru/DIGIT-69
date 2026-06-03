@@ -3,870 +3,1242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGIT.69 - Activity Management System</title>
+    <title>ระบบลงทะเบียนเข้าร่วมกิจกรรม</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Kanit', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' },
+                        dark: { 800: '#1f2937', 900: '#111827' }
+                    }
+                }
+            }
+        }
+    </script>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- Babel -->
+    <!-- Babel for in-browser JSX compilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Recharts (for Dashboard Charts) -->
-    <script src="https://unpkg.com/react-is@18.2.0/umd/react-is.production.min.js"></script>
-    <script src="https://unpkg.com/prop-types/prop-types.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.1.12/umd/Recharts.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+        /* Modern Animated Background Shapes */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 20s infinite ease-in-out alternate;
+        }
+        body::before {
+            top: -10%; left: -10%;
+            width: 50vw; height: 50vw;
+            background: rgba(249, 115, 22, 0.15); /* Brand Orange */
+        }
+        body::after {
+            bottom: -10%; right: -10%;
+            width: 40vw; height: 40vw;
+            background: rgba(236, 72, 153, 0.15); /* Pink/Rose */
+            animation-delay: -10s;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .glass-panel-dark {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')] bg-cover bg-center bg-fixed min-h-screen overflow-x-hidden text-slate-800">
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[-1]"></div>
+<body class="text-gray-800 antialiased selection:bg-brand-500 selection:text-white">
+
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } = window.Recharts || {};
+        const { useState, useEffect } = React;
 
-        // ==========================================
-        // 🔴 นำ URL ของ Web App จาก Google Script มาใส่ที่นี่
-        // ==========================================
-        const GAS_API_URL = ""; 
-        
-        // Mock Data for demonstration when URL is empty
-        const mockStudent = { studentId: "64010101", idCard: "1103900000000", name: "สมชาย ใจดี", major: "เทคโนโลยีสารสนเทศ" };
-        const mockActivities = [{ id: "A01", name: "สัมมนาเทคโนโลยี AI", date: "2026-06-15", location: "ห้องประชุม 1" }];
+        // --- Utils: Promisify Google Apps Script calls ---
+        const runGAS = (functionName, ...args) => {
+            return new Promise((resolve, reject) => {
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        [functionName](...args);
+                } else {
+                    console.warn(`[Mock Mode] GAS environment not found. Mocking: ${functionName}`);
+                    // Mock data responses for local preview / testing
+                    setTimeout(() => {
+                        switch(functionName) {
+                            case 'getActiveActivities':
+                                resolve([
+                                    { ActivityID: 'MOCK_01', Name: '[ทดสอบ] กิจกรรมปฐมนิเทศนักศึกษาใหม่', Date: '2026-06-10', Location: 'หอประชุมใหญ่', Status: 'open' },
+                                    { ActivityID: 'MOCK_02', Name: '[ทดสอบ] อบรมการใช้งานระบบ IT', Date: '2026-06-15', Location: 'ห้องคอมพิวเตอร์ 1', Status: 'open' }
+                                ]);
+                                break;
+                            case 'verifyStudent':
+                                resolve({ success: true, data: { StudentID: args[0], Name: 'นักศึกษา ทดสอบ (Mock)', Major: 'วิศวกรรมซอฟต์แวร์' } });
+                                break;
+                            case 'saveCheckInAndSurvey':
+                                resolve({ success: true });
+                                break;
+                            case 'getStudentHistory':
+                                resolve([
+                                    { ActivityName: '[ทดสอบ] กิจกรรมวิชาการ', Name: 'นักศึกษา ทดสอบ', StudentID: args[0], Timestamp: new Date().toISOString() }
+                                ]);
+                                break;
+                            case 'getAdminDashboardData':
+                                resolve({
+                                    activities: [
+                                        { ActivityID: 'MOCK_01', Name: '[ทดสอบ] กิจกรรมปฐมนิเทศนักศึกษาใหม่', Date: '2026-06-10', Location: 'หอประชุมใหญ่', Status: 'open' }
+                                    ],
+                                    checkins: [
+                                        { StudentID: '6600001', Name: 'นักศึกษา ทดสอบ', Major: 'วิศวกรรมซอฟต์แวร์', ActivityName: '[ทดสอบ] กิจกรรมปฐมนิเทศนักศึกษาใหม่', Timestamp: new Date().toISOString() }
+                                    ],
+                                    evaluations: [
+                                        { ActivityID: 'MOCK_01', Q1_1: 5, Q1_2: 4, Q1_3: 5, Q1_4: 4, Q2_1: 5, Q2_2: 4, Q2_3: 5, Q2_4: 4, Q3_1: 5, Q3_2: 4, Q3_3: 5, Q3_4: 4, Q3_5: 5, Suggestion: 'เป็นกิจกรรมที่จัดได้ดีมากครับ' }
+                                    ]
+                                });
+                                break;
+                            case 'createActivity':
+                            case 'toggleActivityStatus':
+                                resolve({ success: true });
+                                break;
+                            default:
+                                resolve(null);
+                        }
+                    }, 500);
+                }
+            });
+        };
 
-        const surveyQuestions = [
-            "1. เนื้อหาของกิจกรรมมีความน่าสนใจ", "2. วิทยากรมีความรู้ความสามารถ", "3. ระยะเวลาการจัดกิจกรรมเหมาะสม",
-            "4. สถานที่จัดกิจกรรมมีความเหมาะสม", "5. การประชาสัมพันธ์ทั่วถึง", "6. เจ้าหน้าที่ให้บริการด้วยความสุภาพ",
-            "7. อุปกรณ์และสื่อที่ใช้มีความพร้อม", "8. อาหารและเครื่องดื่มเหมาะสม", "9. สามารถนำความรู้ไปประยุกต์ใช้ได้",
-            "10. รูปแบบการจัดกิจกรรมมีความน่าสนใจ", "11. การลำดับขั้นตอนของกิจกรรมเหมาะสม", "12. ภาพรวมความพึงพอใจต่อกิจกรรม", "13. ท่านจะเข้าร่วมกิจกรรมลักษณะนี้อีกในอนาคต"
+        // --- Data Models ---
+        const surveyData = [
+            {
+                title: "1. กระบวนการ ขั้นตอนการให้บริการ",
+                questions: [
+                    { id: "q1", text: "1.1 การประชาสัมพันธ์โครงการ ฯ" },
+                    { id: "q2", text: "1.2 ความเหมาะสมของสถานที่" },
+                    { id: "q3", text: "1.3 ความเหมาะสมของระยะเวลา" },
+                    { id: "q4", text: "1.4 การจัดลำดับขั้นตอนของกิจกรรม" },
+                ]
+            },
+            {
+                title: "2. การอำนวยความสะดวก",
+                questions: [
+                    { id: "q5", text: "2.1 เอกสาร" },
+                    { id: "q6", text: "2.2 โสตทัศนูปกรณ์" },
+                    { id: "q7", text: "2.3 เจ้าหน้าที่สนับสนุน" },
+                    { id: "q8", text: "2.4 อาหาร,เครื่องดื่มและสถานที่" },
+                ]
+            },
+            {
+                title: "3. คุณภาพการให้บริการ",
+                questions: [
+                    { id: "q9", text: "3.1 ท่านได้รับความรู้ แนวคิด ทักษะและประสบการณ์ใหม่ ๆ จากโครงการ" },
+                    { id: "q10", text: "3.2 ท่านสามารถนำสิ่งที่ได้รับจากโครงการ/กิจกรรมนี้ไปใช้ในการปฏิบัติงาน" },
+                    { id: "q11", text: "3.3 สิ่งที่ท่านได้รับจากโครงการ/กิจกรรมครั้งนี้ตรงตามความคาดหวังของท่านหรือไม่" },
+                    { id: "q12", text: "3.4 โครงการ/กิจกรรมนี้เอื้ออำนวยต่อการเรียนรู้และพัฒนาความสามารถของท่าน" },
+                    { id: "q13", text: "3.5 ประโยชน์ที่ท่านได้รับจากโครงการ/กิจกรรม" },
+                ]
+            }
         ];
 
-        // API Helper
-        const apiCall = async (action, data = {}) => {
-            if(!GAS_API_URL) {
-                // Mock responses if no API URL is provided
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        if(action === 'getStudent') resolve({ status: 'success', data: mockStudent });
-                        if(action === 'getActiveActivities') resolve({ status: 'success', data: mockActivities });
-                        if(action === 'checkIn' || action === 'submitSurvey') resolve({ status: 'success' });
-                        if(action === 'adminLogin') resolve(data.username === 'admin' ? { status: 'success', role: 'SuperAdmin' } : { status: 'error', message: 'รหัสผิด' });
-                        if(action === 'getHistory') resolve({ status: 'success', profile: mockStudent, history: [{ timestamp: '01/06/2026 09:00', activityName: 'ปฐมนิเทศนักศึกษา' }] });
-                    }, 800);
-                });
-            }
-
-            try {
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action, data })
-                });
-                return await response.json();
-            } catch (error) {
-                console.error("API Error:", error);
-                return { status: 'error', message: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' };
-            }
-        };
-
-        // --- COMPONENTS ---
-
-        // 1. Home / Menu Selection
-        const Home = ({ setView, adminLogout, adminRole }) => {
-            const isRegOpen = localStorage.getItem('regOpen') !== 'false'; // Default true
-
-            return (
-                <div class="min-h-screen flex flex-col items-center justify-center p-4">
-                    <div class="absolute top-4 right-4">
-                        {adminRole ? 
-                            <button onClick={() => setView('admin')} class="glass px-4 py-2 rounded-lg text-white hover:bg-white/20 transition flex items-center gap-2">
-                                <i data-lucide="layout-dashboard"></i> Dashboard
-                            </button>
-                            :
-                            <button onClick={() => setView('login')} class="glass px-4 py-2 rounded-lg text-white hover:bg-white/20 transition flex items-center gap-2">
-                                <i data-lucide="lock"></i> Staff Login
-                            </button>
-                        }
-                    </div>
-                    
-                    <div class="text-center mb-10 text-white animate-fade-in">
-                        <div class="inline-block p-4 rounded-full glass mb-4">
-                            <i data-lucide="fingerprint" class="w-16 h-16 text-blue-400"></i>
-                        </div>
-                        <h1 class="text-5xl font-bold mb-2 tracking-wider">DIGIT<span class="text-blue-400">.69</span></h1>
-                        <p class="text-xl text-gray-300">ระบบจัดการกิจกรรมและลงทะเบียนนักศึกษา</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
-                        <button 
-                            onClick={() => isRegOpen ? setView('checkin') : null} 
-                            class={`glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-4 transition-all duration-300 ${isRegOpen ? 'hover:scale-105 hover:bg-white/20 cursor-pointer text-white' : 'opacity-50 cursor-not-allowed text-gray-400 grayscale'}`}
-                        >
-                            <div class={`p-4 rounded-full ${isRegOpen ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20'}`}>
-                                <i data-lucide="scan-line" class="w-12 h-12"></i>
-                            </div>
-                            <h2 class="text-2xl font-semibold">1. เช็คชื่อเข้ากิจกรรม</h2>
-                            <p class="text-sm text-center">สแกน/กรอกรหัส เพื่อลงทะเบียนและประเมินผลกิจกรรม</p>
-                            {!isRegOpen && <span class="bg-red-500/80 text-white text-xs px-2 py-1 rounded">ปิดรับลงทะเบียน</span>}
-                        </button>
-
-                        <button onClick={() => setView('history')} class="glass-card p-8 rounded-2xl flex flex-col items-center justify-center gap-4 text-white hover:scale-105 hover:bg-white/20 transition-all duration-300 cursor-pointer">
-                            <div class="p-4 rounded-full bg-purple-500/20 text-purple-400">
-                                <i data-lucide="history" class="w-12 h-12"></i>
-                            </div>
-                            <h2 class="text-2xl font-semibold">2. ตรวจสอบประวัติ</h2>
-                            <p class="text-sm text-center">ดูประวัติการเข้าร่วมกิจกรรมย้อนหลังทั้งหมด</p>
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        // 2. Check-in Flow
-        const CheckInFlow = ({ setView }) => {
-            const [step, setStep] = useState(1);
-            const [query, setQuery] = useState('');
+        // --- Main App Component ---
+        function App() {
+            const [view, setView] = useState('home'); // home, search, select, survey, success, history_search, history_result, admin_login, admin_dashboard
             const [student, setStudent] = useState(null);
             const [activities, setActivities] = useState([]);
-            const [selectedAct, setSelectedAct] = useState(null);
+            const [selectedActivity, setSelectedActivity] = useState(null);
+            const [surveyAnswers, setSurveyAnswers] = useState({});
+            const [suggestion, setSuggestion] = useState('');
+            const [historyData, setHistoryData] = useState([]);
 
-            const handleSearch = async (e) => {
-                e.preventDefault();
-                if(!query) return;
+            // System State
+            const [systemOpen, setSystemOpen] = useState(localStorage.getItem('system_status') !== 'maintenance');
+
+            // Admin State
+            const [adminData, setAdminData] = useState(null);
+
+            // Effect: Load active activities on start
+            useEffect(() => {
+                const loadInitialData = async () => {
+                    try {
+                        const acts = await runGAS('getActiveActivities');
+                        setActivities(acts || []);
+                    } catch (e) {
+                        console.error("Failed to load activities", e);
+                    }
+                };
+                loadInitialData();
+
+                // Check logged in admin
+                if (localStorage.getItem('admin_logged_in') === 'true') {
+                    // Pre-load dashboard if they were there
+                }
+            }, []);
+
+            // --- Handlers: Student Flow ---
+            const handleSearchStudent = async (studentId) => {
+                if(!studentId) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสนักศึกษา', 'warning');
                 
-                Swal.fire({ title: 'กำลังค้นหา...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const res = await apiCall('getStudent', { query });
+                Swal.fire({ title: 'กำลังค้นหาข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 
-                if(res.status === 'success') {
-                    setStudent(res.data);
-                    const actRes = await apiCall('getActiveActivities');
-                    setActivities(actRes.data || []);
+                try {
+                    const res = await runGAS('verifyStudent', studentId);
                     Swal.close();
-                    setStep(2);
-                } else {
-                    Swal.fire('ไม่พบข้อมูล', 'กรุณาตรวจสอบรหัสนักศึกษา หรือ เลขบัตร ปชช. อีกครั้ง', 'error');
+                    if(res.success) {
+                        setStudent(res.data);
+                        localStorage.setItem('last_student_id', studentId);
+                        setView('select');
+                    } else {
+                        Swal.fire('ไม่พบข้อมูล', 'ไม่พบรหัสนักศึกษานี้ในระบบ', 'error');
+                    }
+                } catch(e) {
+                    Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
                 }
             };
 
-            const handleConfirm = async () => {
-                if(!selectedAct) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกกิจกรรม', 'warning');
+            const handleSelectActivity = (act) => {
+                setSelectedActivity(act);
+                setView('survey');
+            };
+
+            const handleSubmitSurvey = async (e) => {
+                e.preventDefault();
+                // Validate if all questions answered
+                const totalQuestions = surveyData.reduce((acc, cat) => acc + cat.questions.length, 0);
+                if(Object.keys(surveyAnswers).length < totalQuestions) {
+                    Swal.fire('กรุณาตอบให้ครบ', 'กรุณาประเมินความพึงพอใจให้ครบทุกข้อ', 'warning');
+                    return;
+                }
+
+                Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 
-                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const res = await apiCall('checkIn', { studentId: student.studentId, activityId: selectedAct.id, activityName: selectedAct.name });
-                
-                if(res.status === 'success') {
-                    Swal.fire({ icon: 'success', title: 'ลงทะเบียนสำเร็จ!', timer: 1500, showConfirmButton: false });
-                    setTimeout(() => setStep(3), 1500); // Go to survey
-                } else {
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                try {
+                    const payload = {
+                        student,
+                        activity: selectedActivity,
+                        answers: surveyAnswers,
+                        suggestion
+                    };
+                    const res = await runGAS('saveCheckInAndSurvey', payload);
+                    Swal.close();
+                    if(res.success) {
+                        Swal.fire({
+                            title: 'บันทึกสำเร็จ!',
+                            text: 'ขอบคุณที่เข้าร่วมกิจกรรมและทำแบบประเมิน',
+                            icon: 'success',
+                            confirmButtonColor: '#ea580c'
+                        }).then(() => {
+                            // Reset state
+                            setStudent(null);
+                            setSelectedActivity(null);
+                            setSurveyAnswers({});
+                            setSuggestion('');
+                            setView('home');
+                        });
+                    } else {
+                        Swal.fire('ข้อผิดพลาด', res.error, 'error');
+                    }
+                } catch(e) {
+                    Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
                 }
             };
 
-            return (
-                <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="glass-card w-full max-w-2xl rounded-2xl p-8 relative text-white">
-                        <button onClick={() => setView('home')} class="absolute top-4 left-4 p-2 hover:bg-white/10 rounded-full transition"><i data-lucide="arrow-left"></i></button>
-                        
-                        {step === 1 && (
-                            <div class="text-center mt-6">
-                                <h2 class="text-3xl font-bold mb-6">เช็คชื่อเข้ากิจกรรม</h2>
-                                <form onSubmit={handleSearch} class="flex flex-col gap-4">
-                                    <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="กรอกรหัสนักศึกษา หรือ เลขบัตร ปชช." class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-center text-lg" required autoFocus />
-                                    <button type="submit" class="w-full py-3 bg-blue-500 hover:bg-blue-600 rounded-xl font-semibold transition shadow-lg">ค้นหาข้อมูล</button>
+            const handleSearchHistory = async (studentId) => {
+                if(!studentId) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสนักศึกษา', 'warning');
+                Swal.fire({ title: 'กำลังดึงประวัติ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                
+                try {
+                    const data = await runGAS('getStudentHistory', studentId);
+                    Swal.close();
+                    setHistoryData(data || []);
+                    setView('history_result');
+                } catch(e) {
+                    Swal.fire('เกิดข้อผิดพลาด', e.message, 'error');
+                }
+            };
+
+            // --- UI Rendering Helpers ---
+            const Navbar = () => (
+                <div className="pt-4 px-4 sm:px-8 w-full max-w-6xl mx-auto">
+                    <nav className="glass-panel-dark text-white px-6 py-3.5 flex justify-between items-center rounded-full shadow-2xl transition-all duration-300">
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setView('home')}>
+                            <div className="w-10 h-10 bg-gradient-to-tr from-brand-500 to-rose-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                <i className="fa-solid fa-graduation-cap text-xl text-white"></i>
+                            </div>
+                            <h1 className="font-bold text-lg tracking-wide hidden sm:block group-hover:text-brand-300 transition-colors">Activity<span className="font-light">System</span></h1>
+                        </div>
+                        {view.startsWith('admin') ? (
+                            <button onClick={() => {
+                                localStorage.removeItem('admin_logged_in');
+                                setView('home');
+                            }} className="text-sm bg-red-500/20 hover:bg-red-500/40 text-red-100 px-5 py-2.5 rounded-full transition-all border border-red-500/30 flex items-center font-medium">
+                                <i className="fa-solid fa-right-from-bracket mr-2"></i>ออกจากระบบ
+                            </button>
+                        ) : (
+                            <button onClick={() => setView('admin_login')} className="text-sm bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-full transition-all border border-white/10 flex items-center backdrop-blur-md font-medium">
+                                <i className="fa-solid fa-shield-halved mr-2 text-brand-400"></i>Staff Login
+                            </button>
+                        )}
+                    </nav>
+                </div>
+            );
+
+            const Footer = () => (
+                <div className="w-full text-center py-6 mt-auto relative z-10">
+                    <p className="text-sm font-medium text-gray-500 drop-shadow-sm">
+                        Developed by <span className="font-bold text-brand-600 tracking-wide">JENNAEONG</span>
+                    </p>
+                </div>
+            );
+
+            // ==========================================
+            // VIEWS
+            // ==========================================
+
+            // 1. Home View
+            if (view === 'home') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex items-center justify-center p-4">
+                            <div className="max-w-4xl w-full grid md:grid-cols-2 gap-8">
+                                {/* Menu 1 */}
+                                <div onClick={() => systemOpen ? setView('search') : Swal.fire('ปิดระบบ', 'ระบบปิดปรับปรุงชั่วคราว', 'info')} 
+                                     className={`glass-panel p-10 rounded-[2rem] cursor-pointer transform hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden ${!systemOpen ? 'opacity-70 grayscale' : ''}`}>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                    <div className="w-16 h-16 bg-gradient-to-br from-brand-100 to-rose-100 text-brand-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                        <i className="fa-solid fa-qrcode"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 mb-3 tracking-tight">ลงทะเบียนกิจกรรม</h2>
+                                    <p className="text-gray-500 leading-relaxed font-medium">เช็คชื่อเข้าร่วมกิจกรรมและทำแบบประเมินความพึงพอใจอย่างรวดเร็ว</p>
+                                    <div className="mt-8 flex items-center text-brand-600 font-semibold group-hover:translate-x-2 transition-transform">
+                                        เริ่มใช้งาน <i className="fa-solid fa-arrow-right-long ml-2"></i>
+                                    </div>
+                                </div>
+                                {/* Menu 2 */}
+                                <div onClick={() => setView('history_search')} 
+                                     className="glass-panel p-10 rounded-[2rem] cursor-pointer transform hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                                    <div className="w-16 h-16 bg-gradient-to-br from-blue-50 to-indigo-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
+                                        <i className="fa-solid fa-clock-rotate-left"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 mb-3 tracking-tight">ตรวจสอบประวัติ</h2>
+                                    <p className="text-gray-500 leading-relaxed font-medium">ดูประวัติการเข้าร่วมกิจกรรมย้อนหลังทั้งหมดของคุณแบบเรียลไทม์</p>
+                                    <div className="mt-8 flex items-center text-blue-600 font-semibold group-hover:translate-x-2 transition-transform">
+                                        ตรวจสอบเลย <i className="fa-solid fa-arrow-right-long ml-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <Footer />
+                    </div>
+                );
+            }
+
+            // 2. Search Student View
+            if (view === 'search') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex flex-col items-center justify-center p-4">
+                            <div className="glass-panel w-full max-w-md p-10 rounded-[2rem] relative overflow-hidden">
+                                <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-500/20 rounded-full blur-3xl"></div>
+                                
+                                <button onClick={() => setView('home')} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center bg-gray-100/50 hover:bg-gray-200 text-gray-600 rounded-full transition-colors border border-white">
+                                    <i className="fa-solid fa-arrow-left"></i>
+                                </button>
+                                
+                                <div className="text-center mt-6 mb-8">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-brand-100 to-rose-100 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                        <i className="fa-regular fa-id-card text-3xl text-brand-600"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 tracking-tight">ค้นหานักศึกษา</h2>
+                                    <p className="text-gray-500 mt-2 font-medium">กรุณาระบุข้อมูลเพื่อเข้าสู่ระบบ</p>
+                                </div>
+                                
+                                <form onSubmit={(e) => { e.preventDefault(); handleSearchStudent(e.target.studentId.value); }}>
+                                    <div className="relative mb-6">
+                                        <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                        <input type="text" name="studentId" required placeholder="รหัสนักศึกษา หรือ เลขบัตร ปชช." defaultValue={localStorage.getItem('last_student_id')||''}
+                                               className="w-full pl-12 pr-5 py-4 rounded-2xl border border-white/80 focus:border-brand-400 focus:ring-4 focus:ring-brand-500/20 outline-none transition-all text-lg bg-white/70 backdrop-blur-md shadow-inner placeholder-gray-400 font-medium text-gray-800" />
+                                    </div>
+                                    <button type="submit" className="w-full bg-gradient-to-r from-brand-500 to-rose-500 hover:from-brand-600 hover:to-rose-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 text-lg">
+                                        ค้นหาข้อมูล
+                                    </button>
                                 </form>
                             </div>
-                        )}
+                        </div>
+                        <Footer />
+                    </div>
+                );
+            }
 
-                        {step === 2 && (
-                            <div class="mt-6">
-                                <div class="bg-white/10 p-4 rounded-xl border border-white/20 mb-6 flex items-center gap-4">
-                                    <div class="w-16 h-16 bg-blue-500/30 rounded-full flex items-center justify-center"><i data-lucide="user" class="w-8 h-8"></i></div>
+            // 3. Select Activity View
+            if (view === 'select') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex flex-col items-center pt-8 p-4">
+                            <div className="glass-panel w-full max-w-2xl p-8 sm:p-10 rounded-[2rem]">
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 bg-white/60 backdrop-blur-sm p-6 rounded-2xl border border-white shadow-sm">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-gradient-to-tr from-brand-500 to-rose-400 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                                            {student.Name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 font-medium">ยินดีต้อนรับ</p>
+                                            <h2 className="text-xl font-bold text-gray-800">{student.Name}</h2>
+                                            <p className="text-brand-600 font-semibold text-sm mt-0.5">{student.Major} <span className="text-gray-300 mx-1">|</span> {student.StudentID}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setView('search')} className="mt-4 sm:mt-0 text-sm bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-full font-medium transition-colors border border-gray-200 shadow-sm flex items-center gap-2">
+                                        <i className="fa-solid fa-user-pen"></i> เปลี่ยนผู้ใช้
+                                    </button>
+                                </div>
+                                
+                                <h3 className="font-bold text-xl text-gray-800 mb-5 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center text-brand-600 shadow-inner"><i className="fa-solid fa-list-check"></i></div>
+                                    เลือกกิจกรรมที่กำลังเปิดรับ
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    {activities.length === 0 ? (
+                                        <div className="text-center py-12 bg-white/40 rounded-3xl border-2 border-dashed border-gray-300">
+                                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-regular fa-calendar-xmark text-3xl text-gray-400"></i></div>
+                                            <p className="text-gray-500 font-medium text-lg">ไม่มีกิจกรรมที่เปิดให้ลงทะเบียนในขณะนี้</p>
+                                        </div>
+                                    ) : (
+                                        activities.map(act => (
+                                            <div key={act.ActivityID} onClick={() => handleSelectActivity(act)} 
+                                                 className="p-6 bg-white/80 border border-white rounded-2xl hover:border-brand-300 hover:shadow-xl hover:shadow-brand-500/10 cursor-pointer transition-all duration-300 group flex justify-between items-center transform hover:-translate-y-1">
+                                                <div>
+                                                    <h4 className="font-bold text-lg text-gray-800 group-hover:text-brand-600 transition-colors">{act.Name}</h4>
+                                                    <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500 font-medium">
+                                                        <span className="flex items-center gap-2"><div className="w-7 h-7 bg-gray-100/80 rounded-full flex items-center justify-center text-gray-500"><i className="fa-regular fa-calendar text-xs"></i></div> {act.Date}</span>
+                                                        <span className="flex items-center gap-2"><div className="w-7 h-7 bg-gray-100/80 rounded-full flex items-center justify-center text-gray-500"><i className="fa-solid fa-location-dot text-xs"></i></div> {act.Location}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="w-12 h-12 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-brand-500 group-hover:to-rose-500 group-hover:text-white transition-all shadow-sm">
+                                                    <i className="fa-solid fa-chevron-right text-lg"></i>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <Footer />
+                    </div>
+                );
+            }
+
+            // 4. Survey View
+            if (view === 'survey') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex flex-col items-center pt-2 p-3 sm:p-4 pb-20">
+                            <div className="glass-panel w-full max-w-4xl p-5 sm:p-10 rounded-[2rem] shadow-xl">
+                                <div className="text-center mb-8 relative">
+                                    <button onClick={() => setView('select')} className="absolute left-0 top-0 w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white text-gray-600 rounded-full transition-colors border border-white shadow-sm">
+                                        <i className="fa-solid fa-arrow-left"></i>
+                                    </button>
+                                    <div className="inline-block bg-gradient-to-r from-brand-100 to-rose-100 text-brand-700 px-5 py-1.5 rounded-full text-sm font-bold mb-4 border border-white shadow-sm">
+                                        แบบประเมินความพึงพอใจ
+                                    </div>
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 tracking-tight">{selectedActivity.Name}</h2>
+                                    <p className="text-gray-500 mt-3 font-medium">กรุณาประเมินตามความเป็นจริง เพื่อนำไปพัฒนาการจัดกิจกรรมครั้งต่อไป</p>
+                                </div>
+
+                                <form onSubmit={handleSubmitSurvey}>
+                                    
+                                    {/* คำอธิบายความหมายของระดับคะแนน (Legend) */}
+                                    <div className="bg-white/60 p-4 rounded-2xl mb-8 border border-white shadow-sm flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-gray-600">
+                                        <span className="font-bold text-gray-800 mr-2"><i className="fa-solid fa-circle-info text-brand-500 mr-1"></i> ระดับคะแนน:</span>
+                                        <div className="flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-500 to-rose-500 text-white flex items-center justify-center text-xs font-bold">5</span> มากที่สุด</div>
+                                        <div className="flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-bold">4</span> มาก</div>
+                                        <div className="flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-bold">3</span> ปานกลาง</div>
+                                        <div className="flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-bold">2</span> น้อย</div>
+                                        <div className="flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-bold">1</span> น้อยที่สุด</div>
+                                    </div>
+
+                                    {surveyData.map((category, catIdx) => (
+                                        <div key={catIdx} className="mb-10">
+                                            <div className="flex items-center gap-3 mb-5">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-rose-500 rounded-xl flex items-center justify-center text-white font-bold shadow-md text-lg">
+                                                    {catIdx + 1}
+                                                </div>
+                                                <h3 className="text-xl font-bold text-gray-800 tracking-tight">{category.title.split(' ').slice(1).join(' ')}</h3>
+                                            </div>
+                                            
+                                            {/* หัวตารางแต่ละคอลัมน์ (แสดงเฉพาะบน Desktop/Tablet) */}
+                                            <div className="hidden md:flex flex-row items-center justify-between px-6 mb-3">
+                                                <div className="md:w-3/5 font-bold text-gray-500 text-sm pl-2">หัวข้อการประเมิน</div>
+                                                <div className="flex justify-end gap-3 w-auto pr-1">
+                                                    <div className="w-11 text-center text-xs font-bold text-brand-600 leading-tight">มาก<br/>ที่สุด</div>
+                                                    <div className="w-11 text-center text-xs font-bold text-brand-600 leading-tight">มาก<br/>&nbsp;</div>
+                                                    <div className="w-11 text-center text-xs font-bold text-brand-600 leading-tight">ปาน<br/>กลาง</div>
+                                                    <div className="w-11 text-center text-xs font-bold text-brand-600 leading-tight">น้อย<br/>&nbsp;</div>
+                                                    <div className="w-11 text-center text-xs font-bold text-brand-600 leading-tight">น้อย<br/>ที่สุด</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="space-y-4">
+                                                {category.questions.map((q) => (
+                                                    <div key={q.id} className="p-5 sm:p-6 bg-white/70 backdrop-blur-sm border border-white rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-5">
+                                                        <div className="text-gray-800 font-medium md:w-3/5 text-lg sm:text-base leading-snug">{q.text}</div>
+                                                        <div className="flex justify-between md:justify-end gap-2 sm:gap-3 w-full md:w-auto">
+                                                            {[5, 4, 3, 2, 1].map(score => (
+                                                                <label key={score} className={`relative w-12 h-12 sm:w-11 sm:h-11 flex items-center justify-center rounded-2xl cursor-pointer text-base sm:text-lg font-bold transition-all duration-300 ${surveyAnswers[q.id] === score ? 'bg-gradient-to-br from-brand-500 to-rose-500 text-white shadow-lg shadow-brand-500/40 scale-110 border-0 ring-2 ring-white' : 'bg-white text-gray-500 border border-gray-200 hover:border-brand-400 hover:text-brand-500 shadow-sm hover:bg-brand-50'}`}>
+                                                                    <input type="radio" className="hidden" name={q.id} value={score} required onChange={() => setSurveyAnswers({...surveyAnswers, [q.id]: score})} />
+                                                                    {score}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    <div className="mb-10 p-6 sm:p-8 bg-white/60 border border-white rounded-[2rem] shadow-sm">
+                                        <div className="flex items-center gap-3 mb-5">
+                                            <div className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-white"><i className="fa-regular fa-comment-dots text-lg"></i></div>
+                                            <h3 className="font-bold text-xl text-gray-800">ข้อเสนอแนะเพิ่มเติม <span className="text-sm text-gray-400 font-normal">(ไม่บังคับ)</span></h3>
+                                        </div>
+                                        <textarea rows="3" value={suggestion} onChange={(e) => setSuggestion(e.target.value)}
+                                            className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 outline-none bg-white shadow-inner resize-none transition-all text-gray-700 font-medium"
+                                            placeholder="พิมพ์ข้อเสนอแนะ หรือสิ่งที่อยากให้ปรับปรุงของท่านที่นี่..."></textarea>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-4 sticky bottom-6 z-20 glass-panel p-4 rounded-3xl shadow-2xl border-white border-2">
+                                        <button type="button" onClick={() => setView('select')} className="w-full sm:w-1/3 bg-white hover:bg-gray-50 text-gray-700 font-bold py-4 rounded-2xl transition-colors border border-gray-200 shadow-sm text-lg">ยกเลิก</button>
+                                        <button type="submit" className="w-full sm:w-2/3 bg-gradient-to-r from-brand-500 to-rose-500 hover:from-brand-600 hover:to-rose-600 text-white font-bold py-4 rounded-2xl shadow-xl shadow-brand-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 text-lg flex items-center justify-center gap-3">
+                                            <i className="fa-solid fa-check-circle text-xl"></i> ยืนยันการลงทะเบียน
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <Footer />
+                    </div>
+                );
+            }
+
+            // 5. History Flow
+            if (view === 'history_search') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex flex-col items-center justify-center p-4">
+                            <div className="glass-panel w-full max-w-md p-10 rounded-[2rem] relative overflow-hidden">
+                                <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+                                
+                                <button onClick={() => setView('home')} className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center bg-gray-100/50 hover:bg-gray-200 text-gray-600 rounded-full transition-colors border border-white">
+                                    <i className="fa-solid fa-arrow-left"></i>
+                                </button>
+                                
+                                <div className="text-center mt-6 mb-8">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
+                                        <i className="fa-solid fa-clock-rotate-left text-3xl text-blue-600"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 tracking-tight">ตรวจสอบประวัติ</h2>
+                                    <p className="text-gray-500 mt-2 font-medium">กรอกข้อมูลเพื่อดูประวัติการเข้าร่วมย้อนหลัง</p>
+                                </div>
+
+                                <form onSubmit={(e) => { e.preventDefault(); handleSearchHistory(e.target.studentId.value); }}>
+                                    <div className="relative mb-6">
+                                        <i className="fa-solid fa-user-graduate absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                        <input type="text" name="studentId" required placeholder="รหัสนักศึกษา / บัตรประชาชน" defaultValue={localStorage.getItem('last_student_id')||''}
+                                               className="w-full pl-12 pr-5 py-4 rounded-2xl border border-white/80 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-lg bg-white/70 backdrop-blur-md shadow-inner placeholder-gray-400 font-medium text-gray-800" />
+                                    </div>
+                                    <button type="submit" className="w-full bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-gray-800 text-white font-bold py-4 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 text-lg">
+                                        ตรวจสอบประวัติ
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <Footer />
+                    </div>
+                );
+            }
+
+            if (view === 'history_result') {
+                return (
+                    <div className="min-h-screen flex flex-col relative z-10">
+                        <Navbar />
+                        <div className="flex-grow flex flex-col items-center pt-8 p-4 pb-20">
+                            <div className="glass-panel w-full max-w-2xl p-6 sm:p-10 rounded-[2rem]">
+                                <div className="flex items-center gap-4 mb-8 bg-white/40 p-4 rounded-2xl border border-white">
+                                    <button onClick={() => setView('history_search')} className="w-12 h-12 flex items-center justify-center bg-white hover:bg-gray-50 text-gray-600 rounded-full transition-colors border border-gray-100 shadow-sm">
+                                        <i className="fa-solid fa-arrow-left"></i>
+                                    </button>
                                     <div>
-                                        <h3 class="text-xl font-bold">{student.name}</h3>
-                                        <p class="text-gray-300 text-sm">รหัส: {student.studentId} | สาขา: {student.major}</p>
+                                        <h2 className="text-2xl font-bold text-gray-800 tracking-tight">ประวัติการเข้าร่วมกิจกรรม</h2>
+                                        <p className="text-brand-600 font-medium">พบทั้งหมด {historyData.length} รายการ</p>
                                     </div>
                                 </div>
                                 
-                                <h4 class="font-semibold mb-3">เลือกกิจกรรมที่เปิดรับลงทะเบียน:</h4>
-                                <div class="space-y-3 mb-6 max-h-60 overflow-y-auto pr-2">
-                                    {activities.length === 0 ? <p class="text-center text-red-300 py-4">ไม่มีกิจกรรมที่เปิดรับลงทะเบียนขณะนี้</p> : null}
-                                    {activities.map(act => (
-                                        <div key={act.id} onClick={() => setSelectedAct(act)} class={`p-4 rounded-xl border cursor-pointer transition ${selectedAct?.id === act.id ? 'bg-blue-500/40 border-blue-400' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                                            <div class="font-semibold">{act.name}</div>
-                                            <div class="text-xs text-gray-400 mt-1"><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>{act.date} | <i data-lucide="map-pin" class="inline w-3 h-3 mx-1"></i>{act.location}</div>
+                                <div className="space-y-4">
+                                    {historyData.length === 0 ? (
+                                        <div className="text-center py-16 bg-white/40 rounded-3xl border-2 border-dashed border-gray-300">
+                                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i className="fa-regular fa-folder-open text-3xl text-gray-400"></i></div>
+                                            <p className="text-gray-500 font-medium text-lg">ไม่พบประวัติการเข้าร่วมกิจกรรม</p>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <div className="relative border-l-2 border-brand-200 ml-4 sm:ml-6 pl-6 sm:pl-8 space-y-8 py-4">
+                                            {historyData.map((h, i) => (
+                                                <div key={i} className="relative group">
+                                                    <div className="absolute -left-[35px] sm:-left-[43px] top-1 w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-brand-400 to-rose-400 rounded-full border-4 border-white shadow-sm group-hover:scale-125 transition-transform"></div>
+                                                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-white shadow-sm hover:shadow-xl hover:shadow-brand-500/5 transition-all transform group-hover:-translate-y-1">
+                                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                                                            <div>
+                                                                <span className="inline-block px-3 py-1 bg-brand-50 text-brand-600 rounded-full text-xs font-bold mb-3 border border-brand-100"><i className="fa-solid fa-check mr-1"></i> เข้าร่วมแล้ว</span>
+                                                                <h4 className="font-bold text-gray-800 text-xl leading-tight mb-2">{h.ActivityName}</h4>
+                                                                <p className="text-sm text-gray-500 font-medium flex items-center gap-2"><div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-regular fa-user text-xs"></i></div> {h.Name} ({h.StudentID})</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm text-gray-700 font-semibold whitespace-nowrap text-center flex items-center justify-center gap-2 shadow-inner">
+                                                                <i className="fa-regular fa-clock text-brand-500"></i>
+                                                                {new Date(h.Timestamp).toLocaleString('th-TH')}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-
-                                <button onClick={handleConfirm} disabled={!selectedAct} class="w-full py-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition shadow-lg">ยืนยันลงทะเบียน</button>
                             </div>
-                        )}
-
-                        {step === 3 && <SurveyForm student={student} activity={selectedAct} onFinish={() => setView('home')} />}
+                        </div>
+                        <Footer />
                     </div>
-                </div>
-            );
-        };
+                );
+            }
 
-        // 2.1 Survey Form
-        const SurveyForm = ({ student, activity, onFinish }) => {
-            const [answers, setAnswers] = useState(Array(13).fill(0));
-            const [comment, setComment] = useState('');
-
-            const handleSubmit = async () => {
-                if(answers.includes(0)) return Swal.fire('แจ้งเตือน', 'กรุณาประเมินให้ครบทุกข้อ', 'warning');
-
-                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const res = await apiCall('submitSurvey', { studentId: student.studentId, activityId: activity.id, answers, comment });
-                
-                if(res.status === 'success') {
-                    Swal.fire({ icon: 'success', title: 'ขอบคุณสำหรับการประเมิน!', text: 'ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว', confirmButtonText: 'กลับหน้าหลัก' }).then(() => onFinish());
+            // ==========================================
+            // ADMIN VIEWS
+            // ==========================================
+            
+            // Admin Components & Logic nested here to keep State connected easily
+            const handleAdminLogin = (e) => {
+                e.preventDefault();
+                const u = e.target.username.value;
+                const p = e.target.password.value;
+                if(u === 'admin' && p === '0000') {
+                    localStorage.setItem('admin_logged_in', 'true');
+                    loadAdminData();
+                } else {
+                    Swal.fire('ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error');
                 }
             };
 
-            return (
-                <div class="mt-4 animate-fade-in text-white">
-                    <h2 class="text-2xl font-bold mb-2 text-center text-blue-300">แบบประเมินความพึงพอใจ</h2>
-                    <p class="text-center text-sm text-gray-300 mb-6">กิจกรรม: {activity.name}</p>
-                    
-                    <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                        {surveyQuestions.map((q, idx) => (
-                            <div key={idx} class="bg-white/5 p-4 rounded-lg border border-white/10">
-                                <p class="mb-3 text-sm">{q}</p>
-                                <div class="flex justify-between max-w-sm mx-auto">
-                                    {[1,2,3,4,5].map(score => (
-                                        <button key={score} onClick={() => { const newAns = [...answers]; newAns[idx] = score; setAnswers(newAns); }} 
-                                            class={`w-10 h-10 rounded-full flex items-center justify-center transition border ${answers[idx] === score ? 'bg-blue-500 border-blue-400 text-white scale-110' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}>
-                                            {score}
-                                        </button>
-                                    ))}
+            const loadAdminData = async () => {
+                Swal.fire({ title: 'กำลังโหลดข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                try {
+                    const data = await runGAS('getAdminDashboardData');
+                    setAdminData(data);
+                    Swal.close();
+                    setView('admin_dashboard');
+                } catch(e) {
+                    Swal.fire('Error', e.message, 'error');
+                }
+            };
+
+            if (view === 'admin_login') {
+                return (
+                    <div className="min-h-screen flex flex-col bg-gray-900 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                            <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl"></div>
+                            <div className="absolute top-1/2 -left-20 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl"></div>
+                        </div>
+                        
+                        <div className="relative z-10 w-full"><Navbar /></div>
+                        
+                        <div className="flex-grow flex items-center justify-center p-4 relative z-10">
+                            <div className="glass-panel-dark w-full max-w-md p-10 rounded-[2rem] border border-gray-700/50 shadow-2xl backdrop-blur-2xl">
+                                <div className="text-center mb-10">
+                                    <div className="w-20 h-20 bg-gray-800/80 border border-gray-700 mx-auto rounded-full flex items-center justify-center mb-5 shadow-inner">
+                                        <i className="fa-solid fa-shield-halved text-4xl text-brand-500"></i>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-white tracking-tight">Staff Login</h2>
+                                    <p className="text-gray-400 mt-2 text-sm font-medium">เข้าสู่ระบบการจัดการหลังบ้าน</p>
                                 </div>
-                                <div class="flex justify-between text-xs text-gray-400 mt-1 max-w-sm mx-auto px-1"><span>น้อยที่สุด</span><span>มากที่สุด</span></div>
+                                <form onSubmit={handleAdminLogin} className="space-y-5">
+                                    <div className="relative">
+                                        <i className="fa-solid fa-user absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                                        <input type="text" name="username" placeholder="Username" required
+                                               className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-900/60 text-white border border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-500 font-medium shadow-inner" />
+                                    </div>
+                                    <div className="relative">
+                                        <i className="fa-solid fa-lock absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                                        <input type="password" name="password" placeholder="Password" required
+                                               className="w-full pl-12 pr-4 py-4 rounded-2xl bg-gray-900/60 text-white border border-gray-700 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 outline-none transition-all placeholder-gray-500 font-medium shadow-inner" />
+                                    </div>
+                                    <button type="submit" className="w-full bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-bold py-4 rounded-2xl transition-all transform hover:-translate-y-0.5 active:scale-95 shadow-lg shadow-brand-500/20 mt-2 text-lg">
+                                        เข้าสู่ระบบ
+                                    </button>
+                                </form>
+                                <button onClick={() => setView('home')} className="w-full text-gray-500 hover:text-white mt-6 text-sm transition-colors font-medium flex items-center justify-center gap-2">
+                                    <i className="fa-solid fa-arrow-left"></i> กลับหน้าหลัก
+                                </button>
                             </div>
-                        ))}
-                        <div class="bg-white/5 p-4 rounded-lg border border-white/10">
-                            <p class="mb-3 text-sm">ข้อเสนอแนะเพิ่มเติม (ถ้ามี)</p>
-                            <textarea value={comment} onChange={e=>setComment(e.target.value)} class="w-full bg-black/20 border border-white/20 rounded p-3 text-white focus:outline-none focus:ring-1 focus:ring-blue-400" rows="3"></textarea>
+                        </div>
+                        <div className="w-full text-center py-6 mt-auto relative z-10">
+                            <p className="text-sm font-medium text-gray-500 drop-shadow-sm">
+                                Developed by <span className="font-bold text-brand-500 tracking-wide">JENNAEONG</span>
+                            </p>
                         </div>
                     </div>
+                );
+            }
 
-                    <button onClick={handleSubmit} class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90 mt-6 rounded-xl font-semibold transition shadow-lg">ส่งแบบประเมิน</button>
+            if (view === 'admin_dashboard') {
+                return <AdminDashboard data={adminData} reloadData={loadAdminData} />;
+            }
+
+            return null; // Fallback
+        }
+
+        // --- Sub-component: Admin Dashboard ---
+        function AdminDashboard({ data, reloadData }) {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [selectedActivityForSpss, setSelectedActivityForSpss] = useState('');
+            const [selectedSummaryAct, setSelectedSummaryAct] = useState(''); // เพิ่ม State สำหรับจัดการตัวกรองยอดเช็คชื่อ
+            const [currentPage, setCurrentPage] = useState(1); // เพิ่ม State สำหรับจัดการหน้า Pagination
+            
+            // Effect: รีเซ็ตหน้ากลับไปที่ 1 เมื่อเปลี่ยนกิจกรรมที่เลือกดู
+            useEffect(() => {
+                setCurrentPage(1);
+            }, [selectedSummaryAct]);
+
+            // Toggle System Master Switch
+            const [systemOpen, setSystemOpen] = useState(localStorage.getItem('system_status') !== 'maintenance');
+            const toggleSystem = () => {
+                const newState = !systemOpen;
+                setSystemOpen(newState);
+                localStorage.setItem('system_status', newState ? 'open' : 'maintenance');
+                Swal.fire({
+                    toast: true, position: 'top-end', showConfirmButton: false, timer: 1500,
+                    icon: 'success', title: `ตั้งค่าระบบเป็น ${newState ? 'เปิด' : 'ปิด'} เรียบร้อย`
+                });
+            };
+
+            const handleCreateActivity = async (e) => {
+                e.preventDefault();
+                const payload = {
+                    name: e.target.name.value,
+                    date: e.target.date.value,
+                    location: e.target.location.value
+                };
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                try {
+                    await runGAS('createActivity', payload);
+                    Swal.fire('สำเร็จ', 'สร้างกิจกรรมใหม่แล้ว', 'success');
+                    e.target.reset();
+                    reloadData(); // refresh data
+                } catch(err) {
+                    Swal.fire('Error', err.message, 'error');
+                }
+            };
+
+            const toggleActivityStatus = async (id, currentStatus) => {
+                Swal.fire({ title: 'กำลังอัปเดต...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                try {
+                    await runGAS('toggleActivityStatus', id, currentStatus);
+                    Swal.close();
+                    reloadData();
+                } catch(err) {
+                    Swal.fire('Error', err.message, 'error');
+                }
+            };
+
+            // SPSS logic
+            const renderSpssTable = () => {
+                if(!selectedActivityForSpss) return <tr><td colSpan="6" className="text-center py-12 text-gray-500 font-medium">กรุณาเลือกกิจกรรมเพื่อดูรายงาน</td></tr>;
+                
+                const evals = data.evaluations.filter(e => String(e.ActivityID) === String(selectedActivityForSpss));
+                const N = evals.length;
+                if(N === 0) return <tr><td colSpan="6" className="text-center py-12 text-gray-500 font-medium bg-gray-50 border-dashed border-2 border-gray-200">ยังไม่มีผู้ประเมินกิจกรรมนี้</td></tr>;
+
+                let totalSumMean = 0;
+
+                const getMeaning = (mean) => {
+                    if(mean >= 4.5) return 'มากที่สุด';
+                    if(mean >= 3.5) return 'มาก';
+                    if(mean >= 2.5) return 'ปานกลาง';
+                    if(mean >= 1.5) return 'น้อย';
+                    return 'น้อยที่สุด';
+                };
+
+                const rows = [];
+                let overallIdx = 1;
+                // Reuse existing global surveyData variable defined above
+                surveyData.forEach(cat => {
+                    cat.questions.forEach(q => {
+                        const headerKeys = ['Q1_1', 'Q1_2', 'Q1_3', 'Q1_4', 'Q2_1', 'Q2_2', 'Q2_3', 'Q2_4', 'Q3_1', 'Q3_2', 'Q3_3', 'Q3_4', 'Q3_5'];
+                        const hKey = headerKeys[overallIdx - 1];
+                        
+                        const scores = evals.map(e => Number(e[hKey]) || 0).filter(s => s > 0);
+                        const n = scores.length;
+                        let mean = 0, sd = 0;
+                        if(n > 0) {
+                            mean = scores.reduce((a,b)=>a+b, 0) / n;
+                            if(n > 1) {
+                                const variance = scores.reduce((a,b)=>a+Math.pow(b-mean, 2), 0) / (n - 1);
+                                sd = Math.sqrt(variance);
+                            }
+                            totalSumMean += mean;
+                        }
+
+                        rows.push(
+                            <tr key={q.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="border-b border-gray-100 px-4 py-3 text-center text-gray-500 font-medium">{overallIdx}</td>
+                                <td className="border-b border-gray-100 px-4 py-3 text-gray-800">{q.text.split(' ').slice(1).join(' ')}</td>
+                                <td className="border-b border-gray-100 px-4 py-3 text-center text-gray-600">{n}</td>
+                                <td className="border-b border-gray-100 px-4 py-3 text-center text-brand-600 font-bold">{mean.toFixed(2)}</td>
+                                <td className="border-b border-gray-100 px-4 py-3 text-center text-gray-500 font-medium">{sd.toFixed(2)}</td>
+                                <td className="border-b border-gray-100 px-4 py-3 text-center text-gray-700 font-bold">
+                                    <span className={`px-2 py-1 rounded text-xs ${mean >= 3.5 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                        {getMeaning(mean)}
+                                    </span>
+                                </td>
+                            </tr>
+                        );
+                        overallIdx++;
+                    });
+                });
+
+                const grandMean = totalSumMean / 13;
+                rows.push(
+                    <tr key="total" className="bg-gradient-to-r from-brand-50 to-rose-50 border-t-2 border-brand-200">
+                        <td colSpan="3" className="px-5 py-4 text-right font-bold text-gray-800">ค่าเฉลี่ยรวมภาพรวม</td>
+                        <td className="px-5 py-4 text-center text-brand-700 font-bold text-lg">{grandMean.toFixed(2)}</td>
+                        <td className="px-5 py-4 text-center text-gray-500 font-bold">-</td>
+                        <td className="px-5 py-4 text-center text-brand-700 font-bold">{getMeaning(grandMean)}</td>
+                    </tr>
+                );
+                return rows;
+            };
+
+            const exportWord = () => {
+                if(!selectedActivityForSpss) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกกิจกรรม', 'warning');
+                const htmlContent = document.getElementById('spss-export-area').innerHTML;
+                const header = `
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head><meta charset='utf-8'><style> body { font-family: 'TH Sarabun PSK', sans-serif; font-size: 16pt; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid black; padding: 5px; } th { background-color: #f2f2f2; } </style></head>
+                    <body>${htmlContent}</body></html>
+                `;
+                const blob = new Blob(['\ufeff', header], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `SPSS_Report_${selectedActivityForSpss}.doc`;
+                link.click();
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-72 bg-gradient-to-b from-brand-500/10 to-transparent z-0"></div>
+                    
+                    {/* Sidebar */}
+                    <aside className="w-full md:w-72 bg-gray-900 text-white flex-shrink-0 flex flex-col shadow-2xl z-20">
+                        <div className="p-8 border-b border-gray-800/50 flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                <i className="fa-solid fa-shield-halved text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold tracking-tight">Admin Panel</h2>
+                                <p className="text-xs text-brand-400 font-medium tracking-wider uppercase mt-0.5">Activity Control</p>
+                            </div>
+                        </div>
+                        <nav className="flex-1 p-5 space-y-2 overflow-y-auto no-scrollbar">
+                            <p className="text-[10px] text-gray-500 font-bold mb-4 px-3 uppercase tracking-widest">Main Menu</p>
+                            {['overview', 'activities', 'summary', 'spss'].map(tab => {
+                                const labels = { overview: 'ภาพรวมระบบ', activities: 'จัดการกิจกรรม', summary: 'ยอดเช็คชื่อ (Real-time)', spss: 'รายงาน SPSS & สถิติ' };
+                                const icons = { overview: 'fa-chart-pie', activities: 'fa-list-check', summary: 'fa-users-viewfinder', spss: 'fa-file-word text-blue-400' };
+                                return (
+                                    <button key={tab} onClick={() => setActiveTab(tab)}
+                                        className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-medium text-sm ${activeTab === tab ? 'bg-gradient-to-r from-brand-500/20 to-transparent text-white border-l-4 border-brand-500 shadow-inner' : 'text-gray-400 hover:bg-gray-800/50 hover:text-white border-l-4 border-transparent'}`}>
+                                        <i className={`fa-solid ${icons[tab]} w-5 text-lg ${activeTab === tab ? 'text-brand-400' : ''}`}></i> {labels[tab]}
+                                    </button>
+                                );
+                            })}
+                            
+                            <div className="mt-8 pt-6 border-t border-gray-800/50">
+                                <p className="text-[10px] text-gray-500 font-bold mb-4 px-3 uppercase tracking-widest">System Settings</p>
+                                <div className="px-1">
+                                    <button onClick={toggleSystem} className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl border transition-all ${systemOpen ? 'border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20' : 'border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'}`}>
+                                        <span className="flex items-center gap-3 font-medium text-sm"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-xl' : 'fa-toggle-off text-xl'}`}></i> สถานะระบบ</span>
+                                        <span className="text-[10px] font-bold px-2 py-1 bg-gray-900 rounded-md shadow-inner">{systemOpen ? 'ONLINE' : 'OFFLINE'}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </nav>
+                        <div className="p-5 border-t border-gray-800/50">
+                            <button onClick={() => window.location.reload()} className="w-full flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-white py-4 rounded-2xl hover:bg-gray-800/50 transition-all font-medium border border-transparent hover:border-gray-700 mb-4">
+                                <i className="fa-solid fa-right-from-bracket"></i> กลับหน้าเว็บไซต์
+                            </button>
+                            <div className="text-center border-t border-gray-800/50 pt-4">
+                                <p className="text-[10px] text-gray-500 uppercase tracking-widest">Developed by</p>
+                                <p className="text-xs font-bold text-brand-500 mt-1 tracking-wider">JENNAEONG</p>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* Content */}
+                    <main className="flex-1 p-4 md:p-10 overflow-y-auto relative z-10">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-800 tracking-tight">
+                                    {activeTab === 'overview' && 'ภาพรวมระบบ (Overview)'}
+                                    {activeTab === 'activities' && 'การจัดการกิจกรรม (Activity)'}
+                                    {activeTab === 'summary' && 'ยอดเช็คชื่อ (Real-time)'}
+                                    {activeTab === 'spss' && 'รายงานผลการประเมิน (SPSS)'}
+                                </h2>
+                                <p className="text-gray-500 mt-2 font-medium text-sm">แผงควบคุมและจัดการข้อมูลสำหรับผู้ดูแลระบบ</p>
+                            </div>
+                            <button onClick={() => reloadData()} className="bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-2xl text-sm font-bold shadow-sm border border-gray-200 transition-all active:scale-95 flex items-center gap-2 hover:border-brand-300 hover:text-brand-600">
+                                <i className="fa-solid fa-rotate-right"></i> รีเฟรชข้อมูล
+                            </button>
+                        </div>
+
+                        <div>
+                            {/* Overview Tab */}
+                            {activeTab === 'overview' && (
+                                <div className="space-y-8">
+                                    {/* Top Summary Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-6 transform hover:-translate-y-1 transition duration-300 relative overflow-hidden group">
+                                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 z-0"></div>
+                                            <div className="relative z-10 w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-blue-100"><i className="fa-solid fa-calendar-check"></i></div>
+                                            <div className="relative z-10"><p className="text-gray-500 text-sm font-medium mb-1">กิจกรรมทั้งหมด</p><p className="text-4xl font-bold text-gray-800 tracking-tight">{data.activities.length}</p></div>
+                                        </div>
+                                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-6 transform hover:-translate-y-1 transition duration-300 relative overflow-hidden group">
+                                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand-50 rounded-full group-hover:scale-150 transition-transform duration-500 z-0"></div>
+                                            <div className="relative z-10 w-16 h-16 bg-gradient-to-br from-brand-100 to-rose-50 text-brand-600 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-brand-100"><i className="fa-solid fa-users"></i></div>
+                                            <div className="relative z-10"><p className="text-gray-500 text-sm font-medium mb-1">ยอดเช็คชื่อรวม</p><p className="text-4xl font-bold text-gray-800 tracking-tight">{data.checkins.length}</p></div>
+                                        </div>
+                                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-6 transform hover:-translate-y-1 transition duration-300 relative overflow-hidden group">
+                                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-green-50 rounded-full group-hover:scale-150 transition-transform duration-500 z-0"></div>
+                                            <div className="relative z-10 w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-50 text-green-600 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-green-100"><i className="fa-solid fa-star"></i></div>
+                                            <div className="relative z-10"><p className="text-gray-500 text-sm font-medium mb-1">แบบประเมินรวม</p><p className="text-4xl font-bold text-gray-800 tracking-tight">{data.evaluations.length}</p></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Breakdown by Activity */}
+                                    <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                                        <div className="flex items-center gap-4 mb-8 border-b border-gray-100 pb-5">
+                                            <div className="w-10 h-10 bg-brand-50 border border-brand-100 text-brand-600 rounded-xl flex items-center justify-center shadow-inner"><i className="fa-solid fa-chart-bar"></i></div>
+                                            <h3 className="font-bold text-gray-800 text-xl tracking-tight">สรุปยอดผู้เข้าร่วมแยกตามกิจกรรม</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {data.activities.length === 0 ? (
+                                                <div className="col-span-full text-center py-10 text-gray-400 font-medium bg-gray-50 rounded-2xl border border-dashed border-gray-200">ไม่มีข้อมูลกิจกรรม</div>
+                                            ) : (
+                                                data.activities.map(act => {
+                                                    const count = data.checkins.filter(c => String(c.ActivityID) === String(act.ActivityID)).length;
+                                                    return (
+                                                        <div key={act.ActivityID} className="p-5 border border-gray-100 rounded-2xl flex items-center justify-between hover:shadow-xl hover:shadow-brand-500/5 transition-all transform hover:-translate-y-1 bg-white group cursor-default">
+                                                            <div className="pr-4">
+                                                                <h4 className="font-bold text-gray-800 text-lg leading-tight mb-2 group-hover:text-brand-600 transition-colors">{act.Name}</h4>
+                                                                <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
+                                                                    <span className="flex items-center gap-1"><i className="fa-regular fa-calendar text-gray-400"></i> {act.Date}</span>
+                                                                    <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold border ${act.Status === 'open' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                                                        {act.Status === 'open' ? 'กำลังเปิดรับ' : 'ปิดแล้ว'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-50 to-rose-50 border border-brand-100 rounded-xl shadow-inner group-hover:from-brand-500 group-hover:to-rose-500 transition-colors">
+                                                                <span className="text-2xl font-black text-brand-600 group-hover:text-white leading-none">{count}</span>
+                                                                <span className="text-[10px] text-brand-400 group-hover:text-brand-200 font-bold mt-1">คน</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Activities Tab */}
+                            {activeTab === 'activities' && (
+                                <div className="grid lg:grid-cols-3 gap-8">
+                                    <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-fit">
+                                        <div className="flex items-center gap-4 mb-8 border-b border-gray-100 pb-5">
+                                            <div className="w-10 h-10 bg-brand-50 border border-brand-100 text-brand-600 rounded-xl flex items-center justify-center shadow-inner"><i className="fa-solid fa-plus"></i></div>
+                                            <h3 className="font-bold text-gray-800 text-xl tracking-tight">สร้างกิจกรรมใหม่</h3>
+                                        </div>
+                                        <form onSubmit={handleCreateActivity} className="space-y-6">
+                                            <div><label className="text-sm font-bold text-gray-700 block mb-2">ชื่อกิจกรรม</label><input name="name" required className="w-full border border-gray-200 bg-gray-50 rounded-2xl px-5 py-4 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/20 transition-all font-medium text-gray-800" placeholder="ระบุชื่อกิจกรรม" /></div>
+                                            <div><label className="text-sm font-bold text-gray-700 block mb-2">วันที่</label><input type="date" name="date" required className="w-full border border-gray-200 bg-gray-50 rounded-2xl px-5 py-4 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/20 transition-all text-gray-600 font-medium" /></div>
+                                            <div><label className="text-sm font-bold text-gray-700 block mb-2">สถานที่</label><input name="location" required className="w-full border border-gray-200 bg-gray-50 rounded-2xl px-5 py-4 outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/20 transition-all font-medium text-gray-800" placeholder="ระบุสถานที่จัด" /></div>
+                                            <button className="w-full bg-gradient-to-r from-brand-500 to-rose-500 hover:from-brand-600 hover:to-rose-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-brand-500/30 transition-all transform active:scale-95 mt-4 text-lg">บันทึกข้อมูล</button>
+                                        </form>
+                                    </div>
+                                    <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left text-sm whitespace-nowrap">
+                                                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 font-bold uppercase tracking-wider text-xs">
+                                                    <tr><th className="px-6 py-5">ชื่อกิจกรรม</th><th className="px-6 py-5">วันที่ / สถานที่</th><th className="px-6 py-5 text-center">สถานะ</th><th className="px-6 py-5 text-center">เปิด/ปิด</th></tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-50">
+                                                    {data.activities.map(act => (
+                                                        <tr key={act.ActivityID} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-6 py-5 font-bold text-gray-800 text-base">{act.Name}</td>
+                                                            <td className="px-6 py-5 text-gray-500 font-medium">
+                                                                <div className="flex items-center gap-2"><div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-regular fa-calendar text-brand-500 text-[10px]"></i></div> {act.Date}</div>
+                                                                <div className="flex items-center gap-2 mt-2 text-xs"><div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-solid fa-location-dot text-gray-400 text-[10px]"></i></div> {act.Location}</div>
+                                                            </td>
+                                                            <td className="px-6 py-5 text-center">
+                                                                <span className={`px-3 py-1.5 rounded-md text-xs font-bold border ${act.Status === 'open' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                                                                    {act.Status === 'open' ? 'เปิดรับ' : 'ปิดแล้ว'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-5 text-center">
+                                                                <button onClick={() => toggleActivityStatus(act.ActivityID, act.Status)} className="text-3xl hover:scale-110 transition-transform focus:outline-none drop-shadow-sm">
+                                                                    <i className={`fa-solid ${act.Status === 'open' ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-300'}`}></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* SPSS Tab */}
+                            {activeTab === 'spss' && (
+                                <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+                                    <div className="flex flex-col md:flex-row gap-4 mb-8 items-end border-b border-gray-100 pb-8">
+                                        <div className="flex-1 w-full">
+                                            <label className="block text-sm font-bold text-gray-700 mb-3"><i className="fa-solid fa-filter text-brand-500 mr-2"></i>เลือกกิจกรรมที่ต้องการดูรายงาน</label>
+                                            <div className="relative">
+                                                <select className="w-full border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/20 bg-gray-50 text-gray-800 font-bold appearance-none cursor-pointer"
+                                                    value={selectedActivityForSpss} onChange={(e) => setSelectedActivityForSpss(e.target.value)}>
+                                                    <option value="" className="text-gray-400">-- กรุณาเลือกกิจกรรม --</option>
+                                                    {data.activities.map(a => <option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
+                                                </select>
+                                                <i className="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                            </div>
+                                        </div>
+                                        <button onClick={exportWord} className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-3">
+                                            <i className="fa-solid fa-file-word text-xl"></i> Export Word
+                                        </button>
+                                    </div>
+
+                                    <div className="overflow-x-auto rounded-2xl border border-gray-200" id="spss-export-area">
+                                        {selectedActivityForSpss && (
+                                            <div style={{display:'none'}} className="print-header mb-4 text-center">
+                                                <h3 style={{fontSize:'18pt', fontWeight:'bold'}}>รายงานผลการประเมินความพึงพอใจ</h3>
+                                                <p>{data.activities.find(a=>String(a.ActivityID)===String(selectedActivityForSpss))?.Name}</p>
+                                            </div>
+                                        )}
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-gray-50 text-gray-600 font-bold border-b border-gray-200">
+                                                <tr>
+                                                    <th className="p-4 text-center w-12 border-r border-gray-200">ข้อ</th>
+                                                    <th className="p-4 border-r border-gray-200">รายการประเมิน</th>
+                                                    <th className="p-4 text-center w-16 border-r border-gray-200">N</th>
+                                                    <th className="p-4 text-center w-20 border-r border-gray-200">x̄</th>
+                                                    <th className="p-4 text-center w-20 border-r border-gray-200">S.D.</th>
+                                                    <th className="p-4 text-center w-32">ระดับ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {renderSpssTable()}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    {/* Suggestions */}
+                                    {selectedActivityForSpss && (
+                                        <div className="mt-10 p-8 bg-brand-50/40 rounded-2xl border border-brand-100">
+                                            <h4 className="font-bold text-gray-800 mb-5 text-lg flex items-center gap-3"><div className="w-8 h-8 bg-brand-100 rounded-lg flex items-center justify-center"><i className="fa-regular fa-comments text-brand-600"></i></div> ข้อเสนอแนะเพิ่มเติม</h4>
+                                            <ul className="list-disc pl-6 space-y-3 text-gray-700 font-medium text-sm">
+                                                {data.evaluations.filter(e => String(e.ActivityID)===String(selectedActivityForSpss) && e.Suggestion && e.Suggestion.trim()!=='').length > 0 
+                                                    ? data.evaluations.filter(e => String(e.ActivityID)===String(selectedActivityForSpss) && e.Suggestion && e.Suggestion.trim()!=='').map((e,i) => (
+                                                        <li key={i} className="pl-2 leading-relaxed bg-white p-3 rounded-xl border border-brand-50 shadow-sm list-none flex gap-3 items-start"><i className="fa-solid fa-quote-left text-brand-300 mt-1"></i> {e.Suggestion}</li>
+                                                    ))
+                                                    : <li className="text-gray-400 list-none -ml-6 font-normal bg-white p-4 rounded-xl border border-dashed border-gray-200 text-center">ไม่มีข้อเสนอแนะ</li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            {/* Summary Tab */}
+                            {activeTab === 'summary' && (
+                                 <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                                    <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-8 border-b border-gray-100 pb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-blue-50 border border-blue-100 text-blue-600 rounded-xl flex items-center justify-center shadow-inner"><i className="fa-solid fa-list-ol"></i></div>
+                                            <h3 className="text-xl font-bold text-gray-800 tracking-tight">ยอดเช็คชื่อ (Activity Summary)</h3>
+                                        </div>
+                                        <div className="w-full md:w-1/3 relative">
+                                            <select
+                                                className="w-full border border-gray-200 rounded-2xl px-5 py-3.5 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 bg-gray-50 text-gray-800 font-bold appearance-none cursor-pointer transition-all shadow-inner"
+                                                value={selectedSummaryAct}
+                                                onChange={(e) => setSelectedSummaryAct(e.target.value)}
+                                            >
+                                                <option value="">-- ดูกิจกรรมทั้งหมด --</option>
+                                                {data.activities.map(a => <option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
+                                            </select>
+                                            <i className="fa-solid fa-chevron-down absolute right-5 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                                        </div>
+                                    </div>
+
+                                    {/* Calculate filtered data */}
+                                    {(() => {
+                                        const filteredCheckins = selectedSummaryAct
+                                            ? data.checkins.filter(c => String(c.ActivityID) === String(selectedSummaryAct))
+                                            : data.checkins;
+
+                                        // Calculate Major breakdown
+                                        const majorCounts = {};
+                                        filteredCheckins.forEach(c => {
+                                            majorCounts[c.Major] = (majorCounts[c.Major] || 0) + 1;
+                                        });
+                                        const sortedMajors = Object.entries(majorCounts).sort((a, b) => b[1] - a[1]);
+
+                                        // Pagination Logic (15 items per page)
+                                        const ITEMS_PER_PAGE = 15;
+                                        const reversedCheckins = [...filteredCheckins].reverse(); // เรียงจากใหม่สุดไปเก่าสุด
+                                        const totalPages = Math.ceil(reversedCheckins.length / ITEMS_PER_PAGE) || 1;
+                                        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                                        const paginatedCheckins = reversedCheckins.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+                                        return (
+                                            <div>
+                                                {/* Summary Cards */}
+                                                <div className="mb-10">
+                                                    <h4 className="font-bold text-gray-700 mb-5 flex items-center gap-2"><i className="fa-solid fa-chart-simple text-blue-500"></i> สรุปยอดผู้เข้าร่วม: <span className="text-blue-600 text-2xl ml-1">{filteredCheckins.length}</span> คน</h4>
+                                                    {sortedMajors.length > 0 ? (
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                            {sortedMajors.map(([major, count]) => (
+                                                                <div key={major} className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm hover:shadow-md transition-shadow">
+                                                                    <span className="text-sm font-bold text-gray-500 mb-2 leading-tight">{major || 'ไม่ระบุ'}</span>
+                                                                    <span className="text-3xl font-black text-blue-600 drop-shadow-sm">{count}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center p-8 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 font-medium">ไม่มีข้อมูลผู้เข้าร่วมในกิจกรรมนี้</div>
+                                                    )}
+                                                </div>
+
+                                                {/* Table */}
+                                                <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><i className="fa-solid fa-table-list text-gray-400"></i> รายชื่อผู้เข้าร่วม</h4>
+                                                <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm mb-4">
+                                                    <table className="w-full text-sm text-left whitespace-nowrap">
+                                                        <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-xs">
+                                                            <tr><th className="px-6 py-5">ลำดับ</th><th className="px-6 py-5">วัน/เวลา</th><th className="px-6 py-5">รหัส / ชื่อ-สกุล</th><th className="px-6 py-5">สาขาวิชา</th><th className="px-6 py-5">กิจกรรม</th></tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-50">
+                                                            {paginatedCheckins.map((c, i) => (
+                                                                <tr key={i} className="hover:bg-blue-50/30 transition-colors">
+                                                                    <td className="px-6 py-4 text-gray-400 font-bold text-center w-12">{startIndex + i + 1}</td>
+                                                                    <td className="px-6 py-4 text-gray-500 font-medium">
+                                                                        <div className="flex items-center gap-2"><div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center"><i className="fa-regular fa-clock text-blue-400 text-[10px]"></i></div> <span className="font-bold text-gray-700">{new Date(c.Timestamp).toLocaleString('th-TH').split(' ')[1]}</span></div>
+                                                                        <div className="text-xs text-gray-400 mt-1 ml-8">{new Date(c.Timestamp).toLocaleDateString('th-TH')}</div>
+                                                                    </td>
+                                                                    <td className="px-6 py-4 font-bold text-gray-800 text-base">{c.StudentID}<br/><span className="text-sm font-medium text-gray-500">{c.Name}</span></td>
+                                                                    <td className="px-6 py-4"><span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-md font-bold text-xs border border-blue-100">{c.Major}</span></td>
+                                                                    <td className="px-6 py-4 text-gray-600 font-medium whitespace-normal min-w-[200px]">{c.ActivityName}</td>
+                                                                </tr>
+                                                            ))}
+                                                            {reversedCheckins.length === 0 && <tr><td colSpan="5" className="text-center p-12 text-gray-400 font-medium">ยังไม่มีข้อมูลการเช็คชื่อ</td></tr>}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                {/* Pagination Controls */}
+                                                {reversedCheckins.length > 0 && (
+                                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 mt-4">
+                                                        <span className="text-sm text-gray-500 font-medium bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                                            แสดงรายการที่ <span className="font-bold text-gray-800">{startIndex + 1}</span> ถึง <span className="font-bold text-gray-800">{Math.min(startIndex + ITEMS_PER_PAGE, reversedCheckins.length)}</span> จากทั้งหมด <span className="font-bold text-blue-600">{reversedCheckins.length}</span> รายการ
+                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <button 
+                                                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                                disabled={currentPage === 1}
+                                                                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-50 hover:bg-gray-50 font-medium text-sm transition-all active:scale-95 shadow-sm flex items-center gap-2"
+                                                            >
+                                                                <i className="fa-solid fa-chevron-left"></i> ย้อนกลับ
+                                                            </button>
+                                                            <span className="text-sm font-bold text-blue-700 bg-blue-50 px-4 py-2 rounded-xl border border-blue-200 shadow-inner">
+                                                                หน้า {currentPage} / {totalPages}
+                                                            </span>
+                                                            <button 
+                                                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                                disabled={currentPage === totalPages}
+                                                                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-50 hover:bg-gray-50 font-medium text-sm transition-all active:scale-95 shadow-sm flex items-center gap-2"
+                                                            >
+                                                                ถัดไป <i className="fa-solid fa-chevron-right"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+                                 </div>
+                            )}
+                        </div>
+                    </main>
                 </div>
             );
         }
 
-        // 3. History
-        const HistoryFlow = ({ setView }) => {
-            const [query, setQuery] = useState('');
-            const [data, setData] = useState(null);
-
-            const handleSearch = async (e) => {
-                e.preventDefault();
-                Swal.fire({ title: 'กำลังค้นหา...', didOpen: () => Swal.showLoading() });
-                const res = await apiCall('getHistory', { query });
-                if(res.status === 'success') setData(res);
-                else Swal.fire('ไม่พบข้อมูล', '', 'error');
-                if(res.status === 'success') Swal.close();
-            };
-
-            return (
-                <div class="min-h-screen flex flex-col items-center p-4 pt-10 text-white">
-                    <div class="w-full max-w-3xl">
-                        <button onClick={() => setView('home')} class="glass px-4 py-2 rounded-lg mb-6 hover:bg-white/20 transition flex items-center gap-2"><i data-lucide="arrow-left"></i> กลับหน้าหลัก</button>
-                        
-                        <div class="glass-card rounded-2xl p-8">
-                            <h2 class="text-3xl font-bold mb-6 flex items-center gap-3"><i data-lucide="history" class="text-purple-400"></i> ตรวจสอบประวัติกิจกรรม</h2>
-                            <form onSubmit={handleSearch} class="flex gap-4 mb-8">
-                                <input type="text" value={query} onChange={e=>setQuery(e.target.value)} placeholder="รหัสนักศึกษา / เลขบัตร ปชช." class="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-purple-400" required />
-                                <button type="submit" class="px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-xl font-semibold transition">ค้นหา</button>
-                            </form>
-
-                            {data && (
-                                <div class="animate-fade-in">
-                                    <div class="bg-gradient-to-r from-blue-900/40 to-purple-900/40 p-6 rounded-xl border border-white/20 mb-6 flex gap-6 items-center">
-                                        <div class="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="user" class="w-10 h-10"></i></div>
-                                        <div>
-                                            <h3 class="text-2xl font-bold text-blue-200">{data.profile.name}</h3>
-                                            <p class="text-gray-300 mt-1">รหัส: {data.profile.studentId} | สาขา: {data.profile.major}</p>
-                                            <p class="text-sm text-gray-400 mt-1">จำนวนกิจกรรมที่เข้าร่วม: <span class="text-white font-bold text-lg">{data.history.length}</span> ครั้ง</p>
-                                        </div>
-                                    </div>
-
-                                    <h4 class="text-lg font-semibold mb-4 border-b border-white/10 pb-2">รายการกิจกรรมที่เข้าร่วม</h4>
-                                    <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-                                        {data.history.length === 0 ? <p class="text-center text-gray-400 py-4">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</p> : null}
-                                        {data.history.map((h, i) => (
-                                            <div key={i} class="bg-white/5 p-4 rounded-lg border border-white/10 flex items-center justify-between hover:bg-white/10 transition">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="p-2 bg-green-500/20 rounded-full text-green-400"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
-                                                    <span class="font-medium text-lg">{h.activityName}</span>
-                                                </div>
-                                                <div class="text-sm text-gray-400 flex items-center gap-1"><i data-lucide="clock" class="w-4 h-4"></i> {h.timestamp}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // 4. Admin Login
-        const AdminLogin = ({ setView, setAdminRole }) => {
-            const [user, setUser] = useState('');
-            const [pass, setPass] = useState('');
-
-            const handleLogin = async (e) => {
-                e.preventDefault();
-                Swal.fire({ title: 'กำลังตรวจสอบ...', didOpen: () => Swal.showLoading() });
-                
-                // Fallback for demo if no API
-                if(!GAS_API_URL && user === 'admin' && pass === '0000') {
-                    setAdminRole('SuperAdmin');
-                    Swal.close();
-                    setView('admin');
-                    return;
-                }
-
-                const res = await apiCall('adminLogin', { username: user, password: pass });
-                if(res.status === 'success') {
-                    setAdminRole(res.role);
-                    Swal.close();
-                    setView('admin');
-                } else {
-                    Swal.fire('เข้าสู่ระบบล้มเหลว', res.message, 'error');
-                }
-            };
-
-            return (
-                <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="glass-card w-full max-w-md rounded-2xl p-8 text-white relative">
-                        <button onClick={() => setView('home')} class="absolute top-4 left-4 p-2 hover:bg-white/10 rounded-full transition"><i data-lucide="x"></i></button>
-                        <div class="text-center mb-8 mt-4">
-                            <div class="inline-flex p-4 rounded-full bg-blue-500/20 text-blue-400 mb-4"><i data-lucide="shield-check" class="w-10 h-10"></i></div>
-                            <h2 class="text-2xl font-bold">Staff Login</h2>
-                            <p class="text-gray-400 text-sm mt-1">DIGIT.69 Admin Panel</p>
-                        </div>
-                        <form onSubmit={handleLogin} class="space-y-4">
-                            <div><input type="text" value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" class="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400" required /></div>
-                            <div><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-black/20 border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400" required /></div>
-                            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition mt-4">เข้าสู่ระบบ</button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        // 5. Admin Dashboard
-        const AdminDashboard = ({ setView, adminRole }) => {
-            const [activeMenu, setActiveMenu] = useState('overview');
-            const [dbData, setDbData] = useState({ students: [], checkins: [], activities: [], surveys: [] });
-            const [loading, setLoading] = useState(true);
-
-            // Fetch all data for dashboard
-            const fetchData = async () => {
-                setLoading(true);
-                if(!GAS_API_URL) {
-                    // Mock data for Dashboard visualization
-                    setTimeout(() => {
-                        setDbData({
-                            students: [
-                                ["6401", "1", "A", "IT"], ["6402", "2", "B", "IT"], ["6403", "3", "C", "Accounting"], ["6404", "4", "D", "Marketing"]
-                            ],
-                            checkins: [
-                                ["01/01/26", "6401", "A01", "Act 1"], ["01/01/26", "6402", "A01", "Act 1"], ["02/01/26", "6403", "A02", "Act 2"]
-                            ],
-                            activities: [
-                                ["A01", "สัมมนา AI", "2026-06-15", "Room 1", "Open"], ["A02", "กีฬาสี", "2026-07-01", "Field", "Close"]
-                            ],
-                            surveys: [
-                                ["Ts", "6401", "A01", 5,4,5,4,5,4,5,4,5,4,5,4,5, "ดีมาก"],
-                                ["Ts", "6402", "A01", 3,3,4,4,3,3,4,4,3,3,4,4,3, "พอใช้"]
-                            ]
-                        });
-                        setLoading(false);
-                    }, 1000);
-                    return;
-                }
-
-                const res = await apiCall('getDashboardData');
-                if(res.status === 'success') setDbData(res.data);
-                setLoading(false);
-            };
-
-            useEffect(() => { fetchData(); }, []);
-
-            // Dashboard Components
-            const Overview = () => {
-                const totalStudents = dbData.students.length;
-                const totalCheckins = dbData.checkins.length;
-                const activeActs = dbData.activities.filter(a => a[4] === 'Open').length;
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <h2 class="text-2xl font-bold mb-6">ภาพรวมระบบ (Overview)</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="glass-card p-6 rounded-xl border-l-4 border-blue-500">
-                                <div class="text-gray-400 text-sm mb-1">ยอดนักศึกษาในระบบ</div>
-                                <div class="text-4xl font-bold text-blue-400">{totalStudents}</div>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl border-l-4 border-green-500">
-                                <div class="text-gray-400 text-sm mb-1">รายการเช็คชื่อทั้งหมด</div>
-                                <div class="text-4xl font-bold text-green-400">{totalCheckins}</div>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl border-l-4 border-purple-500">
-                                <div class="text-gray-400 text-sm mb-1">กิจกรรมที่กำลังเปิดรับ</div>
-                                <div class="text-4xl font-bold text-purple-400">{activeActs}</div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const Majors = () => {
-                // Calculate Majors data
-                const majorCounts = {};
-                dbData.students.forEach(s => {
-                    const major = s[3] || 'ไม่ระบุ';
-                    majorCounts[major] = (majorCounts[major] || 0) + 1;
-                });
-                const pieData = Object.keys(majorCounts).map(k => ({ name: k, value: majorCounts[k] }));
-                const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
-
-                return (
-                    <div class="animate-fade-in text-white h-full flex flex-col">
-                        <h2 class="text-2xl font-bold mb-6">สัดส่วนสาขาวิชา (Majors)</h2>
-                        <div class="glass-card p-6 rounded-xl flex-1 flex flex-col md:flex-row items-center justify-center">
-                            {pieData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <PieChart>
-                                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
-                                            {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                                        </Pie>
-                                        <Tooltip contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white'}} />
-                                        <Legend />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : <p class="text-gray-400">ยังไม่มีข้อมูล</p>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const ExecReport = () => {
-                const [filter, setFilter] = useState('All');
-                
-                // Get unique majors for dropdown
-                const majors = [...new Set(dbData.students.map(s => s[3]))].filter(Boolean);
-                
-                // Filter Checkins
-                const filteredCheckins = dbData.checkins.filter(c => {
-                    if(filter === 'All') return true;
-                    const student = dbData.students.find(s => s[0] == c[1]);
-                    return student && student[3] === filter;
-                });
-
-                // Prepare Bar Chart Data (Top Activities)
-                const actCounts = {};
-                filteredCheckins.forEach(c => {
-                    actCounts[c[3]] = (actCounts[c[3]] || 0) + 1;
-                });
-                const barData = Object.keys(actCounts).map(k => ({ name: k.substring(0,15)+'...', 'ผู้เข้าร่วม': actCounts[k] })).sort((a,b) => b.ผู้เข้าร่วม - a.ผู้เข้าร่วม).slice(0,5);
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold">รายงานสรุปผู้บริหาร</h2>
-                            <select value={filter} onChange={e=>setFilter(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none">
-                                <option value="All">ทุกสาขาวิชา</option>
-                                {majors.map(m => <option key={m} value={m}>{m}</option>)}
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="glass-card p-6 rounded-xl">
-                                <h3 class="text-lg mb-4 text-gray-300">5 อันดับกิจกรรมยอดนิยม ({filter})</h3>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={barData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" vertical={false} />
-                                        <XAxis dataKey="name" stroke="#cbd5e1" fontSize={12} />
-                                        <YAxis stroke="#cbd5e1" />
-                                        <Tooltip cursor={{fill: '#ffffff10'}} contentStyle={{backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white'}} />
-                                        <Bar dataKey="ผู้เข้าร่วม" fill="#8b5cf6" radius={[4,4,0,0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div class="glass-card p-6 rounded-xl flex flex-col justify-center items-center text-center">
-                                <h3 class="text-lg mb-2 text-gray-300">ยอดการเข้าร่วมรวม</h3>
-                                <div class="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">{filteredCheckins.length}</div>
-                                <p class="text-gray-400">ครั้ง</p>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const ManageActivity = () => {
-                const [showForm, setShowForm] = useState(false);
-                const [form, setForm] = useState({ name: '', date: '', location: '' });
-
-                const handleCreate = async (e) => {
-                    e.preventDefault();
-                    Swal.fire({ title: 'กำลังสร้าง...', didOpen:()=>Swal.showLoading()});
-                    const res = await apiCall('createActivity', form);
-                    if(res.status === 'success') {
-                        Swal.fire('สำเร็จ', 'สร้างกิจกรรมเรียบร้อย', 'success');
-                        setForm({name:'', date:'', location:''});
-                        setShowForm(false);
-                        fetchData();
-                    }
-                };
-
-                const handleToggle = async (id, currentStatus) => {
-                    const newStatus = currentStatus === 'Open' ? 'Close' : 'Open';
-                    Swal.fire({ title: 'กำลังอัปเดต...', didOpen:()=>Swal.showLoading()});
-                    const res = await apiCall('toggleActivity', { id, status: newStatus });
-                    if(res.status === 'success') fetchData();
-                    Swal.close();
-                };
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold">จัดการกิจกรรม</h2>
-                            <button onClick={() => setShowForm(!showForm)} class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg transition text-sm flex items-center gap-2">
-                                <i data-lucide={showForm ? "x" : "plus"}></i> {showForm ? 'ยกเลิก' : 'สร้างกิจกรรมใหม่'}
-                            </button>
-                        </div>
-
-                        {showForm && (
-                            <form onSubmit={handleCreate} class="glass-card p-6 rounded-xl mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in border-l-4 border-blue-500">
-                                <div><label class="text-xs text-gray-400">ชื่อกิจกรรม</label><input type="text" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
-                                <div><label class="text-xs text-gray-400">วันเวลา</label><input type="datetime-local" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
-                                <div><label class="text-xs text-gray-400">สถานที่</label><input type="text" value={form.location} onChange={e=>setForm({...form, location:e.target.value})} required class="w-full mt-1 bg-black/20 border border-white/20 rounded p-2" /></div>
-                                <div class="md:col-span-3 flex justify-end"><button type="submit" class="bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg transition">บันทึก</button></div>
-                            </form>
-                        )}
-
-                        <div class="glass-card rounded-xl overflow-hidden">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-white/10 text-gray-300">
-                                    <tr><th class="p-4">ชื่อกิจกรรม</th><th class="p-4">วันเวลา</th><th class="p-4">สถานที่</th><th class="p-4 text-center">สถานะ</th><th class="p-4 text-center">จัดการ</th></tr>
-                                </thead>
-                                <tbody>
-                                    {dbData.activities.map((a, i) => (
-                                        <tr key={i} class="border-t border-white/10 hover:bg-white/5">
-                                            <td class="p-4 font-medium">{a[1]}</td><td class="p-4 text-gray-400">{a[2]}</td><td class="p-4 text-gray-400">{a[3]}</td>
-                                            <td class="p-4 text-center">
-                                                <span class={`px-2 py-1 rounded text-xs ${a[4] === 'Open' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{a[4] === 'Open' ? 'เปิดรับ' : 'ปิดแล้ว'}</span>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <button onClick={() => handleToggle(a[0], a[4])} class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded transition">สลับสถานะ</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            };
-
-            const RealTimeRecord = () => {
-                const [selectedAct, setSelectedAct] = useState('');
-                const activeActs = dbData.activities.filter(a => a[4] === 'Open');
-                
-                // Realtime simulation
-                useEffect(() => {
-                    const timer = setInterval(() => { if(GAS_API_URL) fetchData(); }, 30000); // refresh every 30s
-                    return () => clearInterval(timer);
-                }, []);
-
-                const attendees = dbData.checkins.filter(c => selectedAct ? c[2] === selectedAct : c[2] === (activeActs[0]?.[0] || ''));
-                
-                const exportExcel = () => {
-                    // Simple CSV Export mapping full student data
-                    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-                    csvContent += "รหัสนักศึกษา,เลขบัตรประชาชน,ชื่อ-สกุล,สาขาวิชา,กิจกรรม,เวลาที่ลงทะเบียน\n";
-                    
-                    attendees.forEach(row => {
-                        const std = dbData.students.find(s => s[0] == row[1]) || ['','','ไม่พบข้อมูล',''];
-                        const actName = row[3];
-                        csvContent += `="${std[0]}",="${std[1]}","${std[2]}","${std[3]}","${actName}","${row[0]}"\n`;
-                    });
-
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", "รายชื่อเข้าร่วมกิจกรรม.csv");
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                            <h2 class="text-2xl font-bold flex items-center gap-2"><div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div> ยอดเช็คชื่อเรียลไทม์</h2>
-                            <div class="flex gap-2 w-full md:w-auto">
-                                <select value={selectedAct} onChange={e=>setSelectedAct(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-2 text-white flex-1 md:w-64">
-                                    {activeActs.map(a => <option key={a[0]} value={a[0]}>{a[1]}</option>)}
-                                    {activeActs.length === 0 && <option value="">ไม่มีกิจกรรมที่เปิดอยู่</option>}
-                                </select>
-                                <button onClick={exportExcel} disabled={attendees.length===0} class="bg-green-600 hover:bg-green-700 disabled:opacity-50 px-4 py-2 rounded-lg flex items-center gap-2 transition"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export</button>
-                            </div>
-                        </div>
-
-                        <div class="glass-card p-6 rounded-xl text-center mb-6 border border-white/20">
-                            <div class="text-gray-400 mb-2">ยอดผู้เข้าร่วมขณะนี้</div>
-                            <div class="text-6xl font-bold text-white">{attendees.length} <span class="text-2xl text-gray-400 font-normal">คน</span></div>
-                        </div>
-                        
-                        <div class="glass-card rounded-xl overflow-hidden max-h-[400px] overflow-y-auto custom-scrollbar">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-white/10 text-gray-300 sticky top-0 backdrop-blur-md">
-                                    <tr><th class="p-3">เวลา</th><th class="p-3">รหัส</th><th class="p-3">ชื่อ-สกุล</th><th class="p-3">สาขา</th></tr>
-                                </thead>
-                                <tbody>
-                                    {attendees.map((a, i) => {
-                                        const std = dbData.students.find(s => s[0] == a[1]) || ['','','ไม่พบข้อมูล',''];
-                                        return (
-                                            <tr key={i} class="border-t border-white/10 hover:bg-white/5">
-                                                <td class="p-3 text-xs text-gray-400">{a[0]}</td><td class="p-3">{std[0]}</td><td class="p-3">{std[2]}</td><td class="p-3 text-blue-300">{std[3]}</td>
-                                            </tr>
-                                        )
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                );
-            };
-
-            const SpssReport = () => {
-                const [selectedAct, setSelectedAct] = useState('');
-                const acts = dbData.activities;
-                
-                // Calculate SPSS Logic
-                const actSurveys = dbData.surveys.filter(s => selectedAct ? s[2] === selectedAct : s[2] === (acts[0]?.[0] || ''));
-                const N = actSurveys.length;
-                
-                let stats = [];
-                if(N > 0) {
-                    for(let q=0; q<13; q++) {
-                        let sum = 0;
-                        let scores = [];
-                        actSurveys.forEach(row => {
-                            const score = Number(row[3 + q]);
-                            if(!isNaN(score)) { sum += score; scores.push(score); }
-                        });
-                        const mean = sum / N;
-                        let varianceSum = 0;
-                        scores.forEach(s => { varianceSum += Math.pow(s - mean, 2); });
-                        // Using Sample SD (N-1), fallback to 0 if N<=1
-                        const sd = N > 1 ? Math.sqrt(varianceSum / (N - 1)) : 0; 
-                        
-                        stats.push({ qText: surveyQuestions[q], mean: mean.toFixed(2), sd: sd.toFixed(2) });
-                    }
-                }
-
-                const exportWord = () => {
-                    const actName = acts.find(a => a[0] === (selectedAct || acts[0]?.[0]))?.[1] || 'รายงาน';
-                    let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-                    <head><meta charset='utf-8'><title>Report</title><style>table {border-collapse: collapse; width: 100%;} th, td {border: 1px solid black; padding: 8px; text-align: left;} th {background-color: #f2f2f2;}</style></head><body>
-                    <h2 style="text-align:center;">รายงานผลการประเมินความพึงพอใจ</h2>
-                    <h3 style="text-align:center;">กิจกรรม: ${actName} (N = ${N})</h3>
-                    <table><tr><th>ข้อที่</th><th>ประเด็นการประเมิน</th><th style="text-align:center;">x̄</th><th style="text-align:center;">S.D.</th><th style="text-align:center;">ระดับ</th></tr>`;
-                    
-                    stats.forEach((s, idx) => {
-                        let level = s.mean >= 4.5 ? 'มากที่สุด' : s.mean >= 3.5 ? 'มาก' : s.mean >= 2.5 ? 'ปานกลาง' : s.mean >= 1.5 ? 'น้อย' : 'น้อยที่สุด';
-                        html += `<tr><td style="text-align:center;">${idx+1}</td><td>${s.qText.substring(3)}</td><td style="text-align:center;">${s.mean}</td><td style="text-align:center;">${s.sd}</td><td style="text-align:center;">${level}</td></tr>`;
-                    });
-                    
-                    html += `</table><br><h4>ข้อเสนอแนะเพิ่มเติม:</h4><ul>`;
-                    actSurveys.forEach(row => { if(row[16]) html += `<li>${row[16]}</li>`; });
-                    html += `</ul></body></html>`;
-
-                    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.download = `Survey_Report_${actName}.doc`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-2xl font-bold">รายงานสถิติ (SPSS Report)</h2>
-                            <button onClick={exportWord} disabled={N===0} class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 rounded-lg flex items-center gap-2 transition"><i data-lucide="file-text" class="w-4 h-4"></i> Export Word</button>
-                        </div>
-
-                        <select value={selectedAct} onChange={e=>setSelectedAct(e.target.value)} class="bg-black/30 border border-white/20 rounded-lg px-4 py-3 text-white w-full max-w-md mb-6 focus:outline-none">
-                            {acts.map(a => <option key={a[0]} value={a[0]}>{a[1]}</option>)}
-                        </select>
-
-                        <div class="glass-card rounded-xl p-6">
-                            <div class="text-right text-gray-300 mb-4 font-mono text-lg">กลุ่มตัวอย่าง (N) = {N}</div>
-                            {N === 0 ? <p class="text-center text-gray-400 py-10">ยังไม่มีข้อมูลแบบประเมินสำหรับกิจกรรมนี้</p> : (
-                                <div class="overflow-x-auto">
-                                    <table class="w-full text-left text-sm border-collapse">
-                                        <thead class="bg-white/10 text-gray-300 border-b border-white/20">
-                                            <tr><th class="p-3 w-12 text-center">ข้อ</th><th class="p-3">ประเด็นการประเมิน</th><th class="p-3 text-center w-24">x̄</th><th class="p-3 text-center w-24">S.D.</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {stats.map((s, i) => (
-                                                <tr key={i} class="border-b border-white/5 hover:bg-white/5">
-                                                    <td class="p-3 text-center text-gray-400">{i+1}</td>
-                                                    <td class="p-3">{s.qText.substring(3)}</td>
-                                                    <td class="p-3 text-center font-bold text-blue-300">{s.mean}</td>
-                                                    <td class="p-3 text-center font-mono text-purple-300">{s.sd}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            const Settings = () => {
-                const [isOpen, setIsOpen] = useState(localStorage.getItem('regOpen') !== 'false');
-
-                const toggleReg = () => {
-                    const newVal = !isOpen;
-                    setIsOpen(newVal);
-                    localStorage.setItem('regOpen', newVal);
-                    Swal.fire({
-                        icon: 'success',
-                        title: newVal ? 'เปิดระบบลงทะเบียนแล้ว' : 'ปิดระบบลงทะเบียนแล้ว',
-                        showConfirmButton: false, timer: 1000
-                    });
-                };
-
-                return (
-                    <div class="animate-fade-in text-white">
-                        <h2 class="text-2xl font-bold mb-6">ตั้งค่าระบบ (Settings)</h2>
-                        <div class="glass-card p-6 rounded-xl flex items-center justify-between max-w-lg border border-white/20">
-                            <div>
-                                <h3 class="font-semibold text-lg">เปิด/ปิด เมนูเช็คชื่อเข้ากิจกรรม</h3>
-                                <p class="text-sm text-gray-400">ควบคุมการแสดงผลปุ่มที่หน้าแรก</p>
-                            </div>
-                            <button onClick={toggleReg} class={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${isOpen ? 'bg-green-500' : 'bg-gray-500'}`}>
-                                <span class={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${isOpen ? 'translate-x-7' : 'translate-x-1'}`} />
-                            </button>
-                        </div>
-                    </div>
-                );
-            };
-
-            // Sidebar Menu Mapping
-            const menus = [
-                { id: 'overview', icon: 'pie-chart', label: '1. ภาพรวม (Overview)' },
-                { id: 'majors', icon: 'users', label: '2. สัดส่วนสาขา (Majors)' },
-                { id: 'report', icon: 'bar-chart-3', label: '3. สรุปผู้บริหาร' },
-                { id: 'activity', icon: 'calendar-plus', label: '4. จัดการกิจกรรม' },
-                { id: 'realtime', icon: 'activity', label: '5. ยอดเช็คชื่อ (Real-time)' },
-                { id: 'spss', icon: 'calculator', label: '6. รายงาน SPSS' },
-                ...(adminRole === 'SuperAdmin' ? [{ id: 'users', icon: 'shield', label: '7. จัดการสิทธิ์แอดมิน' }] : []),
-                { id: 'settings', icon: 'settings', label: '8. ตั้งค่าระบบ' }
-            ];
-
-            return (
-                <div class="flex h-screen overflow-hidden">
-                    {/* Sidebar */}
-                    <div class="w-64 glass-card border-r border-white/10 flex flex-col text-white z-10 shrink-0">
-                        <div class="p-6 border-b border-white/10 flex items-center justify-between">
-                            <div>
-                                <h1 class="text-2xl font-bold tracking-wider">DIGIT<span class="text-blue-400">.69</span></h1>
-                                <p class="text-xs text-gray-400">Admin Dashboard ({adminRole})</p>
-                            </div>
-                            <button onClick={() => { setView('home'); }} class="text-gray-400 hover:text-white" title="ออกจากระบบ"><i data-lucide="log-out"></i></button>
-                        </div>
-                        <div class="flex-1 overflow-y-auto py-4 custom-scrollbar">
-                            {menus.map(m => (
-                                <button key={m.id} onClick={() => setActiveMenu(m.id)} class={`w-full flex items-center gap-3 px-6 py-3 text-left transition ${activeMenu === m.id ? 'bg-blue-500/20 text-blue-300 border-r-4 border-blue-400' : 'text-gray-300 hover:bg-white/5'}`}>
-                                    <i data-lucide={m.icon} class="w-5 h-5"></i> {m.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Main Content Area */}
-                    <div class="flex-1 overflow-y-auto p-8 relative">
-                        {loading && (
-                            <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-                                <div class="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
-                                <p class="text-white mt-4 font-mono animate-pulse">Loading Data...</p>
-                            </div>
-                        )}
-                        {!loading && (
-                            <>
-                                {activeMenu === 'overview' && <Overview />}
-                                {activeMenu === 'majors' && <Majors />}
-                                {activeMenu === 'report' && <ExecReport />}
-                                {activeMenu === 'activity' && <ManageActivity />}
-                                {activeMenu === 'realtime' && <RealTimeRecord />}
-                                {activeMenu === 'spss' && <SpssReport />}
-                                {activeMenu === 'users' && <div class="text-white"><h1>7. จัดการสิทธิ์แอดมิน (อยู่ระหว่างการพัฒนา)</h1></div>}
-                                {activeMenu === 'settings' && <Settings />}
-                            </>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-
-        // --- MAIN APP ---
-        const App = () => {
-            const [view, setView] = useState('home'); // home, checkin, history, login, admin
-            const [adminRole, setAdminRole] = useState(null);
-
-            // Re-initialize icons when view changes
-            useEffect(() => {
-                if(window.lucide) window.lucide.createIcons();
-            }, [view]);
-
-            return (
-                <div>
-                    {view === 'home' && <Home setView={setView} adminRole={adminRole} />}
-                    {view === 'checkin' && <CheckInFlow setView={setView} />}
-                    {view === 'history' && <HistoryFlow setView={setView} />}
-                    {view === 'login' && <AdminLogin setView={setView} setAdminRole={setAdminRole} />}
-                    {view === 'admin' && <AdminDashboard setView={setView} adminRole={adminRole} />}
-                </div>
-            );
-        };
-
+        // --- Render App ---
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
