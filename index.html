@@ -90,7 +90,7 @@
             USE_FAST_CSV: true,
             SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
             // 🚨 ใส่ลิงก์ Web App (Google Apps Script) อันใหม่ล่าสุดของท่านที่นี่ 🚨
-            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwRkO2W4mNItUq70h1-8XN-G_x1-5n7wLpL7o3-uJz6Oa_T9zH_nF_Jg6s2Z_Y8XW/exec", 
+            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwegTVU6yVfNHRL5RZnn2GEmCCG_sZN3qR-D7-l16Y5-7g_B6Q0U5hwd993pk3siZ2n7A/exec", 
             getCSVUrl: function(sheetName) {
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}&_=${new Date().getTime()}`;
             }
@@ -123,6 +123,10 @@
                     return result.data !== undefined ? result.data : result;
                 } catch (error) { 
                     console.warn(`runGAS Fetch Error (${functionName}):`, error);
+                    // ปรับปรุงการแจ้งเตือน Error ให้ชัดเจนขึ้น
+                    if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
+                        throw new Error('Failed to fetch: ไม่สามารถเชื่อมต่อฐานข้อมูลได้ \nกรุณาตรวจสอบว่าสิทธิ์การแชร์ของ Web App เป็น "ทุกคน (Anyone)" และอัปเดตเป็น "เวอร์ชันใหม่ (New version)" แล้ว');
+                    }
                     throw error; 
                 }
             } else {
@@ -223,7 +227,17 @@
                             setSystemOpen(priceInfo.systemStatus !== 'maintenance');
                             setReceiptSettings({ header: priceInfo.receiptHeader, note: priceInfo.receiptNote });
                         }
-                    } catch (e) { console.error("Initial load failed", e); }
+                    } catch (e) { 
+                        console.error("Initial load failed", e); 
+                        // เพิ่มการแจ้งเตือนกรณีโหลดหน้าเว็บครั้งแรกแล้วดึงข้อมูลไม่สำเร็จ
+                        if (e.message && e.message.includes('Failed to fetch')) {
+                            Swal.fire({
+                                title: 'การเชื่อมต่อผิดพลาด',
+                                text: 'ไม่สามารถดึงข้อมูลเริ่มต้นได้ กรุณาตรวจสอบการแชร์ไฟล์ Google Sheets',
+                                icon: 'error'
+                            });
+                        }
+                    }
                 };
                 if(view === 'home') loadInitialData();
             }, [view]);
@@ -335,7 +349,6 @@
                 try {
                     let data;
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        // โหลดข้อมูลทุกอย่างผ่าน CSV โดยตรง (ไม่พึ่งพา Web App API เพื่อป้องกัน Error Failed to fetch ตอนล็อกอิน)
                         const [acts, chks, evals, shirts, settings] = await Promise.all([
                             fetchFastCSV('Activities').catch(() => []), 
                             fetchFastCSV('CheckIns').catch(() => []),
@@ -346,7 +359,6 @@
                         
                         let priceInfo = { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ', systemStatus: 'open' };
                         
-                        // ดึงการตั้งค่าจากชีต Settings ตรงๆ
                         if (settings && settings.length > 0) {
                             const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
                             const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
@@ -375,7 +387,7 @@
                     }
                     Swal.close(); setView('admin_dashboard');
                 } catch(e) { 
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบการตั้งค่า Sheet ID', 'error'); 
+                    Swal.fire('ข้อผิดพลาดการเชื่อมต่อ', e.message, 'error'); 
                 }
             };
 
