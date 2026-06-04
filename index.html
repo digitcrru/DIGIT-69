@@ -93,7 +93,8 @@
             SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
             WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/exec", 
             getCSVUrl: function(sheetName) {
-                return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+                // เพิ่ม cache-buster (_=timestamp) เพื่อป้องกัน Google Sheets จำค่าเก่า
+                return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}&_=${new Date().getTime()}`;
             }
         };
 
@@ -191,30 +192,12 @@
             useEffect(() => {
                 const loadInitialData = async () => {
                     try {
-                        let acts = [];
-                        if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                            const allActs = await fetchFastCSV('Activities');
-                            acts = allActs.filter(a => a.Status === 'open');
-                        } else {
-                            acts = await runGAS('getActiveActivities');
-                        }
+                        // เปลี่ยนมาใช้ runGAS แบบสดๆ สำหรับการเช็คข้อมูลสำคัญอย่าง "กิจกรรมที่เปิดอยู่" และ "สถานะปิดเปิดจองเสื้อ"
+                        // เพื่อให้ทำงานได้ Real-time ทันทีที่แอดมินกดเปิด/ปิด โดยไม่ติด Cache
+                        const acts = await runGAS('getActiveActivities');
                         setActivities(acts || []);
                         
-                        let priceInfo = null;
-                        if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                            try {
-                                const settings = await fetchFastCSV('Settings');
-                                const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
-                                const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
-                                const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', Value2: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ'};
-                                
-                                priceInfo = { 
-                                    normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
-                                    status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2 
-                                };
-                            } catch(e) { priceInfo = await runGAS('getShirtPrice'); }
-                        } else { priceInfo = await runGAS('getShirtPrice'); }
-
+                        const priceInfo = await runGAS('getShirtPrice');
                         if (priceInfo) {
                             setShirtPrice(priceInfo);
                             setShirtSystemOpen(priceInfo.status !== 'closed');
@@ -683,6 +666,7 @@
                                 </form>
                             </div>
                         </div>
+                        <Footer />
                         <MobileTabBar />
                     </div>
                 );
