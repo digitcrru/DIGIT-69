@@ -89,9 +89,9 @@
         const API_CONFIG = {
             USE_FAST_CSV: true, // ดึงข้อมูลให้อ่านผ่าน CSV โดยตรง (เร็วกว่า 10 เท่า)
             // 🚨 แก้ไขให้เป็น ID ของชีตตัวเอง (ตัวอักษรยาวๆ ใน URL Google Sheets)
-            SHEET_ID: "YOUR_SHEET_ID_HERE", 
+            SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
             // 🚨 นำลิงก์ Web App URL จาก Google Apps Script (ตอน Deploy) มาใส่ตรงนี้
-            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/execE", 
+            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/exec", 
             getCSVUrl: function(sheetName) {
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
             }
@@ -1057,7 +1057,10 @@
                         {activeTab === 'summary' && (
                             <div className="bg-white p-8 border border-gray-100 rounded-xl transition-colors">
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-between">
-                                    <select className="border border-gray-200 p-3 rounded-lg text-sm bg-transparent outline-none flex-grow max-w-sm focus:border-gold-500 transition-colors" value={selectedActivityForSummary} onChange={(e)=>setSelectedActivityForSummary(e.target.value)}><option value="">All Activities</option>{data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}</select>
+                                    <select className="border border-gray-200 p-3 rounded-lg text-sm bg-transparent outline-none flex-grow max-w-sm focus:border-gold-500 transition-colors" value={selectedActivityForSummary} onChange={(e)=>setSelectedActivityForSummary(e.target.value)}>
+                                        <option value="">All Activities</option>
+                                        {data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
+                                    </select>
                                     <div className="flex gap-2">
                                         <label className="border border-gray-200 text-charcoal-900 px-4 py-2.5 rounded-lg cursor-pointer text-xs font-medium tracking-widest uppercase hover:bg-gray-50 transition-colors flex items-center"><i className="fa-solid fa-upload mr-2"></i> Import<input type="file" accept=".csv" className="hidden" onChange={handleImportCSV} /></label>
                                         <button onClick={()=>{ const list = selectedActivityForSummary ? data.checkins.filter(c=>c.ActivityID===selectedActivityForSummary) : data.checkins; const csvData = Papa.unparse(list); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' })); link.download = `Checkins.csv`; link.click(); }} className="btn-primary px-4 py-2.5 rounded-lg text-xs font-medium tracking-widest uppercase flex items-center"><i className="fa-solid fa-download mr-2"></i> Export</button>
@@ -1070,7 +1073,9 @@
                                 </div>
                                 {totalPages > 1 && (
                                     <div className="flex justify-between items-center text-sm">
-                                        <button disabled={currentPage===1} onClick={()=>setCurrentPage(prev=>Math.max(1,prev-1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===1?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Prev</button><span className="text-gray-400 font-light text-xs">Page {currentPage} of {totalPages}</span><button disabled={currentPage===totalPages} onClick={()=>setCurrentPage(prev=>Math.min(totalPages,prev+1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===totalPages?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Next</button>
+                                        <button disabled={currentPage===1} onClick={()=>setCurrentPage(prev=>Math.max(1,prev-1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===1?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Prev</button>
+                                        <span className="text-gray-400 font-light text-xs">Page {currentPage} of {totalPages}</span>
+                                        <button disabled={currentPage===totalPages} onClick={()=>setCurrentPage(prev=>Math.min(totalPages,prev+1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===totalPages?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Next</button>
                                     </div>
                                 )}
                             </div>
