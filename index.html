@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบลงทะเบียนเข้าร่วมกิจกรรม</title>
+    <title>ระบบลงทะเบียนเข้าร่วมกิจกรรม - DIGIT.CRRU</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -74,6 +74,11 @@
         html.dark tr, html.dark td, html.dark th { border-color: #333 !important; }
         html.dark tr:hover { background-color: #262626 !important; }
         html.dark select { background-color: #121212 !important; color: #fff !important; }
+        
+        /* Receipt A4 Landscape Custom */
+        .receipt-container { width: 1123px; min-height: 794px; background: white; margin: 0 auto; display: flex; flex-direction: row; justify-content: space-between; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .receipt-half { width: 50%; padding: 40px; display: flex; flex-direction: column; }
+        .receipt-divider { border-left: 2px dashed #e5e7eb; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 0; }
     </style>
 </head>
 <body class="selection:bg-gold-500 selection:text-white">
@@ -83,14 +88,9 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // =========================================================================
-        // [CONFIG] สำหรับใช้งานบน GitHub Pages 
-        // =========================================================================
         const API_CONFIG = {
-            USE_FAST_CSV: true, // ดึงข้อมูลให้อ่านผ่าน CSV โดยตรง (เร็วกว่า 10 เท่า)
-            // 🚨 แก้ไขให้เป็น ID ของชีตตัวเอง (ตัวอักษรยาวๆ ใน URL Google Sheets)
+            USE_FAST_CSV: true,
             SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
-            // 🚨 นำลิงก์ Web App URL จาก Google Apps Script (ตอน Deploy) มาใส่ตรงนี้
             WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/exec", 
             getCSVUrl: function(sheetName) {
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
@@ -107,7 +107,6 @@
             });
         };
 
-        // ฟังก์ชันอัจฉริยะ เลือกว่าจะทำงานแบบใน GAS ตรงๆ หรือยิง API ข้ามไปหา GAS จาก GitHub
         const runGAS = async (functionName, ...args) => {
             if (typeof google !== 'undefined' && google.script && google.script.run) {
                 return new Promise((resolve, reject) => {
@@ -125,7 +124,6 @@
                     return result.data !== undefined ? result.data : result;
                 } catch (error) { throw error; }
             } else {
-                console.warn(`[Mock Mode] Using Local Data. function: ${functionName}`);
                 return new Promise((resolve) => setTimeout(() => resolve({ success: true, count: 1 }), 500));
             }
         };
@@ -172,7 +170,7 @@
             const [searchPurpose, setSearchPurpose] = useState('activity');
             const [shirtSystemOpen, setShirtSystemOpen] = useState(true);
             const [shirtPrice, setShirtPrice] = useState({ normal: 250, oversize: 380, status: 'open' });
-            const [receiptSettings, setReceiptSettings] = useState({ header: 'สโมสรนักศึกษา\nมหาวิทยาลัยราชภัฏเชียงราย', note: 'ขอบคุณครับ' });
+            const [receiptSettings, setReceiptSettings] = useState({ header: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', note: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ' });
             
             const [isEditingOrder, setIsEditingOrder] = useState(false);
             const [poloGender, setPoloGender] = useState('ชาย');
@@ -194,14 +192,29 @@
                 const loadInitialData = async () => {
                     try {
                         let acts = [];
-                        if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                        if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                             const allActs = await fetchFastCSV('Activities');
                             acts = allActs.filter(a => a.Status === 'open');
                         } else {
                             acts = await runGAS('getActiveActivities');
                         }
                         setActivities(acts || []);
-                        const priceInfo = await runGAS('getShirtPrice');
+                        
+                        let priceInfo = null;
+                        if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                            try {
+                                const settings = await fetchFastCSV('Settings');
+                                const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                                const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                                const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', Value2: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ'};
+                                
+                                priceInfo = { 
+                                    normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                    status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2 
+                                };
+                            } catch(e) { priceInfo = await runGAS('getShirtPrice'); }
+                        } else { priceInfo = await runGAS('getShirtPrice'); }
+
                         if (priceInfo) {
                             setShirtPrice(priceInfo);
                             setShirtSystemOpen(priceInfo.status !== 'closed');
@@ -223,13 +236,34 @@
                 if(!studentId) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสนักศึกษา', 'warning');
                 Swal.fire({ title: 'ตรวจสอบข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
-                    const res = await runGAS('verifyStudent', studentId);
+                    let res = { success: false };
+                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                        try {
+                            const allStudents = await fetchFastCSV('Students');
+                            const studentData = allStudents.find(s => String(s.StudentID) === String(studentId) || String(s.IDCard) === String(studentId));
+                            if (studentData) res = { success: true, data: studentData };
+                            else res = { success: false };
+                        } catch(csvErr) { res = await runGAS('verifyStudent', studentId); }
+                    } else { res = await runGAS('verifyStudent', studentId); }
+
                     if(res.success) {
                         setStudent(res.data);
                         localStorage.setItem('last_student_id', studentId);
 
                         if (searchPurpose === 'shirt') {
-                            const orderCheck = await runGAS('checkShirtOrder', studentId);
+                            let orderCheck = { hasOrdered: false };
+                            if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                                try {
+                                    const allOrders = await fetchFastCSV('ShirtOrders');
+                                    for (let i = allOrders.length - 1; i >= 0; i--) {
+                                        if (String(allOrders[i].StudentID) === String(studentId)) {
+                                            orderCheck = { hasOrdered: true, data: allOrders[i] };
+                                            break;
+                                        }
+                                    }
+                                } catch(csvErr) { orderCheck = await runGAS('checkShirtOrder', studentId); }
+                            } else { orderCheck = await runGAS('checkShirtOrder', studentId); }
+
                             Swal.close();
                             if (orderCheck.hasOrdered && orderCheck.data) {
                                 const pastOrder = orderCheck.data;
@@ -285,7 +319,7 @@
                 Swal.fire({ title: 'ค้นหาประวัติ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data = [];
-                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                         const allChks = await fetchFastCSV('Checkins');
                         data = allChks.filter(c => String(c.StudentID) === String(studentId) || String(c.IDCard) === String(studentId));
                     } else { data = await runGAS('getStudentHistory', studentId); }
@@ -297,12 +331,25 @@
                 Swal.fire({ title: 'Accessing Secure Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data;
-                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        const [acts, chks, evals, shirts] = await Promise.all([
+                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                        const [acts, chks, evals, shirts, settings] = await Promise.all([
                             fetchFastCSV('Activities').catch(() => []), fetchFastCSV('Checkins').catch(() => []),
-                            fetchFastCSV('Evaluations').catch(() => []), fetchFastCSV('ShirtOrders').catch(() => [])
+                            fetchFastCSV('Evaluations').catch(() => []), fetchFastCSV('ShirtOrders').catch(() => []),
+                            fetchFastCSV('Settings').catch(() => [])
                         ]);
-                        const priceInfo = await runGAS('getShirtPrice'); 
+                        
+                        let priceInfo = { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ' };
+                        if (settings && settings.length > 0) {
+                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', Value2: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ'};
+                            
+                            priceInfo = { 
+                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2 
+                            };
+                        } else { priceInfo = await runGAS('getShirtPrice'); }
+                        
                         data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
                     } else { data = await runGAS('getAdminDashboardData'); }
                     setAdminData(data); 
@@ -323,7 +370,7 @@
                     <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-3 cursor-pointer" onClick={goHome}>
                             <div className="w-10 h-10 bg-charcoal-900 rounded-full flex items-center justify-center shadow-sm transition-colors"><i className="fa-solid fa-gem text-gold-500 text-lg"></i></div>
-                            <h1 className="font-semibold text-lg tracking-wide text-charcoal-900 hidden sm:block transition-colors">DIGIT.<span className="font-light text-gray-400">CRRU</span></h1>
+                            <h1 className="font-semibold text-lg tracking-wide text-charcoal-900 hidden sm:block transition-colors">DIGIT.CRRU <span className="font-light text-gray-400"></span></h1>
                         </div>
                         <div className="flex items-center gap-4">
                             <button onClick={() => setIsDarkMode(!isDarkMode)} className="w-10 h-10 rounded-full flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:text-gold-500 transition-colors shadow-sm focus:outline-none">
@@ -478,7 +525,17 @@
                                     <p className="text-gray-500 mt-2 font-light">Satisfaction Survey / แบบประเมินความพึงพอใจ</p>
                                 </div>
                                 <form onSubmit={handleSubmitSurvey}>
-                                    <div className="flex flex-wrap items-center gap-4 text-xs font-light text-gray-500 mb-10 pb-6 border-b border-gray-100">
+                                    <div className="hidden md:flex flex-row items-center justify-between px-4 mb-3 border-b border-gray-100 pb-2">
+                                        <div className="md:w-3/5 font-semibold text-gray-400 text-[10px] tracking-widest uppercase">หัวข้อการประเมิน</div>
+                                        <div className="flex justify-end gap-2 w-auto pr-1">
+                                            <div className="w-10 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-tight">5<br/>ยอดเยี่ยม</div>
+                                            <div className="w-10 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-tight">4<br/>ดีมาก</div>
+                                            <div className="w-10 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-tight">3<br/>ดี</div>
+                                            <div className="w-10 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-tight">2<br/>พอใช้</div>
+                                            <div className="w-10 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest leading-tight">1<br/>ปรับปรุง</div>
+                                        </div>
+                                    </div>
+                                    <div className="md:hidden flex flex-wrap items-center gap-4 text-xs font-light text-gray-500 mb-10 pb-6 border-b border-gray-100">
                                         <span className="font-medium text-charcoal-900">SCORING:</span>
                                         <div className="flex items-center gap-1.5"><div className="w-5 h-5 rounded bg-charcoal-900 text-white flex justify-center items-center">5</div> ยอดเยี่ยม</div>
                                         <div className="flex items-center gap-1.5"><div className="w-5 h-5 rounded border border-gray-200 text-gray-500 flex justify-center items-center">4</div> ดีมาก</div>
@@ -539,7 +596,7 @@
                                 </div>
 
                                 <form onSubmit={handleSubmitShirtOrder}>
-                                    <h2 className="text-2xl font-semibold text-charcoal-900 text-center mb-8">{isEditingOrder ? 'Edit Booking' : 'Shirt Booking'}</h2>
+                                    <h2 className="text-2xl font-semibold text-charcoal-900 text-center mb-8">แบบฟอร์มสั่งจองเสื้อ</h2>
                                     
                                     {/* Polo Section */}
                                     <div className="mb-8">
@@ -626,7 +683,6 @@
                                 </form>
                             </div>
                         </div>
-                        <Footer />
                         <MobileTabBar />
                     </div>
                 );
@@ -642,87 +698,40 @@
                 };
 
                 const ReceiptSlip = ({ title, data, config }) => (
-                    <div className="bg-white p-10 relative flex flex-col w-[48%]" style={{ minHeight: '100%' }}>
-                        
-                        {/* Header Section */}
-                        <div className="flex justify-between items-start mb-8">
-                            <div className="max-w-[70%]">
-                                <h2 className="text-lg font-bold text-charcoal-900 leading-tight whitespace-pre-wrap">{config.header}</h2>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-1">{title}</p>
-                                <p className="text-sm font-bold text-gold-600 bg-gold-50 px-3 py-1 rounded-md inline-block">{data.orderId}</p>
-                            </div>
+                    <div className="bg-white p-8 relative flex flex-col w-[48%]" style={{ minHeight: '100%' }}>
+                        <div className="border-b border-gray-200 pb-5 mb-6 flex justify-between items-start">
+                            <div className="max-w-[75%]"><h2 className="text-sm font-semibold text-charcoal-900 leading-relaxed whitespace-pre-wrap">{config.header}</h2></div>
+                            <div className="text-right"><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{title}</p><p className="text-sm font-bold text-charcoal-900">{data.orderId}</p></div>
                         </div>
-                        
-                        {/* Customer Info Section */}
-                        <div className="bg-charcoal-50/50 p-5 rounded-xl border border-gray-100 mb-8 grid grid-cols-2 gap-6">
-                            <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1.5">Customer Info</p>
-                                <p className="font-bold text-charcoal-900 text-sm break-words">{data.student.Name}</p>
-                                <p className="text-gray-500 font-light text-xs mt-1 break-words">{data.student.Major}</p>
-                                <p className="text-gray-500 font-light text-xs mt-0.5 break-words">ID: <span className="font-medium text-gray-700">{data.student.StudentID}</span></p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1.5">Transaction Date</p>
-                                <p className="font-bold text-charcoal-900 text-sm">{data.date.split(' ')[0]}</p>
-                                <p className="text-gray-500 font-light text-xs mt-1">{data.date.split(' ')[1]}</p>
-                            </div>
+                        <div className="grid grid-cols-2 gap-6 mb-8 text-sm border-b border-gray-100 pb-6">
+                            <div><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Customer</p><p className="font-semibold text-charcoal-900 break-words">{data.student.Name}</p><p className="text-gray-500 font-light mt-1 leading-normal break-words">{data.student.Major}</p><p className="text-gray-500 font-light mt-1 break-words">ID: {data.student.StudentID}</p></div>
+                            <div><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Date</p><p className="font-semibold text-charcoal-900">{data.date.split(' ')[0]}</p><p className="text-gray-500 font-light mt-1">{data.date.split(' ')[1]}</p></div>
                         </div>
-                        
-                        {/* Items Table Section */}
-                        <div className="flex-grow mb-8">
+                        <div className="flex-grow mb-6">
                             <table className="w-full text-sm text-left">
-                                <thead>
-                                    <tr className="border-b-2 border-gray-100">
-                                        <th className="pb-3 text-[11px] text-gray-400 uppercase tracking-widest font-medium">Description</th>
-                                        <th className="pb-3 text-center w-20 text-[11px] text-gray-400 uppercase tracking-widest font-medium">Qty</th>
-                                        <th className="pb-3 text-right w-28 text-[11px] text-gray-400 uppercase tracking-widest font-medium">Amount</th>
-                                    </tr>
+                                <thead className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200">
+                                    <tr><th className="pb-3 font-medium">Item</th><th className="pb-3 text-center w-16 font-medium">Qty</th><th className="pb-3 text-right w-24 font-medium">Amount</th></tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     <tr>
-                                        <td className="py-5">
-                                            <p className="font-bold text-charcoal-900 text-sm mb-1">Polo Shirt</p>
-                                            <p className="text-xs text-gray-500 font-light flex gap-3">
-                                                <span><i className="fa-solid fa-venus-mars text-gray-300 mr-1"></i> {data.poloGender}</span>
-                                                <span><i className="fa-solid fa-ruler text-gray-300 mr-1"></i> <span className="font-semibold text-charcoal-900">{data.poloSize}</span></span>
-                                            </p>
-                                        </td>
-                                        <td className="py-5 text-center font-medium text-charcoal-900 bg-gray-50/50 rounded-lg">{data.poloQty}</td>
-                                        <td className="py-5 text-right font-medium text-charcoal-900">฿{(['XL', '2XL', '3XL'].includes(data.poloSize) ? shirtPrice.oversize : shirtPrice.normal) * data.poloQty}</td>
+                                        <td className="py-4"><p className="font-semibold text-charcoal-900 text-sm">Polo Shirt</p><p className="text-xs text-gray-500 font-light mt-1">Gender: {data.poloGender}, Size: <span className="font-semibold text-charcoal-900">{data.poloSize}</span></p></td>
+                                        <td className="py-4 text-center text-charcoal-900">{data.poloQty}</td>
+                                        <td className="py-4 text-right text-charcoal-900">฿{ (['XL', '2XL', '3XL'].includes(data.poloSize) ? shirtPrice.oversize : shirtPrice.normal) * data.poloQty }</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-5">
-                                            <p className="font-bold text-charcoal-900 text-sm mb-1">T-Shirt Activity</p>
-                                            <p className="text-xs text-gray-500 font-light flex gap-3">
-                                                <span><i className="fa-solid fa-venus-mars text-gray-300 mr-1"></i> {data.tshirtGender}</span>
-                                                <span><i className="fa-solid fa-ruler text-gray-300 mr-1"></i> <span className="font-semibold text-charcoal-900">{data.tshirtSize}</span></span>
-                                            </p>
-                                        </td>
-                                        <td className="py-5 text-center font-medium text-charcoal-900 bg-gray-50/50 rounded-lg">{data.tshirtQty}</td>
-                                        <td className="py-5 text-right font-medium text-charcoal-900">฿{(['XL', '2XL', '3XL'].includes(data.tshirtSize) ? shirtPrice.oversize : shirtPrice.normal) * data.tshirtQty}</td>
+                                        <td className="py-4"><p className="font-semibold text-charcoal-900 text-sm">T-Shirt</p><p className="text-xs text-gray-500 font-light mt-1">Gender: {data.tshirtGender}, Size: <span className="font-semibold text-charcoal-900">{data.tshirtSize}</span></p></td>
+                                        <td className="py-4 text-center text-charcoal-900">{data.tshirtQty}</td>
+                                        <td className="py-4 text-right text-charcoal-900">฿{ (['XL', '2XL', '3XL'].includes(data.tshirtSize) ? shirtPrice.oversize : shirtPrice.normal) * data.tshirtQty }</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        
-                        {/* Total Section */}
-                        <div className="bg-charcoal-900 text-white p-5 rounded-xl flex justify-between items-center mb-10 shadow-lg shadow-charcoal-900/20">
-                            <span className="text-xs text-gray-400 uppercase tracking-widest font-medium">Grand Total</span>
-                            <span className="text-2xl font-bold text-gold-400">฿ {data.grandTotal.toLocaleString()}</span>
+                        <div className="flex justify-between items-end border-t border-gray-200 pt-4 mb-8">
+                            <span className="text-xs text-gray-500 uppercase tracking-widest font-medium">Total</span><span className="text-xl font-bold text-charcoal-900">฿ {data.grandTotal.toLocaleString()}</span>
                         </div>
-                        
-                        {/* Footer / Signatures */}
-                        <div className="mt-auto flex justify-between items-end border-t border-gray-100 pt-6">
-                            <div className="text-[10px] text-gray-400 max-w-[55%] leading-relaxed font-light">
-                                <span className="font-bold text-charcoal-900 uppercase tracking-widest block mb-1">Note:</span>
-                                <span className="whitespace-pre-wrap">{config.note}</span>
-                            </div>
-                            <div className="text-center w-48">
-                                <div className="border-b border-gray-400 border-dashed mb-3 h-8"></div>
-                                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-widest">Authorized Signature</p>
-                            </div>
+                        <div className="mt-auto flex justify-between items-end">
+                            <div className="text-[10px] text-gray-400 max-w-[50%] leading-relaxed font-light"><span className="font-medium text-gray-500 uppercase tracking-widest">Note:</span><br/><span className="whitespace-pre-wrap">{config.note}</span></div>
+                            <div className="text-center w-40"><div className="border-b border-gray-300 mb-2 h-6"></div><p className="text-[10px] text-gray-500 font-medium">Authorized Signature</p></div>
                         </div>
                     </div>
                 );
@@ -732,50 +741,26 @@
                         <Navbar />
                         <div className="flex-grow flex flex-col items-center pt-8 p-4 pb-20">
                             <div className="w-full max-w-[1200px]">
-                                
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 px-2 gap-4">
-                                    <div>
-                                        <h2 className="text-3xl font-bold text-charcoal-900 tracking-tight">Order Confirmation</h2>
-                                        <p className="text-gray-500 text-sm font-light mt-2">กรุณาดาวน์โหลดหรือแคปหน้าจอใบเสร็จนี้ไว้เป็นหลักฐาน</p>
-                                    </div>
-                                    <p className="text-xs bg-gold-50 text-gold-700 font-medium px-4 py-2 rounded-full border border-gold-200 xl:hidden shadow-sm flex items-center gap-2">
-                                        <i className="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวา เพื่อดูแบบเต็ม
-                                    </p>
+                                <div className="flex justify-between items-end mb-6 px-2">
+                                    <div><h2 className="text-2xl font-semibold text-charcoal-900">Order Confirmation</h2><p className="text-gray-500 text-sm font-light mt-1">Please download this receipt for your reference.</p></div>
+                                    <p className="text-xs text-gold-600 font-medium xl:hidden"><i className="fa-solid fa-arrows-left-right"></i> Scroll for full view</p>
                                 </div>
-
-                                {/* Receipt Canvas Area */}
-                                <div className="w-full overflow-x-auto pb-8 no-scrollbar">
-                                    <div id="receipt-card" className="bg-white flex flex-row justify-between items-stretch shadow-xl shadow-gray-200/50 rounded-2xl border border-gray-100 overflow-hidden" style={{ width: '1123px', minHeight: '794px', margin: '0 auto' }}>
-                                        
+                                <div className="w-full overflow-x-auto pb-6">
+                                    <div id="receipt-card" className="bg-white flex flex-row justify-between items-stretch shadow-sm border border-gray-200" style={{ width: '1123px', minHeight: '794px', margin: '0 auto' }}>
                                         <ReceiptSlip title="ORIGINAL" data={receiptData} config={receiptSettings} />
-                                        
-                                        {/* Divider */}
-                                        <div className="flex flex-col items-center justify-center gap-6 text-gray-300 bg-gray-50/80 px-2 border-x-2 border-dashed border-gray-200 relative">
-                                            <div className="absolute top-0 w-full h-4 bg-white rounded-b-full border-b border-gray-200 shadow-inner"></div>
-                                            <i className="fa-solid fa-scissors text-gray-400 text-sm transform -rotate-90"></i>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] whitespace-nowrap" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Cut Here</span>
-                                            <i className="fa-solid fa-scissors text-gray-400 text-sm transform rotate-90"></i>
-                                            <div className="absolute bottom-0 w-full h-4 bg-white rounded-t-full border-t border-gray-200 shadow-inner"></div>
+                                        <div className="flex flex-col items-center justify-center gap-4 text-gray-300 bg-gray-50/50 px-1 border-x border-dashed border-gray-200">
+                                            <i className="fa-solid fa-scissors text-gray-400 text-xs transform -rotate-90"></i>
+                                            <span className="text-[9px] font-medium uppercase tracking-[0.2em] whitespace-nowrap opacity-50" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>Cut Here</span>
+                                            <i className="fa-solid fa-scissors text-gray-400 text-xs transform rotate-90"></i>
                                         </div>
-                                        
                                         <ReceiptSlip title="COPY" data={receiptData} config={receiptSettings} />
-                                        
                                     </div>
                                 </div>
-                                
-                                {/* Action Buttons */}
-                                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-6 max-w-[800px] w-full mx-auto">
-                                    <button onClick={goHome} className="w-full sm:w-1/4 bg-white text-charcoal-900 font-bold py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all shadow-sm text-sm tracking-wider flex items-center justify-center gap-2"><i className="fa-solid fa-house"></i> HOME</button>
-                                    
-                                    {shirtSystemOpen && (
-                                        <button onClick={() => { setIsEditingOrder(true); setView('shirt_form'); }} className="w-full sm:w-1/4 btn-primary py-4 rounded-xl font-bold text-sm tracking-wider shadow-lg flex items-center justify-center gap-2"><i className="fa-solid fa-pen-to-square"></i> EDIT ORDER</button>
-                                    )}
-                                    
-                                    <button onClick={handleDownloadReceipt} className="w-full sm:w-2/4 btn-gold py-4 rounded-xl font-bold flex justify-center items-center gap-3 text-sm tracking-wider shadow-lg shadow-gold-500/30 transform hover:-translate-y-1 transition-all">
-                                        <i className="fa-solid fa-download text-lg"></i> DOWNLOAD RECEIPT
-                                    </button>
+                                <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 max-w-[800px] w-full mx-auto">
+                                    <button onClick={goHome} className="w-full sm:w-1/4 bg-white text-charcoal-900 font-semibold py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm tracking-wider">HOME</button>
+                                    {shirtSystemOpen && <button onClick={() => { setIsEditingOrder(true); setView('shirt_form'); }} className="w-full sm:w-1/4 btn-primary py-4 rounded-xl font-semibold text-sm tracking-wider">EDIT ORDER</button>}
+                                    <button onClick={handleDownloadReceipt} className="w-full sm:w-2/4 btn-gold py-4 rounded-xl font-semibold flex justify-center items-center gap-2 text-sm tracking-wider"><i className="fa-solid fa-download"></i> DOWNLOAD RECEIPT</button>
                                 </div>
-                                
                             </div>
                         </div>
                         <Footer />
@@ -881,9 +866,6 @@
             return null;
         }
 
-        // ======================
-        // ADMIN DASHBOARD
-        // ======================
         function AdminDashboard({ data, reloadData, goHome }) {
             const [activeTab, setActiveTab] = useState('overview');
             const [selectedActivityForSummary, setSelectedActivityForSummary] = useState('');
@@ -1129,8 +1111,7 @@
                             <div className="bg-white p-8 border border-gray-100 rounded-xl transition-colors">
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-between">
                                     <select className="border border-gray-200 p-3 rounded-lg text-sm bg-transparent outline-none flex-grow max-w-sm focus:border-gold-500 transition-colors" value={selectedActivityForSummary} onChange={(e)=>setSelectedActivityForSummary(e.target.value)}>
-                                        <option value="">All Activities</option>
-                                        {data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
+                                        <option value="">All Activities</option>{data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
                                     </select>
                                     <div className="flex gap-2">
                                         <label className="border border-gray-200 text-charcoal-900 px-4 py-2.5 rounded-lg cursor-pointer text-xs font-medium tracking-widest uppercase hover:bg-gray-50 transition-colors flex items-center"><i className="fa-solid fa-upload mr-2"></i> Import<input type="file" accept=".csv" className="hidden" onChange={handleImportCSV} /></label>
