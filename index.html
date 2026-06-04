@@ -323,7 +323,7 @@
                 try {
                     let data = [];
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        const allChks = await fetchFastCSV('Checkins').catch(() => []);
+                        const allChks = await fetchFastCSV('CheckIns').catch(() => []);
                         data = allChks.filter(c => String(c.StudentID) === String(studentId) || String(c.IDCard) === String(studentId));
                     } else { data = await runGAS('getStudentHistory', studentId); }
                     Swal.close(); setHistoryData(data || []); setView('history_result');
@@ -331,17 +331,41 @@
             };
 
             const loadAdminData = async () => {
-                Swal.fire({ title: 'Accessing Secure Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                Swal.fire({ title: 'กำลังโหลดข้อมูลแอดมิน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data;
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        const [acts, chks, evals, shirts] = await Promise.all([
-                            fetchFastCSV('Activities').catch(() => []), fetchFastCSV('Checkins').catch(() => []),
-                            fetchFastCSV('Evaluations').catch(() => []), fetchFastCSV('ShirtOrders').catch(() => [])
+                        // โหลดข้อมูลทุกอย่างผ่าน CSV โดยตรง (ไม่พึ่งพา Web App API เพื่อป้องกัน Error Failed to fetch ตอนล็อกอิน)
+                        const [acts, chks, evals, shirts, settings] = await Promise.all([
+                            fetchFastCSV('Activities').catch(() => []), 
+                            fetchFastCSV('CheckIns').catch(() => []),
+                            fetchFastCSV('Evaluations').catch(() => []), 
+                            fetchFastCSV('ShirtOrders').catch(() => []),
+                            fetchFastCSV('Settings').catch(() => [])
                         ]);
-                        const priceInfo = await runGAS('getShirtPrice'); 
+                        
+                        let priceInfo = { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ', systemStatus: 'open' };
+                        
+                        // ดึงการตั้งค่าจากชีต Settings ตรงๆ
+                        if (settings && settings.length > 0) {
+                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: priceInfo.receiptHeader, Value2: priceInfo.receiptNote};
+                            const systemRow = settings.find(r => r.Key === 'SystemStatus') || {Value1: 'open', Value2: ''};
+                            
+                            priceInfo = { 
+                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2,
+                                systemStatus: systemRow.Value1
+                            };
+                        } else {
+                            try { priceInfo = await runGAS('getShirtPrice'); } catch(err) { console.warn("Fallback to default settings"); }
+                        }
+                        
                         data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
-                    } else { data = await runGAS('getAdminDashboardData'); }
+                    } else { 
+                        data = await runGAS('getAdminDashboardData'); 
+                    }
                     
                     setAdminData(data); 
                     if (data && data.shirtPrice) { 
@@ -350,7 +374,9 @@
                         setSystemOpen(data.shirtPrice.systemStatus !== 'maintenance');
                     }
                     Swal.close(); setView('admin_dashboard');
-                } catch(e) { Swal.fire('Error', e.message, 'error'); }
+                } catch(e) { 
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้ กรุณาตรวจสอบการตั้งค่า Sheet ID', 'error'); 
+                }
             };
 
             const getGenderProps = (nameStr) => {
@@ -872,7 +898,7 @@
                 e.preventDefault();
                 if(e.target.username.value === 'admin' && e.target.password.value === '9999') {
                     localStorage.setItem('admin_logged_in', 'true'); loadAdminData();
-                } else { Swal.fire('Error', 'Invalid Credentials', 'error'); }
+                } else { Swal.fire('ข้อผิดพลาด', 'Username หรือ Password ไม่ถูกต้อง (รหัสคือ 9999)', 'error'); }
             };
 
             if (view === 'admin_login') {
