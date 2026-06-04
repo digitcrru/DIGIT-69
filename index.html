@@ -1271,6 +1271,40 @@
                                         <button onClick={() => { const csv = Papa.unparse(data.shirtOrders); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'})); link.download = `ShirtOrders.csv`; link.click(); }} className="btn-gradient px-4 py-2.5 rounded-xl text-xs font-medium tracking-widest uppercase flex items-center shadow-lg shadow-orange-500/20"><i className="fa-solid fa-file-csv mr-2"></i> Export</button>
                                     </div>
                                 </div>
+                                
+                                {/* กล่องสรุปยอดรวม และ ยอดแยกตามสาขา */}
+                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                                    <div className="lg:col-span-1 bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-2xl border border-orange-200 shadow-sm flex flex-col justify-center">
+                                        <p className="text-xs font-medium text-orange-600/80 uppercase tracking-widest mb-2">ยอดเงินรวมทั้งหมด</p>
+                                        <p className="text-4xl font-bold text-charcoal-900">
+                                            ฿{(data.shirtOrders||[]).reduce((sum, o) => sum + (Number(o.TotalPrice) || 0), 0).toLocaleString()}
+                                        </p>
+                                        <p className="text-sm text-gray-500 mt-2 font-medium">จากทั้งหมด {(data.shirtOrders||[]).length} รายการสั่งจอง</p>
+                                    </div>
+                                    <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-orange-100 shadow-sm">
+                                        <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-4">สรุปยอดสั่งจองแยกตามสาขาวิชา</p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {Object.entries((data.shirtOrders||[]).reduce((acc, o) => {
+                                                const m = o.Major || 'ไม่ระบุสาขา';
+                                                if(!acc[m]) acc[m] = { count: 0, total: 0 };
+                                                acc[m].count++;
+                                                acc[m].total += Number(o.TotalPrice) || 0;
+                                                return acc;
+                                            }, {})).sort((a,b) => b[1].count - a[1].count).map(([major, stats], idx) => (
+                                                <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-orange-200 transition-colors">
+                                                    <p className="font-semibold text-charcoal-900 text-sm truncate" title={major}>{major}</p>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <span className="text-xs text-gray-500 font-medium">{stats.count} บิล</span>
+                                                        <span className="font-bold text-orange-600 text-sm">฿{stats.total.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {(data.shirtOrders||[]).length === 0 && <div className="text-sm text-gray-400 col-span-full">ยังไม่มีข้อมูลการสั่งจอง</div>}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* สิ้นสุดกล่องสรุป */}
+
                                 <div className="overflow-x-auto border border-orange-100/50 rounded-xl transition-colors">
                                     <table className="w-full text-sm text-left whitespace-nowrap"><thead className="bg-orange-50/50 border-b border-orange-100 text-[10px] text-gray-500 uppercase tracking-widest transition-colors"><tr><th className="px-6 py-4 font-medium">Time</th><th className="px-6 py-4 font-medium">Student</th><th className="px-6 py-4 text-center font-medium">Polo</th><th className="px-6 py-4 text-center font-medium">T-Shirt</th><th className="px-6 py-4 text-right font-medium">Total</th></tr></thead><tbody className="divide-y divide-orange-50">
                                         {(data.shirtOrders||[]).slice().reverse().map((o,i)=>(
