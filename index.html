@@ -123,7 +123,6 @@
                     return result.data !== undefined ? result.data : result;
                 } catch (error) { 
                     console.warn(`runGAS Fetch Error (${functionName}):`, error);
-                    // ปรับปรุงการแจ้งเตือน Error ให้ชัดเจนขึ้น
                     if (error.name === 'TypeError' || error.message.includes('Failed to fetch')) {
                         throw new Error('Failed to fetch: ไม่สามารถเชื่อมต่อฐานข้อมูลได้ \nกรุณาตรวจสอบว่าสิทธิ์การแชร์ของ Web App เป็น "ทุกคน (Anyone)" และอัปเดตเป็น "เวอร์ชันใหม่ (New version)" แล้ว');
                     }
@@ -162,7 +161,15 @@
         ];
 
         function App() {
-            const [view, setView] = useState('home'); 
+            // ระบบจดจำหน้าเมื่อรีเฟรช (Session Persistence)
+            const [view, setView] = useState(() => {
+                const savedView = sessionStorage.getItem('app_view');
+                if (savedView === 'admin_dashboard' && localStorage.getItem('admin_logged_in') === 'true') return 'admin_dashboard';
+                // นำเฉพาะหน้าที่ไม่ต้องพึ่งพาสเตทข้อมูลชั่วคราวกลับมา
+                if (['home', 'search', 'history_search', 'admin_login'].includes(savedView)) return savedView;
+                return 'home';
+            }); 
+            
             const [student, setStudent] = useState(null);
             const [activities, setActivities] = useState([]);
             const [selectedActivity, setSelectedActivity] = useState(null);
@@ -173,7 +180,8 @@
             const [systemOpen, setSystemOpen] = useState(true);
             const [adminData, setAdminData] = useState(null);
 
-            const [searchPurpose, setSearchPurpose] = useState('activity');
+            const [searchPurpose, setSearchPurpose] = useState(() => sessionStorage.getItem('search_purpose') || 'activity');
+            
             const [shirtSystemOpen, setShirtSystemOpen] = useState(true);
             const [shirtPrice, setShirtPrice] = useState({ normal: 250, oversize: 380, status: 'open' });
             const [receiptSettings, setReceiptSettings] = useState({ header: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', note: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ' });
@@ -189,11 +197,63 @@
 
             const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
+            // บันทึกหน้าจอลง Session
+            useEffect(() => { sessionStorage.setItem('app_view', view); }, [view]);
+            useEffect(() => { sessionStorage.setItem('search_purpose', searchPurpose); }, [searchPurpose]);
+
             useEffect(() => {
                 if (isDarkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
                 else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
             }, [isDarkMode]);
 
+            const loadAdminData = async () => {
+                Swal.fire({ title: 'กำลังโหลดข้อมูลแอดมิน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                try {
+                    let data;
+                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                        const [acts, chks, evals, shirts, settings] = await Promise.all([
+                            fetchFastCSV('Activities').catch(() => []), 
+                            fetchFastCSV('CheckIns').catch(() => []),
+                            fetchFastCSV('Evaluations').catch(() => []), 
+                            fetchFastCSV('ShirtOrders').catch(() => []),
+                            fetchFastCSV('Settings').catch(() => [])
+                        ]);
+                        
+                        let priceInfo = { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ', systemStatus: 'open' };
+                        
+                        if (settings && settings.length > 0) {
+                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: priceInfo.receiptHeader, Value2: priceInfo.receiptNote};
+                            const systemRow = settings.find(r => r.Key === 'SystemStatus') || {Value1: 'open', Value2: ''};
+                            
+                            priceInfo = { 
+                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2,
+                                systemStatus: systemRow.Value1
+                            };
+                        } else {
+                            try { priceInfo = await runGAS('getShirtPrice'); } catch(err) { console.warn("Fallback to default settings"); }
+                        }
+                        
+                        data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
+                    } else { 
+                        data = await runGAS('getAdminDashboardData'); 
+                    }
+                    
+                    setAdminData(data); 
+                    if (data && data.shirtPrice) { 
+                        setShirtPrice(data.shirtPrice); 
+                        setShirtSystemOpen(data.shirtPrice.status !== 'closed'); 
+                        setSystemOpen(data.shirtPrice.systemStatus !== 'maintenance');
+                    }
+                    Swal.close(); setView('admin_dashboard');
+                } catch(e) { 
+                    Swal.fire('ข้อผิดพลาดการเชื่อมต่อ', e.message, 'error'); 
+                }
+            };
+
+            // โหลดข้อมูลเริ่มต้นแค่ครั้งเดียวตอนเปิดแอพ หรือตอนรีเฟรชหน้า
             useEffect(() => {
                 const loadInitialData = async () => {
                     try {
@@ -229,18 +289,17 @@
                         }
                     } catch (e) { 
                         console.error("Initial load failed", e); 
-                        // เพิ่มการแจ้งเตือนกรณีโหลดหน้าเว็บครั้งแรกแล้วดึงข้อมูลไม่สำเร็จ
-                        if (e.message && e.message.includes('Failed to fetch')) {
-                            Swal.fire({
-                                title: 'การเชื่อมต่อผิดพลาด',
-                                text: 'ไม่สามารถดึงข้อมูลเริ่มต้นได้ กรุณาตรวจสอบการแชร์ไฟล์ Google Sheets',
-                                icon: 'error'
-                            });
-                        }
                     }
                 };
-                if(view === 'home') loadInitialData();
-            }, [view]);
+
+                // เลือกว่าจะโหลดแบบแอดมิน (ถ้ารีเฟรชในหน้าแอดมิน) หรือโหลดแบบผู้ใช้ทั่วไป
+                if (view === 'admin_dashboard' && localStorage.getItem('admin_logged_in') === 'true') {
+                    if (!adminData) loadAdminData();
+                } else {
+                    loadInitialData();
+                }
+                // eslint-disable-next-line react-hooks/exhaustive-deps
+            }, []); // ทำงานแค่ครั้งเดียวตอน Mount
 
             const goHome = () => {
                 setStudent(null); setSearchPurpose('activity');
@@ -331,7 +390,6 @@
                     }
                 } catch(e) {
                     Swal.close();
-                    // Fallback ถ้าเช็คไม่ได้ให้ผ่านไปก่อน แล้วไปดักที่ Backend แทน
                     setSelectedActivity(act);
                     setView('survey');
                 }
@@ -378,53 +436,6 @@
                     } else { data = await runGAS('getStudentHistory', studentId); }
                     Swal.close(); setHistoryData(data || []); setView('history_result');
                 } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
-            };
-
-            const loadAdminData = async () => {
-                Swal.fire({ title: 'กำลังโหลดข้อมูลแอดมิน...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
-                try {
-                    let data;
-                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        const [acts, chks, evals, shirts, settings] = await Promise.all([
-                            fetchFastCSV('Activities').catch(() => []), 
-                            fetchFastCSV('CheckIns').catch(() => []),
-                            fetchFastCSV('Evaluations').catch(() => []), 
-                            fetchFastCSV('ShirtOrders').catch(() => []),
-                            fetchFastCSV('Settings').catch(() => [])
-                        ]);
-                        
-                        let priceInfo = { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ', systemStatus: 'open' };
-                        
-                        if (settings && settings.length > 0) {
-                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
-                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
-                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: priceInfo.receiptHeader, Value2: priceInfo.receiptNote};
-                            const systemRow = settings.find(r => r.Key === 'SystemStatus') || {Value1: 'open', Value2: ''};
-                            
-                            priceInfo = { 
-                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
-                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2,
-                                systemStatus: systemRow.Value1
-                            };
-                        } else {
-                            try { priceInfo = await runGAS('getShirtPrice'); } catch(err) { console.warn("Fallback to default settings"); }
-                        }
-                        
-                        data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
-                    } else { 
-                        data = await runGAS('getAdminDashboardData'); 
-                    }
-                    
-                    setAdminData(data); 
-                    if (data && data.shirtPrice) { 
-                        setShirtPrice(data.shirtPrice); 
-                        setShirtSystemOpen(data.shirtPrice.status !== 'closed'); 
-                        setSystemOpen(data.shirtPrice.systemStatus !== 'maintenance');
-                    }
-                    Swal.close(); setView('admin_dashboard');
-                } catch(e) { 
-                    Swal.fire('ข้อผิดพลาดการเชื่อมต่อ', e.message, 'error'); 
-                }
             };
 
             const getGenderProps = (nameStr) => {
@@ -667,7 +678,7 @@
                                 </div>
 
                                 <form onSubmit={handleSubmitShirtOrder}>
-                                    <h2 className="text-2xl font-semibold text-charcoal-900 text-center mb-8">แบบฟอร์มสั่งจองเสื้อ</h2>
+                                    <h2 className="text-2xl font-semibold text-charcoal-900 text-center mb-8">{isEditingOrder ? 'Edit Booking' : 'แบบฟอร์มสั่งจองเสื้อ'}</h2>
                                     
                                     <div className="mb-8">
                                         <h3 className="font-semibold text-charcoal-900 mb-4 flex items-center"><span className="text-orange-500 mr-2">01.</span> เสื้อคอปกโปโล</h3>
@@ -946,7 +957,16 @@
                 e.preventDefault();
                 if(e.target.username.value === 'admin' && e.target.password.value === '9999') {
                     localStorage.setItem('admin_logged_in', 'true'); loadAdminData();
-                } else { Swal.fire('ข้อผิดพลาด', 'Username หรือ Password ไม่ถูกต้อง (รหัสคือ 9999)', 'error'); }
+                } else { 
+                    Swal.fire({
+                        title: 'ข้อมูลไม่ถูกต้อง', 
+                        text: 'รหัสผ่านหรือชื่อผู้ใช้ผิด กรุณาลองใหม่', 
+                        icon: 'error',
+                        confirmButtonColor: '#ea580c'
+                    }).then(() => {
+                        goHome();
+                    }); 
+                }
             };
 
             if (view === 'admin_login') {
@@ -1167,7 +1187,8 @@
                             <div className="mt-8 pt-6 border-t border-gray-800">
                                 <p className="text-[9px] text-gray-500 font-medium mb-3 px-4 uppercase tracking-widest">System Control</p>
                                 <button onClick={toggleSystem} className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-all ${systemOpen ? 'text-white bg-green-900/30 hover:bg-green-900/50 border border-green-800' : 'text-gray-400 bg-black/30 border border-gray-800'}`}>
-                                    <span className="font-light"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off'} mr-2`}></i> Platform</span><span className="text-[10px] uppercase tracking-widest">{systemOpen ? 'Online' : 'Offline'}</span>
+                                    <span className="font-light flex items-center"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-500'} text-2xl mr-3`}></i> Platform</span>
+                                    <span className="text-[10px] uppercase tracking-widest">{systemOpen ? 'Online' : 'Offline'}</span>
                                 </button>
                             </div>
                         </nav>
@@ -1176,15 +1197,12 @@
 
                     <main className="flex-1 p-6 md:p-12 overflow-y-auto bg-gradient-to-br from-[#fffcf9] to-[#ffedd5] dark:from-[#1c1512] dark:to-[#120c0a]">
                         <div className="flex justify-between items-end mb-12 border-b border-orange-200/50 dark:border-gray-800 pb-4">
-                            <h2 className="text-3xl font-light text-charcoal-900 tracking-tight capitalize">
-                                {activeTab.replace('_', ' ')}
-                            </h2>
+                            <h2 className="text-3xl font-light text-charcoal-900 tracking-tight capitalize">{activeTab.replace('_', ' ')}</h2>
                             <button onClick={reloadData} className="text-xs font-medium text-orange-500 hover:text-orange-700 tracking-widest uppercase transition-colors bg-white/50 px-3 py-1.5 rounded-lg border border-orange-100"><i className="fa-solid fa-rotate-right mr-1"></i> Sync</button>
                         </div>
 
                         {activeTab === 'overview' && (
                             <div>
-                                {}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                                     <div onClick={() => setActiveTab('activities')} className="cursor-pointer group bg-white/80 backdrop-blur p-8 border border-orange-100/50 rounded-2xl shadow-sm transition-all hover:shadow-xl hover:shadow-orange-500/10 hover:-translate-y-1 relative overflow-hidden">
                                         <div className="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-150 transition-transform duration-500 z-0"></div>
@@ -1217,8 +1235,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                {}
                                 <h3 className="text-sm font-medium text-charcoal-900 mb-6 uppercase tracking-widest pl-1 border-l-2 border-orange-500">Activity Breakdown</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                     {data.activities.map(act => {
@@ -1322,14 +1338,10 @@
                                     </div>
                                 </div>
                                 
-                                {/* ---------------- เริ่มต้น: กล่องสรุปยอดรวม และ ยอดแยกตามสาขา (ปรับโฉมใหม่) ---------------- */}
                                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-10">
-                                    
-                                    {/* 1. การ์ดยอดเงินรวมทั้งหมด (Premium Styling) */}
                                     <div className="lg:col-span-1 bg-gradient-to-br from-orange-400 to-orange-600 p-8 rounded-[2rem] shadow-lg shadow-orange-500/30 flex flex-col justify-center relative overflow-hidden group">
                                         <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
                                         <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-orange-700/20 rounded-full blur-2xl"></div>
-                                        
                                         <div className="relative z-10">
                                             <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-white mb-6 backdrop-blur-sm border border-white/20 shadow-inner">
                                                 <i className="fa-solid fa-sack-dollar text-2xl"></i>
@@ -1346,7 +1358,6 @@
                                         </div>
                                     </div>
 
-                                    {/* 2. การ์ดสรุปยอดแยกตามสาขา (Modern Grid Layout) */}
                                     <div className="lg:col-span-3 bg-white p-8 rounded-[2rem] border border-orange-100 shadow-sm relative">
                                         <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
                                             <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 shadow-sm border border-orange-100/50">
@@ -1367,7 +1378,6 @@
                                                 return acc;
                                             }, {})).sort((a,b) => b[1].count - a[1].count).map(([major, stats], idx) => (
                                                 <div key={idx} className="group relative p-5 bg-white rounded-2xl border border-gray-100 hover:border-orange-300 hover:shadow-xl hover:shadow-orange-500/10 transition-all duration-300 transform hover:-translate-y-1 overflow-hidden">
-                                                    {/* Decorative background element on hover */}
                                                     <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-0"></div>
                                                     
                                                     <div className="relative z-10 flex flex-col h-full">
@@ -1402,7 +1412,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {/* ---------------- สิ้นสุด: กล่องสรุปยอดรวม ---------------- */}
 
                                 <div className="overflow-x-auto border border-orange-100/50 rounded-xl transition-colors">
                                     <table className="w-full text-sm text-left whitespace-nowrap"><thead className="bg-orange-50/50 border-b border-orange-100 text-[10px] text-gray-500 uppercase tracking-widest transition-colors"><tr><th className="px-6 py-4 font-medium">Time</th><th className="px-6 py-4 font-medium">Student</th><th className="px-6 py-4 text-center font-medium">Polo</th><th className="px-6 py-4 text-center font-medium">T-Shirt</th><th className="px-6 py-4 text-right font-medium">Total</th></tr></thead><tbody className="divide-y divide-orange-50">
