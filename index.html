@@ -86,14 +86,13 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useCallback } = React;
 
         const API_CONFIG = {
             USE_FAST_CSV: true,
             SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
             WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/exec", 
             getCSVUrl: function(sheetName) {
-                // เพิ่ม cache-buster (_=timestamp) เพื่อป้องกัน Google Sheets จำค่าเก่า
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}&_=${new Date().getTime()}`;
             }
         };
@@ -117,17 +116,24 @@
                 try {
                     const response = await fetch(API_CONFIG.WEB_APP_URL, {
                         method: 'POST',
+                        redirect: 'follow',
                         body: JSON.stringify({ action: functionName, params: args }),
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                        headers: { 'Content-Type': 'text/plain' }
                     });
                     const result = await response.json();
                     if (result.success === false && result.error) throw new Error(result.error);
                     return result.data !== undefined ? result.data : result;
-                } catch (error) { throw error; }
+                } catch (error) { 
+                    console.warn(`runGAS Fetch Error (${functionName}):`, error);
+                    throw error; 
+                }
             } else {
                 return new Promise((resolve) => setTimeout(() => resolve({ success: true, count: 1 }), 500));
             }
         };
+
+        // Cache for Students to speed up search
+        let studentsCache = null;
 
         const surveyData = [
             {
@@ -189,15 +195,46 @@
                 else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
             }, [isDarkMode]);
 
+            // Pre-fetch students on load to make search instant
+            useEffect(() => {
+                if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && !studentsCache) {
+                    fetchFastCSV('Students').then(data => {
+                        studentsCache = data;
+                    }).catch(console.error);
+                }
+            }, []);
+
             useEffect(() => {
                 const loadInitialData = async () => {
                     try {
-                        // เปลี่ยนมาใช้ runGAS แบบสดๆ สำหรับการเช็คข้อมูลสำคัญอย่าง "กิจกรรมที่เปิดอยู่" และ "สถานะปิดเปิดจองเสื้อ"
-                        // เพื่อให้ทำงานได้ Real-time ทันทีที่แอดมินกดเปิด/ปิด โดยไม่ติด Cache
-                        const acts = await runGAS('getActiveActivities');
+                        let acts = null;
+                        try { 
+                            acts = await runGAS('getActiveActivities'); 
+                        } catch (err) { console.warn("Real-time fetch failed, falling back to CSV for activities."); }
+
+                        if (!acts && API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID) {
+                            const allActs = await fetchFastCSV('Activities').catch(() => []);
+                            acts = allActs.filter(a => a.Status === 'open');
+                        }
                         setActivities(acts || []);
                         
-                        const priceInfo = await runGAS('getShirtPrice');
+                        let priceInfo = null;
+                        try { 
+                            priceInfo = await runGAS('getShirtPrice'); 
+                        } catch (err) { console.warn("Real-time fetch failed, falling back to CSV for settings."); }
+
+                        if (!priceInfo && API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID) {
+                            const settings = await fetchFastCSV('Settings').catch(() => []);
+                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', Value2: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ'};
+                            
+                            priceInfo = { 
+                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2 
+                            };
+                        }
+
                         if (priceInfo) {
                             setShirtPrice(priceInfo);
                             setShirtSystemOpen(priceInfo.status !== 'closed');
@@ -217,17 +254,38 @@
 
             const handleSearchStudent = async (studentId) => {
                 if(!studentId) return Swal.fire('แจ้งเตือน', 'กรุณากรอกรหัสนักศึกษา', 'warning');
-                Swal.fire({ title: 'ตรวจสอบข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                
+                // Fast visual feedback
+                Swal.fire({
+                    title: 'กำลังค้นหา...',
+                    text: 'กรุณารอสักครู่',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
                 try {
                     let res = { success: false };
-                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                    
+                    // Try memory cache first for instant search
+                    if (studentsCache) {
+                        const studentData = studentsCache.find(s => String(s.StudentID) === String(studentId) || String(s.IDCard) === String(studentId));
+                        if (studentData) res = { success: true, data: studentData };
+                    } 
+                    // Fallback to CSV
+                    else if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                         try {
                             const allStudents = await fetchFastCSV('Students');
+                            studentsCache = allStudents; // cache for next time
                             const studentData = allStudents.find(s => String(s.StudentID) === String(studentId) || String(s.IDCard) === String(studentId));
                             if (studentData) res = { success: true, data: studentData };
                             else res = { success: false };
-                        } catch(csvErr) { res = await runGAS('verifyStudent', studentId); }
-                    } else { res = await runGAS('verifyStudent', studentId); }
+                        } catch(csvErr) { 
+                            res = await runGAS('verifyStudent', studentId).catch(e => { throw e }); 
+                        }
+                    } else { 
+                        res = await runGAS('verifyStudent', studentId); 
+                    }
 
                     if(res.success) {
                         setStudent(res.data);
@@ -262,48 +320,101 @@
                                 setTshirtGender(pastOrder.TshirtGender || 'ชาย'); setTshirtSize(pastOrder.TshirtSize); setTshirtQty(Number(pastOrder.TshirtQty));
                                 setView('receipt');
                             } else { setView('shirt_form'); }
-                        } else { Swal.close(); setView('select'); }
-                    } else { Swal.close(); Swal.fire({title:'ไม่พบข้อมูล', text:'ไม่พบรหัสนักศึกษานี้ในระบบ', icon:'error', confirmButtonColor: '#1a1a1a'}); }
-                } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
+                        } else { 
+                            Swal.close(); 
+                            setView('select'); 
+                        }
+                    } else { 
+                        Swal.close(); 
+                        Swal.fire({
+                            title: 'ไม่พบข้อมูล', 
+                            text: 'ไม่พบรหัสนักศึกษานี้ในระบบ กรุณาตรวจสอบอีกครั้ง', 
+                            icon: 'error', 
+                            confirmButtonColor: '#1a1a1a'
+                        }); 
+                    }
+                } catch(e) { 
+                    Swal.close();
+                    Swal.fire('ข้อผิดพลาด', e.message, 'error'); 
+                }
             };
 
             const handleSubmitShirtOrder = async (e) => {
                 e.preventDefault();
                 if (poloQty < 1 || tshirtQty < 1) return Swal.fire('แจ้งเตือน', 'ระบุจำนวนอย่างน้อย 1 ตัว', 'warning');
-                Swal.fire({ title: 'กำลังดำเนินการ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                
+                Swal.fire({
+                    title: 'กำลังบันทึกข้อมูล...',
+                    text: 'กรุณารอสักครู่ ห้ามปิดหน้าต่างนี้',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
                 try {
                     const getPrice = (size) => ['XL', '2XL', '3XL'].includes(size) ? shirtPrice.oversize : shirtPrice.normal;
                     const grandTotal = (getPrice(poloSize) * poloQty) + (getPrice(tshirtSize) * tshirtQty);
                     const payload = { student, poloGender, poloSize, poloQty, tshirtGender, tshirtSize, tshirtQty, grandTotal };
+                    
                     const res = await runGAS('saveShirtOrder', payload);
-                    Swal.close();
+                    
                     if(res.success) {
                         setReceiptData({ ...payload, orderId: 'ORD-' + Date.now().toString().slice(-6), date: new Date().toLocaleString('th-TH') });
-                        Swal.fire({ title: 'บันทึกสำเร็จ', icon: 'success', confirmButtonColor: '#d19d47' }).then(() => { setIsEditingOrder(false); setView('receipt'); });
-                    } else { Swal.fire('ข้อผิดพลาด', res.error, 'error'); }
-                } catch(e) { Swal.fire('เกิดข้อผิดพลาด', e.message, 'error'); }
+                        Swal.fire({ 
+                            title: 'บันทึกสำเร็จ!', 
+                            text: 'ข้อมูลการสั่งจองถูกบันทึกเรียบร้อยแล้ว',
+                            icon: 'success', 
+                            confirmButtonColor: '#d19d47' 
+                        }).then(() => { 
+                            setIsEditingOrder(false); 
+                            setView('receipt'); 
+                        });
+                    } else { 
+                        Swal.fire('ข้อผิดพลาด', res.error, 'error'); 
+                    }
+                } catch(e) { 
+                    Swal.fire('เกิดข้อผิดพลาด', e.message, 'error'); 
+                }
             };
 
             const handleSubmitSurvey = async (e) => {
                 e.preventDefault();
                 if(Object.keys(surveyAnswers).length < 13) return Swal.fire('แจ้งเตือน', 'กรุณาประเมินให้ครบทุกข้อ', 'warning');
-                Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                
+                Swal.fire({
+                    title: 'กำลังบันทึกข้อมูล...',
+                    text: 'กรุณารอสักครู่ ระบบกำลังบันทึกผลการประเมิน',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
                 try {
                     const payload = { student, activity: selectedActivity, answers: surveyAnswers, suggestion };
                     const res = await runGAS('saveCheckInAndSurvey', payload);
-                    Swal.close();
-                    if(res.success) Swal.fire({title: 'เรียบร้อย', text: 'ขอบคุณที่เข้าร่วมกิจกรรม', icon: 'success', confirmButtonColor: '#1a1a1a'}).then(goHome);
-                    else Swal.fire('ข้อผิดพลาด', res.error, 'error');
-                } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
+                    
+                    if(res.success) {
+                        Swal.fire({
+                            title: 'เรียบร้อย!', 
+                            text: 'บันทึกการเข้าร่วมกิจกรรมสำเร็จ ขอบคุณที่ให้ความร่วมมือครับ', 
+                            icon: 'success', 
+                            confirmButtonColor: '#1a1a1a'
+                        }).then(goHome);
+                    } else { 
+                        Swal.fire('ข้อผิดพลาด', res.error, 'error'); 
+                    }
+                } catch(e) { 
+                    Swal.fire('ข้อผิดพลาด', e.message, 'error'); 
+                }
             };
 
             const handleSearchHistory = async (studentId) => {
                 if(!studentId) return Swal.fire('แจ้งเตือน', 'กรอกรหัสนักศึกษา', 'warning');
-                Swal.fire({ title: 'ค้นหาประวัติ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                Swal.fire({ title: 'กำลังค้นหาประวัติ...', text: 'กรุณารอสักครู่', allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data = [];
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
-                        const allChks = await fetchFastCSV('Checkins');
+                        const allChks = await fetchFastCSV('Checkins').catch(() => []);
                         data = allChks.filter(c => String(c.StudentID) === String(studentId) || String(c.IDCard) === String(studentId));
                     } else { data = await runGAS('getStudentHistory', studentId); }
                     Swal.close(); setHistoryData(data || []); setView('history_result');
@@ -311,7 +422,7 @@
             };
 
             const loadAdminData = async () => {
-                Swal.fire({ title: 'Accessing Secure Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                Swal.fire({ title: 'กำลังโหลดข้อมูลสรุป...', text: 'รอสักครู่ ระบบกำลังรวบรวมข้อมูล', allowOutsideClick: false, showConfirmButton: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data;
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
@@ -319,8 +430,23 @@
                             fetchFastCSV('Activities').catch(() => []), fetchFastCSV('Checkins').catch(() => []),
                             fetchFastCSV('Evaluations').catch(() => []), fetchFastCSV('ShirtOrders').catch(() => [])
                         ]);
-                        // ดึงการตั้งค่าราคาและสถานะสดๆ จาก GAS แทนการใช้ CSV เพื่อป้องกันการแคชดีเลย์
-                        const priceInfo = await runGAS('getShirtPrice'); 
+                        
+                        let priceInfo = null;
+                        try { 
+                            priceInfo = await runGAS('getShirtPrice'); 
+                        } catch(e) { console.warn("Real-time fetch failed, falling back to CSV for admin settings."); }
+
+                        if (!priceInfo) {
+                            const settings = await fetchFastCSV('Settings').catch(() => []);
+                            const priceRow = settings.find(r => r.Key === 'ShirtPrice') || {Value1: 250, Value2: 380};
+                            const statusRow = settings.find(r => r.Key === 'ShirtStatus') || {Value1: 'open', Value2: ''};
+                            const receiptRow = settings.find(r => r.Key === 'ReceiptConfig') || {Value1: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', Value2: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ'};
+                            
+                            priceInfo = { 
+                                normal: Number(priceRow.Value1), oversize: Number(priceRow.Value2), 
+                                status: statusRow.Value1, receiptHeader: receiptRow.Value1, receiptNote: receiptRow.Value2 
+                            };
+                        }
                         
                         data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
                     } else { data = await runGAS('getAdminDashboardData'); }
