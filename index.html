@@ -1084,13 +1084,13 @@
             }
 
             if (view === 'admin_dashboard') {
-                return <AdminDashboard data={adminData} reloadData={loadAdminData} goHome={goHome} />;
+                return <AdminDashboard data={adminData} reloadData={loadAdminData} goHome={goHome} setAdminData={setAdminData} />;
             }
 
             return null;
         }
 
-        function AdminDashboard({ data, reloadData, goHome }) {
+        function AdminDashboard({ data, reloadData, goHome, setAdminData }) {
             const [activeTab, setActiveTab] = useState('overview');
             const [selectedActivityForSummary, setSelectedActivityForSummary] = useState('');
             const [selectedActivityForSpss, setSelectedActivityForSpss] = useState('');
@@ -1319,7 +1319,7 @@
                             <div className="mt-8 pt-6 border-t border-gray-800">
                                 <p className="text-[9px] text-gray-500 font-medium mb-3 px-4 uppercase tracking-widest">System Control</p>
                                 <button onClick={toggleSystem} className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-all ${systemOpen ? 'text-white bg-green-900/30 hover:bg-green-900/50 border border-green-800' : 'text-gray-400 bg-black/30 border border-gray-800'}`}>
-                                    <span className="font-light"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off'} mr-2`}></i> Platform</span>
+                                    <span className="font-light flex items-center"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off text-gray-500'} text-2xl mr-3`}></i> Platform</span>
                                     <span className="text-[10px] uppercase tracking-widest">{systemOpen ? 'Online' : 'Offline'}</span>
                                 </button>
                             </div>
@@ -1369,7 +1369,7 @@
                                 </div>
                                 <div className="lg:col-span-2 bg-white/90 backdrop-blur border border-orange-100/50 rounded-2xl overflow-hidden transition-colors shadow-sm">
                                     <table className="w-full text-left text-sm whitespace-nowrap"><thead className="bg-orange-50/50 border-b border-orange-100/80 text-[10px] text-gray-500 uppercase tracking-widest transition-colors"><tr><th className="px-6 py-4 font-medium">Detail</th><th className="px-6 py-4 text-center font-medium">Status</th><th className="px-6 py-4 text-right font-medium">Action</th></tr></thead><tbody className="divide-y divide-orange-50">
-                                        {data.activities.map(a=><tr key={a.ActivityID} className="transition-colors hover:bg-orange-50/30"><td className="px-6 py-4"><p className="font-medium text-charcoal-900">{a.Name}</p><p className="text-xs text-orange-400 font-light mt-0.5">{a.Date} • {a.Location}</p></td><td className="px-6 py-4 text-center text-xs"><span className={`${a.Status==='open'?'text-green-500 bg-green-50 px-2 py-1 rounded':'text-gray-400 bg-gray-50 px-2 py-1 rounded'}`}>{a.Status==='open'?'Open':'Closed'}</span></td><td className="px-6 py-4 text-right"><button onClick={()=>toggleActivityStatus(a.ActivityID,a.Status)} className={`text-xl transition-transform hover:scale-110 ${a.Status==='open'?'text-green-500':'text-gray-300'}`}><i className={`fa-solid ${a.Status==='open'?'fa-toggle-on':'fa-toggle-off'}`}></i></button></td></tr>)}
+                                        {data.activities.map(a=><tr key={a.ActivityID} className="transition-colors hover:bg-orange-50/30"><td className="px-6 py-4"><p className="font-medium text-charcoal-900">{a.Name}</p><p className="text-xs text-orange-400 font-light mt-0.5">{a.Date} • {a.Location}</p></td><td className="px-6 py-4 text-center text-xs"><span className={`${a.Status==='open'?'text-green-500 bg-green-50 px-2 py-1 rounded':'text-gray-400 bg-gray-50 px-2 py-1 rounded'}`}>{a.Status==='open'?'Open':'Closed'}</span></td><td className="px-6 py-4 text-right"><button onClick={()=>toggleActivityStatus(a.ActivityID,a.Status)} className={`text-4xl transition-transform hover:scale-110 drop-shadow-sm focus:outline-none ${a.Status==='open'?'text-green-500':'text-gray-300'}`}><i className={`fa-solid ${a.Status==='open'?'fa-toggle-on':'fa-toggle-off'}`}></i></button></td></tr>)}
                                     </tbody></table>
                                 </div>
                             </div>
@@ -1417,9 +1417,9 @@
                                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                                     <div>
                                         <h3 className="text-sm font-medium text-charcoal-900 uppercase tracking-widest border-l-2 border-orange-500 pl-2">Orders Management</h3>
-                                        <div className="flex items-center gap-2 mt-2 ml-2">
-                                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Status</span>
-                                            <button onClick={() => handleToggleShirtSystem(data.shirtPrice?.status || 'open')} className={`text-lg transition-transform hover:scale-110 ${data.shirtPrice?.status !== 'closed' ? 'text-green-500' : 'text-gray-300'}`}><i className={`fa-solid ${data.shirtPrice?.status !== 'closed' ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i></button>
+                                        <div className="flex items-center gap-3 mt-3 ml-2">
+                                            <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">System Status</span>
+                                            <button onClick={() => handleToggleShirtSystem(data.shirtPrice?.status || 'open')} className={`text-4xl transition-transform hover:scale-110 drop-shadow-sm focus:outline-none ${data.shirtPrice?.status !== 'closed' ? 'text-green-500' : 'text-gray-300'}`}><i className={`fa-solid ${data.shirtPrice?.status !== 'closed' ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i></button>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
