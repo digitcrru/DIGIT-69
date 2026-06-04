@@ -494,7 +494,7 @@
                                 {view === 'home' && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
                                 <i className={`fa-solid fa-house text-xl ${view === 'home' ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">หน้าแรก</span>
                             </button>
-                            <button onClick={() => { if(!systemOpen) return Swal.fire({title:'System Offline', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
+                            <button onClick={() => { if(!systemOpen) return Swal.fire({title:'วันนี้ผมรักผมทักผมรอ วันไหนผมท้อผมพอผมลา', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                 {(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
                                 <i className={`fa-solid fa-qrcode text-xl ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">เช็คชื่อ</span>
                             </button>
@@ -505,7 +505,7 @@
                             
                             {/* ปรับให้ซ่อนปุ่มเมนูด้านล่างหากปิดระบบจองเสื้อ */}
                             {shirtSystemOpen && (
-                                <button onClick={() => { if(!systemOpen) return Swal.fire({title:'System Offline', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
+                                <button onClick={() => { if(!systemOpen) return Swal.fire({title:'วันนี้ผมรักผมทักผมรอ วันไหนผมท้อผมพอผมลา', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                     {(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
                                     <i className={`fa-solid fa-shirt text-xl ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">จองเสื้อ</span>
                                 </button>
@@ -538,7 +538,7 @@
                             
                             {/* ปรับ Grid ใหม่ให้จัดกึ่งกลางสวยงาม หากเมนูหายไป 1 อัน */}
                             <div className={`w-full grid gap-6 mx-auto ${shirtSystemOpen ? 'max-w-5xl md:grid-cols-3' : 'max-w-3xl md:grid-cols-2'}`}>
-                                <div onClick={() => { if(!systemOpen) return Swal.fire({title:'Offline', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} 
+                                <div onClick={() => { if(!systemOpen) return Swal.fire({title:'วันนี้ผมรักผมทักผมรอ วันไหนผมท้อผมพอผมลา', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} 
                                      className={`luxury-card p-8 md:p-10 cursor-pointer group ${!systemOpen ? 'opacity-50 grayscale' : ''}`}>
                                     <div className="w-14 h-14 bg-charcoal-50 text-charcoal-900 rounded-full flex items-center justify-center text-2xl mb-8 group-hover:bg-charcoal-900 group-hover:text-gold-500 transition-colors duration-300"><i className="fa-solid fa-qrcode"></i></div>
                                     <h3 className="text-xl font-semibold text-charcoal-900 mb-2">ลงทะเบียนกิจกรรม</h3><p className="text-gray-500 text-sm font-light leading-relaxed">เช็คชื่อเข้าร่วมและประเมินความพึงพอใจ</p>
@@ -550,7 +550,7 @@
                                 
                                 {/* ปรับให้ซ่อนการ์ดจองเสื้อหากปิดระบบ */}
                                 {shirtSystemOpen && (
-                                    <div onClick={() => { if(!systemOpen) return Swal.fire({title:'Offline', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} 
+                                    <div onClick={() => { if(!systemOpen) return Swal.fire({title:'วันนี้ผมรักผมทักผมรอ วันไหนผมท้อผมพอผมลา', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} 
                                          className={`luxury-card p-8 md:p-10 cursor-pointer group ${!systemOpen ? 'opacity-50 grayscale' : ''}`}>
                                         <div className="w-14 h-14 bg-charcoal-50 text-charcoal-900 rounded-full flex items-center justify-center text-2xl mb-8 group-hover:bg-charcoal-900 group-hover:text-gold-500 transition-colors duration-300"><i className="fa-solid fa-shirt"></i></div>
                                         <h3 className="text-xl font-semibold text-charcoal-900 mb-2">สั่งจองเสื้อคณะ</h3><p className="text-gray-500 text-sm font-light leading-relaxed">ระบุไซส์และบันทึกการสั่งจองรับใบเสร็จ</p>
