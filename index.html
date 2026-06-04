@@ -90,7 +90,7 @@
             USE_FAST_CSV: true,
             SHEET_ID: "1KLJNWUUIj1r6eqCZnaF-F6nA2FQg7pvOHMk0PyDCyAc", 
             // 🚨 ใส่ลิงก์ Web App (Google Apps Script) อันใหม่ล่าสุดของท่านที่นี่ 🚨
-            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwegTVU6yVfNHRL5RZnn2GEmCCG_sZN3qR-D7-l16Y5-7g_B6Q0U5hwd993pk3siZ2n7A/exec", 
+            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwRkO2W4mNItUq70h1-8XN-G_x1-5n7wLpL7o3-uJz6Oa_T9zH_nF_Jg6s2Z_Y8XW/exec", 
             getCSVUrl: function(sheetName) {
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}&_=${new Date().getTime()}`;
             }
@@ -299,6 +299,42 @@
                         } else { Swal.close(); setView('select'); }
                     } else { Swal.close(); Swal.fire({title:'ไม่พบข้อมูล', text:'ไม่พบรหัสนักศึกษานี้ในระบบ', icon:'error', confirmButtonColor: '#1a1a1a'}); }
                 } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
+            };
+
+            const handleSelectActivity = async (act) => {
+                Swal.fire({ title: 'กำลังตรวจสอบสิทธิ์...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+                try {
+                    let hasJoined = false;
+                    if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
+                        const allChks = await fetchFastCSV('Checkins').catch(() => []);
+                        // ตรวจสอบข้อมูลซ้ำจาก StudentID หรือ IDCard ในกิจกรรมเดียวกัน
+                        hasJoined = allChks.some(c => 
+                            (String(c.StudentID) === String(student.StudentID) || (student.IDCard && String(c.IDCard) === String(student.IDCard))) && 
+                            String(c.ActivityID) === String(act.ActivityID)
+                        );
+                    } else {
+                        const history = await runGAS('getStudentHistory', student.StudentID);
+                        hasJoined = history.some(h => String(h.ActivityID) === String(act.ActivityID));
+                    }
+
+                    Swal.close();
+                    if (hasJoined) {
+                        Swal.fire({
+                            title: 'ลงทะเบียนซ้ำ!',
+                            text: 'คุณได้ลงทะเบียนเข้าร่วมกิจกรรมนี้ไปแล้ว ไม่สามารถลงซ้ำได้ครับ',
+                            icon: 'warning',
+                            confirmButtonColor: '#ea580c'
+                        });
+                    } else {
+                        setSelectedActivity(act);
+                        setView('survey');
+                    }
+                } catch(e) {
+                    Swal.close();
+                    // Fallback ถ้าเช็คไม่ได้ให้ผ่านไปก่อน แล้วไปดักที่ Backend แทน
+                    setSelectedActivity(act);
+                    setView('survey');
+                }
             };
 
             const handleSubmitShirtOrder = async (e) => {
@@ -531,7 +567,7 @@
                                 <div className="space-y-4">
                                     {activities.length === 0 ? (<div className="text-center py-12 luxury-card"><p className="text-gray-400 font-light">ไม่มีกิจกรรมที่เปิดให้ลงทะเบียนในขณะนี้</p></div>) : (
                                         activities.map(act => (
-                                            <div key={act.ActivityID} onClick={() => { setSelectedActivity(act); setView('survey'); }} className="luxury-card p-6 cursor-pointer group hover:border-orange-300 hover:shadow-orange-500/10">
+                                            <div key={act.ActivityID} onClick={() => handleSelectActivity(act)} className="luxury-card p-6 cursor-pointer group hover:border-orange-300 hover:shadow-orange-500/10">
                                                 <div className="flex justify-between items-center">
                                                     <div><h4 className="font-semibold text-lg text-charcoal-900 group-hover:text-orange-600 transition-colors">{act.Name}</h4><div className="flex items-center gap-4 mt-2 text-sm text-gray-500 font-light"><span><i className="fa-regular fa-calendar mr-1 opacity-70 text-orange-400"></i> {act.Date}</span><span><i className="fa-solid fa-location-dot mr-1 opacity-70 text-orange-400"></i> {act.Location}</span></div></div>
                                                     <i className="fa-solid fa-arrow-right text-gray-300 group-hover:text-orange-500 transition-transform transform group-hover:translate-x-1 text-xl"></i>
