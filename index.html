@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบลงทะเบียนเข้าร่วมกิจกรรม</title>
     
-    <!-- Fonts: Changed to Prompt for an elegant, premium look -->
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -13,14 +13,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class', // เปิดใช้งาน Dark Mode แบบ Class
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['Prompt', 'sans-serif'] },
                     colors: {
-                        // Champagne Gold Palette for Luxury Accent
                         gold: { 50: '#fdfbf7', 100: '#f9f5e8', 200: '#f2e8cd', 300: '#e8d4a6', 400: '#dcb873', 500: '#d19d47', 600: '#c28536', 700: '#a3662d', 800: '#86512b', 900: '#6d4226' },
-                        // Charcoal Black for sophisticated contrast
                         charcoal: { 50: '#f6f6f6', 100: '#e7e7e7', 800: '#2d2d2d', 900: '#1a1a1a' }
                     }
                 }
@@ -28,85 +26,38 @@
         }
     </script>
     
-    <!-- SweetAlert2 -->
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- html2canvas for Receipt Download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel & PapaParse -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         body {
             font-family: 'Prompt', sans-serif;
-            background-color: #faf9f6; /* Alabaster/Pearl White */
+            background-color: #faf9f6;
             color: #1a1a1a;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            padding-bottom: 80px; /* Space for Mobile Tab Bar */
+            padding-bottom: 80px; 
             transition: background-color 0.3s ease, color 0.3s ease;
         }
-        
-        @media (min-width: 768px) {
-            body { padding-bottom: 0; }
-        }
+        @media (min-width: 768px) { body { padding-bottom: 0; } }
 
-        /* Luxury UI Elements */
-        .luxury-card {
-            background-color: #ffffff;
-            border: 1px solid #f0eee9;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0,0,0,0.02);
-            border-radius: 1.5rem;
-            transition: all 0.4s ease;
-        }
-
-        .luxury-input {
-            background-color: #fdfdfd;
-            border: 1px solid #eae8e1;
-            border-radius: 1rem;
-            padding: 1rem 1.25rem;
-            color: #1a1a1a;
-            transition: all 0.3s ease;
-        }
-        .luxury-input:focus {
-            border-color: #d19d47;
-            box-shadow: 0 0 0 4px rgba(209, 157, 71, 0.1);
-            outline: none;
-        }
-
-        .btn-primary {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            border: 1px solid #1a1a1a;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #2d2d2d;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        .btn-gold {
-            background: linear-gradient(135deg, #dcb873 0%, #c28536 100%);
-            color: #ffffff;
-            transition: all 0.3s ease;
-            border: none;
-        }
-        .btn-gold:hover {
-            box-shadow: 0 8px 20px rgba(209, 157, 71, 0.3);
-            filter: brightness(1.05);
-        }
-
+        /* UI Elements */
+        .luxury-card { background-color: #ffffff; border: 1px solid #f0eee9; box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0,0,0,0.02); border-radius: 1.5rem; transition: all 0.4s ease; }
+        .luxury-input { background-color: #fdfdfd; border: 1px solid #eae8e1; border-radius: 1rem; padding: 1rem 1.25rem; color: #1a1a1a; transition: all 0.3s ease; }
+        .luxury-input:focus { border-color: #d19d47; box-shadow: 0 0 0 4px rgba(209, 157, 71, 0.1); outline: none; }
+        .btn-primary { background-color: #1a1a1a; color: #ffffff; border: 1px solid #1a1a1a; transition: all 0.3s ease; }
+        .btn-primary:hover { background-color: #2d2d2d; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .btn-gold { background: linear-gradient(135deg, #dcb873 0%, #c28536 100%); color: #ffffff; transition: all 0.3s ease; border: none; }
+        .btn-gold:hover { box-shadow: 0 8px 20px rgba(209, 157, 71, 0.3); filter: brightness(1.05); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* ========================================================= */
-        /* Dark Mode Theme Overrides (ปุ่มสลับสี)                     */
-        /* ========================================================= */
+        /* Dark Mode */
         html.dark body { background-color: #121212; color: #e5e5e5; }
         html.dark .bg-white { background-color: #1e1e1e !important; }
         html.dark .text-charcoal-900 { color: #f5f5f5 !important; }
@@ -116,20 +67,13 @@
         html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-gray-300 { border-color: #333 !important; }
         html.dark .bg-gray-50, html.dark .bg-charcoal-50 { background-color: #262626 !important; }
         html.dark .bg-charcoal-900 { background-color: #0a0a0a !important; }
-        
         html.dark .luxury-card { background-color: #1e1e1e; border-color: #333; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
         html.dark .luxury-input { background-color: #121212; border-color: #333; color: #f5f5f5; }
-        html.dark .luxury-input:focus { border-color: #d19d47; box-shadow: 0 0 0 4px rgba(209, 157, 71, 0.2); }
-        
         html.dark .btn-primary { background-color: #f5f5f5; color: #121212; border-color: #f5f5f5; }
-        html.dark .btn-primary:hover { background-color: #d4d4d8; }
-        
-        /* Admin Dark Mode Specifics */
         html.dark table thead { background-color: #262626 !important; color: #d4d4d8 !important; }
         html.dark tr, html.dark td, html.dark th { border-color: #333 !important; }
         html.dark tr:hover { background-color: #262626 !important; }
         html.dark select { background-color: #121212 !important; color: #fff !important; }
-        /* ========================================================= */
     </style>
 </head>
 <body class="selection:bg-gold-500 selection:text-white">
@@ -140,14 +84,15 @@
         const { useState, useEffect } = React;
 
         // =========================================================================
-        // [PRO FEATURE] API MODE CONFIGURATION (โหลดข้อมูลผ่าน CSV เร็วขึ้น 10 เท่า)
+        // [CONFIG] สำหรับใช้งานบน GitHub Pages 
         // =========================================================================
         const API_CONFIG = {
-            USE_FAST_CSV: true, // กำหนดเป็น true เพื่อเปิดใช้การดึงข้อมูลแบบใหม่ผ่าน PapaParse
-            // 🚨 แก้ไข SHEET_ID ด้านล่าง ให้เป็น ID จาก URL Google Sheets ของคุณ
+            USE_FAST_CSV: true, // ดึงข้อมูลให้อ่านผ่าน CSV โดยตรง (เร็วกว่า 10 เท่า)
+            // 🚨 แก้ไขให้เป็น ID ของชีตตัวเอง (ตัวอักษรยาวๆ ใน URL Google Sheets)
             SHEET_ID: "YOUR_SHEET_ID_HERE", 
+            // 🚨 นำลิงก์ Web App URL จาก Google Apps Script (ตอน Deploy) มาใส่ตรงนี้
+            WEB_APP_URL: "https://script.google.com/macros/s/AKfycbwpNxvjYzKHmsF93JBKAGNm26T7H2Es5rVQXbb_szwEyiDHtpfD96o6MCifUaoiN7qHMQ/execE", 
             getCSVUrl: function(sheetName) {
-                // ลิงก์สำหรับโหลดข้อมูล CSV ของ Google Sheets แบบสาธารณะ
                 return `https://docs.google.com/spreadsheets/d/${this.SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
             }
         };
@@ -155,94 +100,49 @@
         const fetchFastCSV = (sheetName) => {
             return new Promise((resolve, reject) => {
                 Papa.parse(API_CONFIG.getCSVUrl(sheetName), {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: true,
+                    download: true, header: true, skipEmptyLines: true,
                     complete: (results) => resolve(results.data),
-                    error: (error) => {
-                        console.error(`Error fetching fast CSV for ${sheetName}:`, error);
-                        reject(error);
-                    }
+                    error: (error) => reject(error)
                 });
             });
         };
-        // =========================================================================
 
-        const runGAS = (functionName, ...args) => {
-            return new Promise((resolve, reject) => {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(reject)
-                        [functionName](...args);
-                } else {
-                    console.warn(`[Mock Mode] GAS environment not found. Mocking: ${functionName}`);
-                    setTimeout(() => {
-                        switch(functionName) {
-                            case 'getActiveActivities':
-                                resolve([
-                                    { ActivityID: 'MOCK_01', Name: '[ทดสอบ] กิจกรรมวิชาการระดับชาติ', Date: '2026-06-10', Location: 'Grand Ballroom', Status: 'open' },
-                                    { ActivityID: 'MOCK_02', Name: '[ทดสอบ] อบรมสัมมนาบุคลากร', Date: '2026-06-15', Location: 'Meeting Room 1', Status: 'open' }
-                                ]);
-                                break;
-                            case 'verifyStudent':
-                                resolve({ success: true, data: { StudentID: args[0], Name: 'นายทดสอบ ระบบหรูหรา', Major: 'วิศวกรรมซอฟต์แวร์', IDCard: '1234567890123' } });
-                                break;
-                            case 'checkShirtOrder':
-                                resolve({ hasOrdered: false }); 
-                                break;
-                            case 'getShirtPrice':
-                                resolve({ normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', receiptNote: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อคณะ' });
-                                break;
-                            case 'saveCheckInAndSurvey':
-                            case 'saveShirtOrder':
-                            case 'createActivity':
-                            case 'toggleActivityStatus':
-                            case 'updateShirtPrice':
-                            case 'updateReceiptConfig':
-                            case 'toggleShirtStatus':
-                            case 'importCheckins':
-                                resolve({ success: true, count: 1 });
-                                break;
-                            case 'getStudentHistory':
-                                resolve([
-                                    { ActivityID: 'MOCK_01', ActivityName: '[ทดสอบ] กิจกรรมวิชาการระดับชาติ', Name: 'นายทดสอบ ระบบหรูหรา', StudentID: args[0], Timestamp: new Date().toISOString() }
-                                ]);
-                                break;
-                            case 'getAdminDashboardData':
-                                resolve({
-                                    activities: [{ ActivityID: 'MOCK_01', Name: '[ทดสอบ] กิจกรรมวิชาการระดับชาติ', Date: '2026-06-10', Location: 'Grand Ballroom', Status: 'open' }],
-                                    checkins: [{ StudentID: '6600001', Name: 'นายทดสอบ', Major: 'เทคโนโลยี', ActivityID: 'MOCK_01', ActivityName: 'กิจกรรมวิชาการระดับชาติ', Timestamp: new Date().toISOString() }],
-                                    evaluations: [],
-                                    shirtOrders: [],
-                                    shirtPrice: { normal: 250, oversize: 380, status: 'open', receiptHeader: 'สโมสรนักศึกษา\nที่อยู่...', receiptNote: 'ขอบคุณครับ' }
-                                });
-                                break;
-                            default:
-                                resolve({ success: true });
-                        }
-                    }, 500);
-                }
-            });
+        // ฟังก์ชันอัจฉริยะ เลือกว่าจะทำงานแบบใน GAS ตรงๆ หรือยิง API ข้ามไปหา GAS จาก GitHub
+        const runGAS = async (functionName, ...args) => {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                return new Promise((resolve, reject) => {
+                    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[functionName](...args);
+                });
+            } else if (API_CONFIG.WEB_APP_URL && API_CONFIG.WEB_APP_URL.startsWith("https://script.google.com")) {
+                try {
+                    const response = await fetch(API_CONFIG.WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: functionName, params: args }),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                    });
+                    const result = await response.json();
+                    if (result.success === false && result.error) throw new Error(result.error);
+                    return result.data !== undefined ? result.data : result;
+                } catch (error) { throw error; }
+            } else {
+                console.warn(`[Mock Mode] Using Local Data. function: ${functionName}`);
+                return new Promise((resolve) => setTimeout(() => resolve({ success: true, count: 1 }), 500));
+            }
         };
 
         const surveyData = [
             {
                 title: "1. กระบวนการ ขั้นตอนการให้บริการ",
                 questions: [
-                    { id: "q1", text: "1.1 การประชาสัมพันธ์โครงการ ฯ" },
-                    { id: "q2", text: "1.2 ความเหมาะสมของสถานที่" },
-                    { id: "q3", text: "1.3 ความเหมาะสมของระยะเวลา" },
-                    { id: "q4", text: "1.4 การจัดลำดับขั้นตอนของกิจกรรม" },
+                    { id: "q1", text: "1.1 การประชาสัมพันธ์โครงการ ฯ" }, { id: "q2", text: "1.2 ความเหมาะสมของสถานที่" },
+                    { id: "q3", text: "1.3 ความเหมาะสมของระยะเวลา" }, { id: "q4", text: "1.4 การจัดลำดับขั้นตอนของกิจกรรม" }
                 ]
             },
             {
                 title: "2. การอำนวยความสะดวก",
                 questions: [
-                    { id: "q5", text: "2.1 เอกสาร" },
-                    { id: "q6", text: "2.2 โสตทัศนูปกรณ์" },
-                    { id: "q7", text: "2.3 เจ้าหน้าที่สนับสนุน" },
-                    { id: "q8", text: "2.4 อาหาร,เครื่องดื่มและสถานที่" },
+                    { id: "q5", text: "2.1 เอกสาร" }, { id: "q6", text: "2.2 โสตทัศนูปกรณ์" },
+                    { id: "q7", text: "2.3 เจ้าหน้าที่สนับสนุน" }, { id: "q8", text: "2.4 อาหาร,เครื่องดื่มและสถานที่" }
                 ]
             },
             {
@@ -252,7 +152,7 @@
                     { id: "q10", text: "3.2 ท่านสามารถนำสิ่งที่ได้รับจากโครงการ/กิจกรรมนี้ไปใช้ในการปฏิบัติงาน" },
                     { id: "q11", text: "3.3 สิ่งที่ท่านได้รับจากโครงการ/กิจกรรมครั้งนี้ตรงตามความคาดหวังของท่านหรือไม่" },
                     { id: "q12", text: "3.4 โครงการ/กิจกรรมนี้เอื้ออำนวยต่อการเรียนรู้และพัฒนาความสามารถของท่าน" },
-                    { id: "q13", text: "3.5 ประโยชน์ที่ท่านได้รับจากโครงการ/กิจกรรม" },
+                    { id: "q13", text: "3.5 ประโยชน์ที่ท่านได้รับจากโครงการ/กิจกรรม" }
                 ]
             }
         ];
@@ -272,7 +172,7 @@
             const [searchPurpose, setSearchPurpose] = useState('activity');
             const [shirtSystemOpen, setShirtSystemOpen] = useState(true);
             const [shirtPrice, setShirtPrice] = useState({ normal: 250, oversize: 380, status: 'open' });
-            const [receiptSettings, setReceiptSettings] = useState({ header: 'สโมสรนักศึกษาคณะเทคโนโลยีดิจิทัลมหาวิทยาลัยราชภัฏเชียงราย\nที่อยู่: 80 ซอย 9 ตำบล บ้านดู่ อำเภอเมืองเชียงราย เชียงราย 57100', note: 'กรุณานำใบเสร็จนี้มาแสดงในวันรับเสื้อ' });
+            const [receiptSettings, setReceiptSettings] = useState({ header: 'สโมสรนักศึกษา\nมหาวิทยาลัยราชภัฏเชียงราย', note: 'ขอบคุณครับ' });
             
             const [isEditingOrder, setIsEditingOrder] = useState(false);
             const [poloGender, setPoloGender] = useState('ชาย');
@@ -283,32 +183,23 @@
             const [tshirtQty, setTshirtQty] = useState(1);
             const [receiptData, setReceiptData] = useState(null);
 
-            // State สำหรับสลับสี (Dark Mode)
             const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
-            // ใช้ Effect สำหรับเปลี่ยนสีพื้นหลังและคลาส dark 
             useEffect(() => {
-                if (isDarkMode) {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', 'light');
-                }
+                if (isDarkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
+                else { document.documentElement.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
             }, [isDarkMode]);
 
             useEffect(() => {
                 const loadInitialData = async () => {
                     try {
                         let acts = [];
-                        // [PRO] Load activities via fast CSV API if enabled
                         if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                             const allActs = await fetchFastCSV('Activities');
                             acts = allActs.filter(a => a.Status === 'open');
                         } else {
                             acts = await runGAS('getActiveActivities');
                         }
-                        
                         setActivities(acts || []);
                         const priceInfo = await runGAS('getShirtPrice');
                         if (priceInfo) {
@@ -325,8 +216,7 @@
                 setStudent(null); setSearchPurpose('activity');
                 setPoloGender('ชาย'); setPoloSize('M'); setPoloQty(1);
                 setTshirtGender('ชาย'); setTshirtSize('M'); setTshirtQty(1);
-                setReceiptData(null); setIsEditingOrder(false);
-                setView('home');
+                setReceiptData(null); setIsEditingOrder(false); setView('home');
             };
 
             const handleSearchStudent = async (studentId) => {
@@ -354,45 +244,25 @@
                                 setPoloGender(pastOrder.PoloGender || 'ชาย'); setPoloSize(pastOrder.PoloSize); setPoloQty(Number(pastOrder.PoloQty));
                                 setTshirtGender(pastOrder.TshirtGender || 'ชาย'); setTshirtSize(pastOrder.TshirtSize); setTshirtQty(Number(pastOrder.TshirtQty));
                                 setView('receipt');
-                            } else {
-                                setView('shirt_form');
-                            }
-                        } else {
-                            Swal.close(); setView('select');
-                        }
-                    } else { 
-                        Swal.close(); Swal.fire({title:'ไม่พบข้อมูล', text:'ไม่พบรหัสนักศึกษานี้ในระบบ', icon:'error', confirmButtonColor: '#1a1a1a'}); 
-                    }
+                            } else { setView('shirt_form'); }
+                        } else { Swal.close(); setView('select'); }
+                    } else { Swal.close(); Swal.fire({title:'ไม่พบข้อมูล', text:'ไม่พบรหัสนักศึกษานี้ในระบบ', icon:'error', confirmButtonColor: '#1a1a1a'}); }
                 } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
             };
 
             const handleSubmitShirtOrder = async (e) => {
                 e.preventDefault();
-                if (poloQty < 1 || tshirtQty < 1) return Swal.fire('แจ้งเตือน', 'กรุณาระบุจำนวนอย่างน้อย 1 ตัว', 'warning');
-                
+                if (poloQty < 1 || tshirtQty < 1) return Swal.fire('แจ้งเตือน', 'ระบุจำนวนอย่างน้อย 1 ตัว', 'warning');
                 Swal.fire({ title: 'กำลังดำเนินการ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     const getPrice = (size) => ['XL', '2XL', '3XL'].includes(size) ? shirtPrice.oversize : shirtPrice.normal;
                     const grandTotal = (getPrice(poloSize) * poloQty) + (getPrice(tshirtSize) * tshirtQty);
-
                     const payload = { student, poloGender, poloSize, poloQty, tshirtGender, tshirtSize, tshirtQty, grandTotal };
                     const res = await runGAS('saveShirtOrder', payload);
                     Swal.close();
                     if(res.success) {
-                        setReceiptData({
-                            ...payload,
-                            orderId: 'ORD-' + Date.now().toString().slice(-6),
-                            date: new Date().toLocaleString('th-TH')
-                        });
-                        Swal.fire({
-                            title: 'บันทึกสำเร็จ',
-                            text: 'ระบบบันทึกการสั่งจองของท่านเรียบร้อยแล้ว',
-                            icon: 'success',
-                            confirmButtonColor: '#d19d47'
-                        }).then(() => {
-                            setIsEditingOrder(false);
-                            setView('receipt');
-                        });
+                        setReceiptData({ ...payload, orderId: 'ORD-' + Date.now().toString().slice(-6), date: new Date().toLocaleString('th-TH') });
+                        Swal.fire({ title: 'บันทึกสำเร็จ', icon: 'success', confirmButtonColor: '#d19d47' }).then(() => { setIsEditingOrder(false); setView('receipt'); });
                     } else { Swal.fire('ข้อผิดพลาด', res.error, 'error'); }
                 } catch(e) { Swal.fire('เกิดข้อผิดพลาด', e.message, 'error'); }
             };
@@ -405,9 +275,8 @@
                     const payload = { student, activity: selectedActivity, answers: surveyAnswers, suggestion };
                     const res = await runGAS('saveCheckInAndSurvey', payload);
                     Swal.close();
-                    if(res.success) {
-                        Swal.fire({title: 'เรียบร้อย', text: 'ขอบคุณที่เข้าร่วมกิจกรรม', icon: 'success', confirmButtonColor: '#1a1a1a'}).then(goHome);
-                    } else { Swal.fire('ข้อผิดพลาด', res.error, 'error'); }
+                    if(res.success) Swal.fire({title: 'เรียบร้อย', text: 'ขอบคุณที่เข้าร่วมกิจกรรม', icon: 'success', confirmButtonColor: '#1a1a1a'}).then(goHome);
+                    else Swal.fire('ข้อผิดพลาด', res.error, 'error');
                 } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
             };
 
@@ -416,13 +285,10 @@
                 Swal.fire({ title: 'ค้นหาประวัติ...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data = [];
-                    // [PRO] Fast search using CSV API Method 
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                         const allChks = await fetchFastCSV('Checkins');
                         data = allChks.filter(c => String(c.StudentID) === String(studentId) || String(c.IDCard) === String(studentId));
-                    } else {
-                        data = await runGAS('getStudentHistory', studentId);
-                    }
+                    } else { data = await runGAS('getStudentHistory', studentId); }
                     Swal.close(); setHistoryData(data || []); setView('history_result');
                 } catch(e) { Swal.fire('ข้อผิดพลาด', e.message, 'error'); }
             };
@@ -431,33 +297,16 @@
                 Swal.fire({ title: 'Accessing Secure Data...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                 try {
                     let data;
-                    // [PRO] Fast Backend Parallel Fetching via PapaParse URL
                     if (API_CONFIG.USE_FAST_CSV && API_CONFIG.SHEET_ID !== "YOUR_SHEET_ID_HERE") {
                         const [acts, chks, evals, shirts] = await Promise.all([
-                            fetchFastCSV('Activities').catch(() => []),
-                            fetchFastCSV('Checkins').catch(() => []),
-                            fetchFastCSV('Evaluations').catch(() => []),
-                            fetchFastCSV('ShirtOrders').catch(() => [])
+                            fetchFastCSV('Activities').catch(() => []), fetchFastCSV('Checkins').catch(() => []),
+                            fetchFastCSV('Evaluations').catch(() => []), fetchFastCSV('ShirtOrders').catch(() => [])
                         ]);
-                        // ส่วนตั้งค่าราคาดึงจาก GAS เนื่องจากเป็น object โครงสร้างเฉพาะ
                         const priceInfo = await runGAS('getShirtPrice'); 
-                        
-                        data = { 
-                            activities: acts, 
-                            checkins: chks, 
-                            evaluations: evals, 
-                            shirtOrders: shirts, 
-                            shirtPrice: priceInfo 
-                        };
-                    } else {
-                        data = await runGAS('getAdminDashboardData');
-                    }
-
+                        data = { activities: acts, checkins: chks, evaluations: evals, shirtOrders: shirts, shirtPrice: priceInfo };
+                    } else { data = await runGAS('getAdminDashboardData'); }
                     setAdminData(data); 
-                    if (data && data.shirtPrice) {
-                        setShirtPrice(data.shirtPrice);
-                        setShirtSystemOpen(data.shirtPrice.status !== 'closed');
-                    }
+                    if (data && data.shirtPrice) { setShirtPrice(data.shirtPrice); setShirtSystemOpen(data.shirtPrice.status !== 'closed'); }
                     Swal.close(); setView('admin_dashboard');
                 } catch(e) { Swal.fire('Error', e.message, 'error'); }
             };
@@ -473,26 +322,17 @@
                 <div className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 transition-colors duration-300">
                     <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                         <div className="flex items-center gap-3 cursor-pointer" onClick={goHome}>
-                            <div className="w-10 h-10 bg-charcoal-900 rounded-full flex items-center justify-center shadow-sm transition-colors">
-                                <i className="fa-solid fa-gem text-gold-500 text-lg"></i>
-                            </div>
+                            <div className="w-10 h-10 bg-charcoal-900 rounded-full flex items-center justify-center shadow-sm transition-colors"><i className="fa-solid fa-gem text-gold-500 text-lg"></i></div>
                             <h1 className="font-semibold text-lg tracking-wide text-charcoal-900 hidden sm:block transition-colors">ACTIVITY <span className="font-light text-gray-400">SYSTEM</span></h1>
                         </div>
-                        
                         <div className="flex items-center gap-4">
-                            {/* Theme Toggle Button */}
                             <button onClick={() => setIsDarkMode(!isDarkMode)} className="w-10 h-10 rounded-full flex items-center justify-center border border-gray-200 bg-white text-gray-500 hover:text-gold-500 transition-colors shadow-sm focus:outline-none">
                                 <i className={`fa-solid ${isDarkMode ? 'fa-sun text-gold-500' : 'fa-moon'}`}></i>
                             </button>
-
                             {view.startsWith('admin') ? (
-                                <button onClick={() => { localStorage.removeItem('admin_logged_in'); goHome(); }} className="text-sm text-gray-500 hover:text-charcoal-900 transition-colors font-medium">
-                                    <i className="fa-solid fa-right-from-bracket mr-2"></i>LOGOUT
-                                </button>
+                                <button onClick={() => { localStorage.removeItem('admin_logged_in'); goHome(); }} className="text-sm text-gray-500 hover:text-charcoal-900 transition-colors font-medium"><i className="fa-solid fa-right-from-bracket mr-2"></i>LOGOUT</button>
                             ) : (
-                                <button onClick={() => setView('admin_login')} className="hidden md:flex text-sm text-gray-400 hover:text-gold-600 transition-colors items-center font-medium">
-                                    STAFF LOGIN <i className="fa-solid fa-arrow-right-to-bracket ml-2"></i>
-                                </button>
+                                <button onClick={() => setView('admin_login')} className="hidden md:flex text-sm text-gray-400 hover:text-gold-600 transition-colors items-center font-medium">STAFF LOGIN <i className="fa-solid fa-arrow-right-to-bracket ml-2"></i></button>
                             )}
                         </div>
                     </div>
@@ -506,23 +346,19 @@
                         <div className="flex justify-around items-center h-16 px-2">
                             <button onClick={goHome} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${view === 'home' ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                 {view === 'home' && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
-                                <i className={`fa-solid fa-house text-xl ${view === 'home' ? 'mb-0.5' : ''}`}></i>
-                                <span className="text-[10px] font-medium">หน้าแรก</span>
+                                <i className={`fa-solid fa-house text-xl ${view === 'home' ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">หน้าแรก</span>
                             </button>
                             <button onClick={() => { if(!systemOpen) return Swal.fire({title:'System Offline', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                 {(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
-                                <i className={`fa-solid fa-qrcode text-xl ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'mb-0.5' : ''}`}></i>
-                                <span className="text-[10px] font-medium">เช็คชื่อ</span>
+                                <i className={`fa-solid fa-qrcode text-xl ${(view === 'select' || view === 'survey' || (view === 'search' && searchPurpose === 'activity')) ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">เช็คชื่อ</span>
                             </button>
                             <button onClick={() => setView('history_search')} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'history_search' || view === 'history_result') ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                 {(view === 'history_search' || view === 'history_result') && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
-                                <i className={`fa-solid fa-clock-rotate-left text-xl ${(view === 'history_search' || view === 'history_result') ? 'mb-0.5' : ''}`}></i>
-                                <span className="text-[10px] font-medium">ประวัติ</span>
+                                <i className={`fa-solid fa-clock-rotate-left text-xl ${(view === 'history_search' || view === 'history_result') ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">ประวัติ</span>
                             </button>
                             <button onClick={() => { if(!systemOpen) return; if(!shirtSystemOpen) return Swal.fire({title:'Closed', text:'ปิดรับจองเสื้อ', icon:'info', confirmButtonColor: '#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} className={`relative flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'text-charcoal-900' : 'text-gray-400'}`}>
                                 {(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) && <div className="absolute top-0 w-8 h-1 bg-gold-500 rounded-b-full"></div>}
-                                <i className={`fa-solid fa-shirt text-xl ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'mb-0.5' : ''}`}></i>
-                                <span className="text-[10px] font-medium">จองเสื้อ</span>
+                                <i className={`fa-solid fa-shirt text-xl ${(view === 'shirt_form' || view === 'receipt' || (view === 'search' && searchPurpose === 'shirt')) ? 'mb-0.5' : ''}`}></i><span className="text-[10px] font-medium">จองเสื้อ</span>
                             </button>
                         </div>
                     </div>
@@ -537,6 +373,9 @@
                 </footer>
             );
 
+            // ======================
+            // VIEW RENDERING
+            // ======================
             if (view === 'home') {
                 return (
                     <div className="min-h-screen flex flex-col relative z-10">
@@ -546,25 +385,20 @@
                                 <h2 className="text-sm font-bold text-gold-500 tracking-widest uppercase mb-3">Welcome to Platform</h2>
                                 <h1 className="text-4xl md:text-5xl font-light text-charcoal-900 tracking-tight">University <span className="font-semibold">Activities</span></h1>
                             </div>
-                            
                             <div className="max-w-5xl w-full grid md:grid-cols-3 gap-6">
                                 <div onClick={() => { if(!systemOpen) return Swal.fire({title:'Offline', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('activity'); setView('search'); }} 
                                      className={`luxury-card p-8 md:p-10 cursor-pointer group ${!systemOpen ? 'opacity-50 grayscale' : ''}`}>
                                     <div className="w-14 h-14 bg-charcoal-50 text-charcoal-900 rounded-full flex items-center justify-center text-2xl mb-8 group-hover:bg-charcoal-900 group-hover:text-gold-500 transition-colors duration-300"><i className="fa-solid fa-qrcode"></i></div>
-                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">ลงทะเบียนกิจกรรม</h3>
-                                    <p className="text-gray-500 text-sm font-light leading-relaxed">เช็คชื่อเข้าร่วมและประเมินความพึงพอใจ</p>
+                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">ลงทะเบียนกิจกรรม</h3><p className="text-gray-500 text-sm font-light leading-relaxed">เช็คชื่อเข้าร่วมและประเมินความพึงพอใจ</p>
                                 </div>
-                                <div onClick={() => setView('history_search')} 
-                                     className="luxury-card p-8 md:p-10 cursor-pointer group">
+                                <div onClick={() => setView('history_search')} className="luxury-card p-8 md:p-10 cursor-pointer group">
                                     <div className="w-14 h-14 bg-charcoal-50 text-charcoal-900 rounded-full flex items-center justify-center text-2xl mb-8 group-hover:bg-charcoal-900 group-hover:text-gold-500 transition-colors duration-300"><i className="fa-solid fa-clock-rotate-left"></i></div>
-                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">ประวัติการเข้าร่วม</h3>
-                                    <p className="text-gray-500 text-sm font-light leading-relaxed">ตรวจสอบรายการกิจกรรมย้อนหลังทั้งหมด</p>
+                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">ประวัติการเข้าร่วม</h3><p className="text-gray-500 text-sm font-light leading-relaxed">ตรวจสอบรายการกิจกรรมย้อนหลังทั้งหมด</p>
                                 </div>
                                 <div onClick={() => { if(!systemOpen || !shirtSystemOpen) return Swal.fire({title:'Closed', icon:'info', confirmButtonColor:'#1a1a1a'}); setSearchPurpose('shirt'); setView('search'); }} 
                                      className={`luxury-card p-8 md:p-10 cursor-pointer group ${(!systemOpen || !shirtSystemOpen) ? 'opacity-50 grayscale' : ''}`}>
                                     <div className="w-14 h-14 bg-charcoal-50 text-charcoal-900 rounded-full flex items-center justify-center text-2xl mb-8 group-hover:bg-charcoal-900 group-hover:text-gold-500 transition-colors duration-300"><i className="fa-solid fa-shirt"></i></div>
-                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">สั่งจองเสื้อคณะ</h3>
-                                    <p className="text-gray-500 text-sm font-light leading-relaxed">ระบุไซส์และบันทึกการสั่งจองรับใบเสร็จ</p>
+                                    <h3 className="text-xl font-semibold text-charcoal-900 mb-2">สั่งจองเสื้อคณะ</h3><p className="text-gray-500 text-sm font-light leading-relaxed">ระบุไซส์และบันทึกการสั่งจองรับใบเสร็จ</p>
                                 </div>
                             </div>
                         </div>
@@ -580,23 +414,14 @@
                         <Navbar />
                         <div className="flex-grow flex flex-col items-center justify-center p-6">
                             <div className="luxury-card w-full max-w-md p-10 relative">
-                                <button onClick={goHome} className="absolute top-6 left-6 text-gray-400 hover:text-charcoal-900 transition-colors text-sm">
-                                    <i className="fa-solid fa-arrow-left mr-1"></i> BACK
-                                </button>
-                                
+                                <button onClick={goHome} className="absolute top-6 left-6 text-gray-400 hover:text-charcoal-900 transition-colors text-sm"><i className="fa-solid fa-arrow-left mr-1"></i> BACK</button>
                                 <div className="text-center mt-10 mb-8">
                                     <h2 className="text-2xl font-semibold text-charcoal-900 tracking-tight">Identification</h2>
                                     <p className="text-gray-500 mt-2 text-sm font-light">ระบุรหัสนักศึกษา หรือ เลขบัตรประจำตัวประชาชน</p>
                                 </div>
-                                
                                 <form onSubmit={(e) => { e.preventDefault(); handleSearchStudent(e.target.studentId.value); }}>
-                                    <div className="mb-8">
-                                        <input type="text" name="studentId" required placeholder="Enter ID..." defaultValue={localStorage.getItem('last_student_id')||''}
-                                               className="w-full luxury-input text-center tracking-widest" />
-                                    </div>
-                                    <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">
-                                        PROCEED <i className="fa-solid fa-arrow-right ml-2"></i>
-                                    </button>
+                                    <div className="mb-8"><input type="text" name="studentId" required placeholder="Enter ID..." defaultValue={localStorage.getItem('last_student_id')||''} className="w-full luxury-input text-center tracking-widest" /></div>
+                                    <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">PROCEED <i className="fa-solid fa-arrow-right ml-2"></i></button>
                                 </form>
                             </div>
                         </div>
@@ -614,36 +439,19 @@
                         <div className="flex-grow flex flex-col items-center pt-10 p-6">
                             <div className="w-full max-w-2xl mb-8 flex justify-between items-end">
                                 <div className="flex items-center gap-4">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl shadow-sm ${gProps.bg} ${gProps.text}`}>
-                                        <i className={`fa-solid ${gProps.icon}`}></i>
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-semibold text-charcoal-900">{student.Name}</h2>
-                                        <p className="text-gray-500 text-sm font-light mt-0.5">{student.StudentID} <span className="mx-2">•</span> {student.Major}</p>
-                                    </div>
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl shadow-sm ${gProps.bg} ${gProps.text}`}><i className={`fa-solid ${gProps.icon}`}></i></div>
+                                    <div><h2 className="text-xl font-semibold text-charcoal-900">{student.Name}</h2><p className="text-gray-500 text-sm font-light mt-0.5">{student.StudentID} <span className="mx-2">•</span> {student.Major}</p></div>
                                 </div>
                                 <button onClick={() => setView('search')} className="text-xs text-gold-600 hover:text-gold-700 font-medium">CHANGE</button>
                             </div>
-
                             <div className="w-full max-w-2xl">
                                 <h3 className="font-medium text-gray-400 text-sm mb-4 uppercase tracking-widest">Available Activities</h3>
                                 <div className="space-y-4">
-                                    {activities.length === 0 ? (
-                                        <div className="text-center py-12 luxury-card">
-                                            <p className="text-gray-400 font-light">ไม่มีกิจกรรมที่เปิดให้ลงทะเบียนในขณะนี้</p>
-                                        </div>
-                                    ) : (
+                                    {activities.length === 0 ? (<div className="text-center py-12 luxury-card"><p className="text-gray-400 font-light">ไม่มีกิจกรรมที่เปิดให้ลงทะเบียนในขณะนี้</p></div>) : (
                                         activities.map(act => (
-                                            <div key={act.ActivityID} onClick={() => { setSelectedActivity(act); setView('survey'); }} 
-                                                 className="luxury-card p-6 cursor-pointer group hover:border-gold-300">
+                                            <div key={act.ActivityID} onClick={() => { setSelectedActivity(act); setView('survey'); }} className="luxury-card p-6 cursor-pointer group hover:border-gold-300">
                                                 <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <h4 className="font-semibold text-lg text-charcoal-900 group-hover:text-gold-600 transition-colors">{act.Name}</h4>
-                                                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 font-light">
-                                                            <span><i className="fa-regular fa-calendar mr-1 opacity-70"></i> {act.Date}</span>
-                                                            <span><i className="fa-solid fa-location-dot mr-1 opacity-70"></i> {act.Location}</span>
-                                                        </div>
-                                                    </div>
+                                                    <div><h4 className="font-semibold text-lg text-charcoal-900 group-hover:text-gold-600 transition-colors">{act.Name}</h4><div className="flex items-center gap-4 mt-2 text-sm text-gray-500 font-light"><span><i className="fa-regular fa-calendar mr-1 opacity-70"></i> {act.Date}</span><span><i className="fa-solid fa-location-dot mr-1 opacity-70"></i> {act.Location}</span></div></div>
                                                     <i className="fa-solid fa-arrow-right text-gray-300 group-hover:text-gold-500 transition-transform transform group-hover:translate-x-1"></i>
                                                 </div>
                                             </div>
@@ -665,13 +473,10 @@
                         <div className="flex-grow flex flex-col items-center pt-6 p-4 pb-20">
                             <div className="luxury-card w-full max-w-4xl p-6 sm:p-12">
                                 <div className="mb-10 relative">
-                                    <button onClick={() => setView('select')} className="text-gray-400 hover:text-charcoal-900 transition-colors text-sm mb-6 flex items-center">
-                                        <i className="fa-solid fa-arrow-left mr-2"></i> BACK
-                                    </button>
+                                    <button onClick={() => setView('select')} className="text-gray-400 hover:text-charcoal-900 transition-colors text-sm mb-6 flex items-center"><i className="fa-solid fa-arrow-left mr-2"></i> BACK</button>
                                     <h2 className="text-2xl sm:text-3xl font-semibold text-charcoal-900 leading-tight">{selectedActivity.Name}</h2>
                                     <p className="text-gray-500 mt-2 font-light">Satisfaction Survey / แบบประเมินความพึงพอใจ</p>
                                 </div>
-
                                 <form onSubmit={handleSubmitSurvey}>
                                     <div className="flex flex-wrap items-center gap-4 text-xs font-light text-gray-500 mb-10 pb-6 border-b border-gray-100">
                                         <span className="font-medium text-charcoal-900">SCORING:</span>
@@ -681,13 +486,9 @@
                                         <div className="flex items-center gap-1.5"><div className="w-5 h-5 rounded border border-gray-200 text-gray-500 flex justify-center items-center">2</div> พอใช้</div>
                                         <div className="flex items-center gap-1.5"><div className="w-5 h-5 rounded border border-gray-200 text-gray-500 flex justify-center items-center">1</div> ปรับปรุง</div>
                                     </div>
-
                                     {surveyData.map((category, catIdx) => (
                                         <div key={catIdx} className="mb-12">
-                                            <h3 className="text-lg font-semibold text-charcoal-900 mb-6 border-l-2 border-gold-500 pl-3">
-                                                {category.title.split(' ').slice(1).join(' ')}
-                                            </h3>
-                                            
+                                            <h3 className="text-lg font-semibold text-charcoal-900 mb-6 border-l-2 border-gold-500 pl-3">{category.title.split(' ').slice(1).join(' ')}</h3>
                                             <div className="space-y-4">
                                                 {category.questions.map((q) => (
                                                     <div key={q.id} className="p-4 sm:p-5 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -695,8 +496,7 @@
                                                         <div className="flex justify-between gap-2 w-full md:w-auto">
                                                             {[5, 4, 3, 2, 1].map(score => (
                                                                 <label key={score} className={`relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-lg cursor-pointer text-sm font-medium transition-all ${surveyAnswers[q.id] === score ? 'bg-charcoal-900 text-white shadow-md' : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-400'}`}>
-                                                                    <input type="radio" className="hidden" name={q.id} value={score} required onChange={() => setSurveyAnswers({...surveyAnswers, [q.id]: score})} />
-                                                                    {score}
+                                                                    <input type="radio" className="hidden" name={q.id} value={score} required onChange={() => setSurveyAnswers({...surveyAnswers, [q.id]: score})} />{score}
                                                                 </label>
                                                             ))}
                                                         </div>
@@ -705,18 +505,12 @@
                                             </div>
                                         </div>
                                     ))}
-
                                     <div className="mb-12">
                                         <h3 className="text-lg font-semibold text-charcoal-900 mb-4 border-l-2 border-gold-500 pl-3">ข้อเสนอแนะเพิ่มเติม</h3>
-                                        <textarea rows="3" value={suggestion} onChange={(e) => setSuggestion(e.target.value)}
-                                            className="w-full luxury-input resize-none text-sm font-light"
-                                            placeholder="ความคิดเห็นเพื่อการพัฒนา (ไม่บังคับ)"></textarea>
+                                        <textarea rows="3" value={suggestion} onChange={(e) => setSuggestion(e.target.value)} className="w-full luxury-input resize-none text-sm font-light" placeholder="ความคิดเห็นเพื่อการพัฒนา (ไม่บังคับ)"></textarea>
                                     </div>
-
                                     <div className="flex gap-4 pt-6 border-t border-gray-100">
-                                        <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">
-                                            SUBMIT SURVEY
-                                        </button>
+                                        <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">SUBMIT SURVEY</button>
                                     </div>
                                 </form>
                             </div>
@@ -767,8 +561,7 @@
                                                     {['S', 'M', 'L', 'XL', '2XL', '3XL'].map(size => (
                                                         <label key={`p-${size}`} className={`relative flex flex-col items-center py-3 rounded-xl border cursor-pointer transition-all ${poloSize === size ? 'border-gold-500 bg-gold-50 text-gold-700 shadow-sm' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
                                                             <input type="radio" className="hidden" checked={poloSize === size} onChange={() => setPoloSize(size)} />
-                                                            <span className="text-sm font-semibold">{size}</span>
-                                                            <span className="text-[9px] opacity-70 mt-1">฿{getPrice(size)}</span>
+                                                            <span className="text-sm font-semibold">{size}</span><span className="text-[9px] opacity-70 mt-1">฿{getPrice(size)}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -804,8 +597,7 @@
                                                     {['S', 'M', 'L', 'XL', '2XL', '3XL'].map(size => (
                                                         <label key={`t-${size}`} className={`relative flex flex-col items-center py-3 rounded-xl border cursor-pointer transition-all ${tshirtSize === size ? 'border-gold-500 bg-gold-50 text-gold-700 shadow-sm' : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
                                                             <input type="radio" className="hidden" checked={tshirtSize === size} onChange={() => setTshirtSize(size)} />
-                                                            <span className="text-sm font-semibold">{size}</span>
-                                                            <span className="text-[9px] opacity-70 mt-1">฿{getPrice(size)}</span>
+                                                            <span className="text-sm font-semibold">{size}</span><span className="text-[9px] opacity-70 mt-1">฿{getPrice(size)}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -845,40 +637,20 @@
                     const receiptElement = document.getElementById('receipt-card');
                     Swal.fire({ title: 'Processing...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
                     html2canvas(receiptElement, { scale: 2, backgroundColor: isDarkMode ? '#1e1e1e' : '#faf9f6' }).then(canvas => {
-                        const link = document.createElement('a');
-                        link.download = `Receipt_${receiptData.student.StudentID}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                        Swal.close();
+                        const link = document.createElement('a'); link.download = `Receipt_${receiptData.student.StudentID}.png`; link.href = canvas.toDataURL('image/png'); link.click(); Swal.close();
                     }).catch(() => Swal.fire('Error', 'ไม่สามารถสร้างรูปภาพได้', 'error'));
                 };
 
                 const ReceiptSlip = ({ title, data, config }) => (
                     <div className="bg-white p-8 relative flex flex-col w-[48%]" style={{ minHeight: '100%' }}>
                         <div className="border-b border-gray-200 pb-5 mb-6 flex justify-between items-start">
-                            <div className="max-w-[75%]">
-                                <h2 className="text-sm font-semibold text-charcoal-900 leading-relaxed whitespace-pre-wrap">{config.header}</h2>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{title}</p>
-                                <p className="text-sm font-bold text-charcoal-900">{data.orderId}</p>
-                            </div>
+                            <div className="max-w-[75%]"><h2 className="text-sm font-semibold text-charcoal-900 leading-relaxed whitespace-pre-wrap">{config.header}</h2></div>
+                            <div className="text-right"><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">{title}</p><p className="text-sm font-bold text-charcoal-900">{data.orderId}</p></div>
                         </div>
-                        
                         <div className="grid grid-cols-2 gap-6 mb-8 text-sm border-b border-gray-100 pb-6">
-                            <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Customer</p>
-                                <p className="font-semibold text-charcoal-900 break-words">{data.student.Name}</p>
-                                <p className="text-gray-500 font-light mt-0.5 break-words">{data.student.Major}</p>
-                                <p className="text-gray-500 font-light mt-0.5 break-words">ID: {data.student.StudentID}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Date</p>
-                                <p className="font-semibold text-charcoal-900">{data.date.split(' ')[0]}</p>
-                                <p className="text-gray-500 font-light mt-0.5">{data.date.split(' ')[1]}</p>
-                            </div>
+                            <div><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Customer</p><p className="font-semibold text-charcoal-900 break-words">{data.student.Name}</p><p className="text-gray-500 font-light mt-0.5 break-words">{data.student.Major}</p><p className="text-gray-500 font-light mt-0.5 break-words">ID: {data.student.StudentID}</p></div>
+                            <div><p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Date</p><p className="font-semibold text-charcoal-900">{data.date.split(' ')[0]}</p><p className="text-gray-500 font-light mt-0.5">{data.date.split(' ')[1]}</p></div>
                         </div>
-                        
                         <div className="flex-grow mb-6">
                             <table className="w-full text-sm text-left">
                                 <thead className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-200">
@@ -886,39 +658,24 @@
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     <tr>
-                                        <td className="py-4">
-                                            <p className="font-semibold text-charcoal-900 text-sm">Polo Shirt</p>
-                                            <p className="text-xs text-gray-500 font-light mt-0.5">Gender: {data.poloGender}, Size: <span className="font-semibold text-charcoal-900">{data.poloSize}</span></p>
-                                        </td>
+                                        <td className="py-4"><p className="font-semibold text-charcoal-900 text-sm">Polo Shirt</p><p className="text-xs text-gray-500 font-light mt-0.5">Gender: {data.poloGender}, Size: <span className="font-semibold text-charcoal-900">{data.poloSize}</span></p></td>
                                         <td className="py-4 text-center text-charcoal-900">{data.poloQty}</td>
                                         <td className="py-4 text-right text-charcoal-900">฿{ (['XL', '2XL', '3XL'].includes(data.poloSize) ? shirtPrice.oversize : shirtPrice.normal) * data.poloQty }</td>
                                     </tr>
                                     <tr>
-                                        <td className="py-4">
-                                            <p className="font-semibold text-charcoal-900 text-sm">T-Shirt</p>
-                                            <p className="text-xs text-gray-500 font-light mt-0.5">Gender: {data.tshirtGender}, Size: <span className="font-semibold text-charcoal-900">{data.tshirtSize}</span></p>
-                                        </td>
+                                        <td className="py-4"><p className="font-semibold text-charcoal-900 text-sm">T-Shirt</p><p className="text-xs text-gray-500 font-light mt-0.5">Gender: {data.tshirtGender}, Size: <span className="font-semibold text-charcoal-900">{data.tshirtSize}</span></p></td>
                                         <td className="py-4 text-center text-charcoal-900">{data.tshirtQty}</td>
                                         <td className="py-4 text-right text-charcoal-900">฿{ (['XL', '2XL', '3XL'].includes(data.tshirtSize) ? shirtPrice.oversize : shirtPrice.normal) * data.tshirtQty }</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        
                         <div className="flex justify-between items-end border-t border-gray-200 pt-4 mb-8">
-                            <span className="text-xs text-gray-500 uppercase tracking-widest font-medium">Total</span>
-                            <span className="text-xl font-bold text-charcoal-900">฿ {data.grandTotal.toLocaleString()}</span>
+                            <span className="text-xs text-gray-500 uppercase tracking-widest font-medium">Total</span><span className="text-xl font-bold text-charcoal-900">฿ {data.grandTotal.toLocaleString()}</span>
                         </div>
-                        
                         <div className="mt-auto flex justify-between items-end">
-                            <div className="text-[10px] text-gray-400 max-w-[50%] leading-relaxed font-light">
-                                <span className="font-medium text-gray-500 uppercase tracking-widest">Note:</span><br/>
-                                <span className="whitespace-pre-wrap">{config.note}</span>
-                            </div>
-                            <div className="text-center w-40">
-                                <div className="border-b border-gray-300 mb-2 h-6"></div>
-                                <p className="text-[10px] text-gray-500 font-medium">Authorized Signature</p>
-                            </div>
+                            <div className="text-[10px] text-gray-400 max-w-[50%] leading-relaxed font-light"><span className="font-medium text-gray-500 uppercase tracking-widest">Note:</span><br/><span className="whitespace-pre-wrap">{config.note}</span></div>
+                            <div className="text-center w-40"><div className="border-b border-gray-300 mb-2 h-6"></div><p className="text-[10px] text-gray-500 font-medium">Authorized Signature</p></div>
                         </div>
                     </div>
                 );
@@ -932,7 +689,6 @@
                                     <div><h2 className="text-2xl font-semibold text-charcoal-900">Order Confirmation</h2><p className="text-gray-500 text-sm font-light mt-1">Please download this receipt for your reference.</p></div>
                                     <p className="text-xs text-gold-600 font-medium xl:hidden"><i className="fa-solid fa-arrows-left-right"></i> Scroll for full view</p>
                                 </div>
-
                                 <div className="w-full overflow-x-auto pb-6">
                                     <div id="receipt-card" className="bg-white flex flex-row justify-between items-stretch shadow-sm border border-gray-200" style={{ width: '1123px', minHeight: '794px', margin: '0 auto' }}>
                                         <ReceiptSlip title="ORIGINAL" data={receiptData} config={receiptSettings} />
@@ -944,7 +700,6 @@
                                         <ReceiptSlip title="COPY" data={receiptData} config={receiptSettings} />
                                     </div>
                                 </div>
-                                
                                 <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4 max-w-[800px] w-full mx-auto">
                                     <button onClick={goHome} className="w-full sm:w-1/4 bg-white text-charcoal-900 font-semibold py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm tracking-wider">HOME</button>
                                     {shirtSystemOpen && <button onClick={() => { setIsEditingOrder(true); setView('shirt_form'); }} className="w-full sm:w-1/4 btn-primary py-4 rounded-xl font-semibold text-sm tracking-wider">EDIT ORDER</button>}
@@ -964,21 +719,14 @@
                         <Navbar />
                         <div className="flex-grow flex flex-col items-center justify-center p-6">
                             <div className="luxury-card w-full max-w-md p-10 relative">
-                                <button onClick={goHome} className="absolute top-6 left-6 text-gray-400 hover:text-charcoal-900 transition-colors text-sm">
-                                    <i className="fa-solid fa-arrow-left mr-1"></i> BACK
-                                </button>
+                                <button onClick={goHome} className="absolute top-6 left-6 text-gray-400 hover:text-charcoal-900 transition-colors text-sm"><i className="fa-solid fa-arrow-left mr-1"></i> BACK</button>
                                 <div className="text-center mt-10 mb-8">
                                     <h2 className="text-2xl font-semibold text-charcoal-900 tracking-tight">History</h2>
                                     <p className="text-gray-500 mt-2 text-sm font-light">ตรวจสอบประวัติการเข้าร่วม</p>
                                 </div>
                                 <form onSubmit={(e) => { e.preventDefault(); handleSearchHistory(e.target.studentId.value); }}>
-                                    <div className="mb-8">
-                                        <input type="text" name="studentId" required placeholder="Student ID / ID Card" defaultValue={localStorage.getItem('last_student_id')||''}
-                                               className="w-full luxury-input text-center tracking-widest" />
-                                    </div>
-                                    <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">
-                                        SEARCH <i className="fa-solid fa-search ml-2"></i>
-                                    </button>
+                                    <div className="mb-8"><input type="text" name="studentId" required placeholder="Student ID / ID Card" defaultValue={localStorage.getItem('last_student_id')||''} className="w-full luxury-input text-center tracking-widest" /></div>
+                                    <button type="submit" className="w-full btn-primary py-4 rounded-xl font-semibold tracking-wider text-sm">SEARCH <i className="fa-solid fa-search ml-2"></i></button>
                                 </form>
                             </div>
                         </div>
@@ -998,11 +746,8 @@
                                     <div><h2 className="text-xl font-semibold text-charcoal-900">Activity History</h2><p className="text-gray-500 text-sm font-light mt-1">Found {historyData.length} records</p></div>
                                     <button onClick={() => setView('history_search')} className="text-xs text-gray-400 hover:text-charcoal-900 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors">NEW SEARCH</button>
                                 </div>
-                                
                                 <div className="space-y-4">
-                                    {historyData.length === 0 ? (
-                                        <div className="text-center py-16"><p className="text-gray-400 font-light">ไม่พบประวัติการเข้าร่วมกิจกรรม</p></div>
-                                    ) : (
+                                    {historyData.length === 0 ? (<div className="text-center py-16"><p className="text-gray-400 font-light">ไม่พบประวัติการเข้าร่วมกิจกรรม</p></div>) : (
                                         <div className="relative border-l border-gray-200 ml-4 sm:ml-6 pl-6 sm:pl-8 space-y-8 py-2">
                                             {historyData.map((h, i) => (
                                                 <div key={i} className="relative group">
@@ -1014,9 +759,7 @@
                                                                 <h4 className="font-semibold text-charcoal-900 text-lg mb-1">{h.ActivityName}</h4>
                                                                 <p className="text-sm text-gray-500 font-light">{h.Name} ({h.StudentID})</p>
                                                             </div>
-                                                            <div className="text-xs text-gray-500 font-light whitespace-nowrap bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">
-                                                                {new Date(h.Timestamp).toLocaleString('th-TH')}
-                                                            </div>
+                                                            <div className="text-xs text-gray-500 font-light whitespace-nowrap bg-gray-50 px-3 py-1.5 rounded-md border border-gray-100">{new Date(h.Timestamp).toLocaleString('th-TH')}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1045,15 +788,10 @@
                         <Navbar />
                         <div className="flex-grow flex items-center justify-center p-6 relative z-10">
                             <div className="bg-[#1f1f1f] w-full max-w-md p-10 rounded-2xl border border-[#333]">
-                                <div className="text-center mb-10">
-                                    <h2 className="text-2xl font-light text-white tracking-widest uppercase">Workspace</h2>
-                                    <p className="text-gray-500 mt-2 text-sm font-light">Authorized Personnel Only</p>
-                                </div>
+                                <div className="text-center mb-10"><h2 className="text-2xl font-light text-white tracking-widest uppercase">Workspace</h2><p className="text-gray-500 mt-2 text-sm font-light">Authorized Personnel Only</p></div>
                                 <form onSubmit={handleAdminLogin} className="space-y-6">
-                                    <input type="text" name="username" placeholder="Username" required
-                                           className="w-full border-b border-gray-700 bg-transparent text-white px-0 py-3 focus:border-gold-500 outline-none transition-colors font-light text-sm" />
-                                    <input type="password" name="password" placeholder="Password" required
-                                           className="w-full border-b border-gray-700 bg-transparent text-white px-0 py-3 focus:border-gold-500 outline-none transition-colors font-light text-sm" />
+                                    <input type="text" name="username" placeholder="Username" required className="w-full border-b border-gray-700 bg-transparent text-white px-0 py-3 focus:border-gold-500 outline-none transition-colors font-light text-sm" />
+                                    <input type="password" name="password" placeholder="Password" required className="w-full border-b border-gray-700 bg-transparent text-white px-0 py-3 focus:border-gold-500 outline-none transition-colors font-light text-sm" />
                                     <button type="submit" className="w-full bg-white text-charcoal-900 font-semibold py-4 rounded-lg hover:bg-gray-100 transition-colors mt-8 text-sm tracking-wider">LOGIN</button>
                                 </form>
                                 <button onClick={goHome} className="w-full text-gray-500 hover:text-white mt-6 text-xs transition-colors font-light uppercase tracking-widest">Return Home</button>
@@ -1067,13 +805,14 @@
                 );
             }
 
-            if (view === 'admin_dashboard') {
-                return <AdminDashboard data={adminData} reloadData={loadAdminData} goHome={goHome} />;
-            }
+            if (view === 'admin_dashboard') return <AdminDashboard data={adminData} reloadData={loadAdminData} goHome={goHome} />;
 
             return null;
         }
 
+        // ======================
+        // ADMIN DASHBOARD
+        // ======================
         function AdminDashboard({ data, reloadData, goHome }) {
             const [activeTab, setActiveTab] = useState('overview');
             const [selectedActivityForSummary, setSelectedActivityForSummary] = useState('');
@@ -1173,7 +912,6 @@
                         }).filter(s => s > 0);
                         
                         allScoresForGrand.push(...scores);
-
                         const n = scores.length; let mean = 0, sd = 0;
                         if(n > 0) { 
                             mean = scores.reduce((a,b)=>a+b, 0) / n; 
@@ -1203,76 +941,41 @@
                             <h3 style={{ textAlign: 'center', fontSize: '18pt', fontWeight: 'bold' }}>รายงานผลการประเมินความพึงพอใจ</h3>
                             <p style={{ textAlign: 'center', marginBottom: '20pt' }}>กิจกรรม: {data.activities.find(a=>String(a.ActivityID)===String(selectedActivityForSpss))?.Name}</p>
                         </div>
-
                         <div className="mb-10 min-w-[600px]">
                             <h4 className="font-semibold text-charcoal-900 mb-3 text-sm">ตารางที่ 1 ข้อมูลทั่วไปของผู้ตอบแบบสอบถาม (Demographic Data)</h4>
                             <table className="w-full text-sm text-left border-collapse mb-4 border border-gray-300">
                                 <thead className="bg-gray-50 border-b border-gray-300 text-charcoal-900">
-                                    <tr>
-                                        <th className="p-3 font-medium text-center border-r border-gray-300 w-1/3">ข้อมูลทั่วไป</th>
-                                        <th className="p-3 font-medium text-center border-r border-gray-300 w-1/3">จำนวน (คน)</th>
-                                        <th className="p-3 font-medium text-center w-1/3">ร้อยละ (%)</th>
-                                    </tr>
+                                    <tr><th className="p-3 font-medium text-center border-r border-gray-300 w-1/3">ข้อมูลทั่วไป</th><th className="p-3 font-medium text-center border-r border-gray-300 w-1/3">จำนวน (คน)</th><th className="p-3 font-medium text-center w-1/3">ร้อยละ (%)</th></tr>
                                 </thead>
                                 <tbody className="text-charcoal-900">
-                                    <tr className="border-b border-gray-300">
-                                        <td className="p-3 font-semibold bg-gray-50" colSpan="3">เพศ</td>
-                                    </tr>
-                                    <tr className="border-b border-gray-200">
-                                        <td className="p-3 pl-8 border-r border-gray-300">ชาย</td>
-                                        <td className="p-3 text-center border-r border-gray-300">{mCount}</td>
-                                        <td className="p-3 text-center">{mPct}</td>
-                                    </tr>
-                                    <tr className="border-b border-gray-200">
-                                        <td className="p-3 pl-8 border-r border-gray-300">หญิง</td>
-                                        <td className="p-3 text-center border-r border-gray-300">{fCount}</td>
-                                        <td className="p-3 text-center">{fPct}</td>
-                                    </tr>
-                                    <tr className="bg-gray-50 font-medium">
-                                        <td className="p-3 text-right border-r border-gray-300">รวม</td>
-                                        <td className="p-3 text-center border-r border-gray-300">{mCount + fCount}</td>
-                                        <td className="p-3 text-center">100.00</td>
-                                    </tr>
+                                    <tr className="border-b border-gray-300"><td className="p-3 font-semibold bg-gray-50" colSpan="3">เพศ</td></tr>
+                                    <tr className="border-b border-gray-200"><td className="p-3 pl-8 border-r border-gray-300">ชาย</td><td className="p-3 text-center border-r border-gray-300">{mCount}</td><td className="p-3 text-center">{mPct}</td></tr>
+                                    <tr className="border-b border-gray-200"><td className="p-3 pl-8 border-r border-gray-300">หญิง</td><td className="p-3 text-center border-r border-gray-300">{fCount}</td><td className="p-3 text-center">{fPct}</td></tr>
+                                    <tr className="bg-gray-50 font-medium"><td className="p-3 text-right border-r border-gray-300">รวม</td><td className="p-3 text-center border-r border-gray-300">{mCount + fCount}</td><td className="p-3 text-center">100.00</td></tr>
                                 </tbody>
                             </table>
-                            <p className="text-gray-700 text-sm leading-relaxed indent-8">
-                                <span className="font-semibold">สรุปผล:</span> จากตารางที่ 1 พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่เป็นเพศ{majorityGender} จำนวน {majorityCount} คน คิดเป็นร้อยละ {majorityPct} และเพศ{minorityGender} จำนวน {minorityCount} คน คิดเป็นร้อยละ {minorityPct}
-                            </p>
+                            <p className="text-gray-700 text-sm leading-relaxed indent-8"><span className="font-semibold">สรุปผล:</span> จากตารางที่ 1 พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่เป็นเพศ{majorityGender} จำนวน {majorityCount} คน คิดเป็นร้อยละ {majorityPct} และเพศ{minorityGender} จำนวน {minorityCount} คน คิดเป็นร้อยละ {minorityPct}</p>
                         </div>
-
                         <div className="mb-4 min-w-[800px]">
                             <h4 className="font-semibold text-charcoal-900 mb-3 text-sm">ตารางที่ 2 ค่าสถิติเชิงพรรณนา (Descriptive Statistics)</h4>
                             <table className="w-full text-sm text-left border-collapse mb-4 border border-gray-300">
                                 <thead className="bg-gray-50 border-b border-gray-300 text-charcoal-900">
-                                    <tr>
-                                        <th className="p-3 text-center font-medium border-r border-gray-300 w-12">ข้อ</th>
-                                        <th className="p-3 font-medium border-r border-gray-300">รายการประเมิน</th>
-                                        <th className="p-3 text-center font-medium border-r border-gray-300 w-20">x̄</th>
-                                        <th className="p-3 text-center font-medium border-r border-gray-300 w-20">S.D.</th>
-                                        <th className="p-3 text-center font-medium w-24">ระดับ</th>
-                                    </tr>
+                                    <tr><th className="p-3 text-center font-medium border-r border-gray-300 w-12">ข้อ</th><th className="p-3 font-medium border-r border-gray-300">รายการประเมิน</th><th className="p-3 text-center font-medium border-r border-gray-300 w-20">x̄</th><th className="p-3 text-center font-medium border-r border-gray-300 w-20">S.D.</th><th className="p-3 text-center font-medium w-24">ระดับ</th></tr>
                                 </thead>
                                 <tbody className="text-charcoal-900">
                                     {qStats.map(q => (
                                         <tr key={q.no} className="border-b border-gray-200 hover:bg-gray-50/50 transition-colors">
-                                            <td className="p-3 text-center border-r border-gray-300">{q.no}</td>
-                                            <td className="p-3 border-r border-gray-300">{q.text}</td>
-                                            <td className="p-3 text-center text-gold-600 font-medium border-r border-gray-300">{q.mean.toFixed(2)}</td>
-                                            <td className="p-3 text-center border-r border-gray-300">{q.sd.toFixed(2)}</td>
-                                            <td className="p-3 text-center">{getMeaning(q.mean)}</td>
+                                            <td className="p-3 text-center border-r border-gray-300">{q.no}</td><td className="p-3 border-r border-gray-300">{q.text}</td>
+                                            <td className="p-3 text-center text-gold-600 font-medium border-r border-gray-300">{q.mean.toFixed(2)}</td><td className="p-3 text-center border-r border-gray-300">{q.sd.toFixed(2)}</td><td className="p-3 text-center">{getMeaning(q.mean)}</td>
                                         </tr>
                                     ))}
                                     <tr className="bg-gray-50 font-medium border-t border-gray-300">
                                         <td className="p-3 text-right border-r border-gray-300" colSpan="2">รวมเฉลี่ย</td>
-                                        <td className="p-3 text-center text-charcoal-900 border-r border-gray-300">{grandMean.toFixed(2)}</td>
-                                        <td className="p-3 text-center border-r border-gray-300">{grandSd.toFixed(2)}</td>
-                                        <td className="p-3 text-center text-charcoal-900">{getMeaning(grandMean)}</td>
+                                        <td className="p-3 text-center text-charcoal-900 border-r border-gray-300">{grandMean.toFixed(2)}</td><td className="p-3 text-center border-r border-gray-300">{grandSd.toFixed(2)}</td><td className="p-3 text-center text-charcoal-900">{getMeaning(grandMean)}</td>
                                     </tr>
                                 </tbody>
                             </table>
-                            <p className="text-gray-700 text-sm leading-relaxed indent-8">
-                                <span className="font-semibold">สรุปผล:</span> ผลการสำรวจความพึงพอใจในการจัดกิจกรรม พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่มีความพึงพอใจในระดับ{getMeaning(grandMean)} โดยมีค่าเฉลี่ยเท่ากับ {grandMean.toFixed(2)} ซึ่งเมื่อพิจารณาเป็นรายข้อ พบว่า {top1.text} (ค่าเฉลี่ย {top1.mean.toFixed(2)}) รองลงมาคือ {top2.text} (ค่าเฉลี่ย {top2.mean.toFixed(2)}) อันดับที่ 3 คือ {top3.text} (ค่าเฉลี่ย {top3.mean.toFixed(2)})
-                            </p>
+                            <p className="text-gray-700 text-sm leading-relaxed indent-8"><span className="font-semibold">สรุปผล:</span> ผลการสำรวจความพึงพอใจในการจัดกิจกรรม พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่มีความพึงพอใจในระดับ{getMeaning(grandMean)} โดยมีค่าเฉลี่ยเท่ากับ {grandMean.toFixed(2)} ซึ่งเมื่อพิจารณาเป็นรายข้อ พบว่า {top1.text} (ค่าเฉลี่ย {top1.mean.toFixed(2)}) รองลงมาคือ {top2.text} (ค่าเฉลี่ย {top2.mean.toFixed(2)}) อันดับที่ 3 คือ {top3.text} (ค่าเฉลี่ย {top3.mean.toFixed(2)})</p>
                         </div>
                     </div>
                 );
@@ -1287,11 +990,8 @@
 
             return (
                 <div className="min-h-screen bg-[#faf9f6] dark:bg-[#121212] flex flex-col md:flex-row transition-colors">
-                    {/* Dark Elegant Sidebar */}
                     <aside className="w-full md:w-64 bg-charcoal-900 text-white flex-shrink-0 flex flex-col z-20 shadow-xl">
-                        <div className="p-8 border-b border-gray-800">
-                            <h2 className="text-xl font-semibold tracking-widest uppercase text-gold-500">Workspace</h2>
-                        </div>
+                        <div className="p-8 border-b border-gray-800"><h2 className="text-xl font-semibold tracking-widest uppercase text-gold-500">Workspace</h2></div>
                         <nav className="flex-1 px-4 py-6 space-y-1">
                             {['overview', 'activities', 'summary', 'spss', 'shirt_summary'].map(tab => {
                                 const labels = { overview: 'Overview', activities: 'Activities', summary: 'Check-ins', spss: 'SPSS Report', shirt_summary: 'Shirt Orders' };
@@ -1303,21 +1003,16 @@
                             <div className="mt-8 pt-6 border-t border-gray-800">
                                 <p className="text-[9px] text-gray-500 font-medium mb-3 px-4 uppercase tracking-widest">System Control</p>
                                 <button onClick={toggleSystem} className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-all ${systemOpen ? 'text-white bg-green-900/20 hover:bg-green-900/40' : 'text-gray-400 bg-black/20'}`}>
-                                    <span className="font-light"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off'} mr-2`}></i> Platform</span>
-                                    <span className="text-[10px] uppercase tracking-widest">{systemOpen ? 'Online' : 'Offline'}</span>
+                                    <span className="font-light"><i className={`fa-solid ${systemOpen ? 'fa-toggle-on text-green-500' : 'fa-toggle-off'} mr-2`}></i> Platform</span><span className="text-[10px] uppercase tracking-widest">{systemOpen ? 'Online' : 'Offline'}</span>
                                 </button>
                             </div>
                         </nav>
-                        <div className="p-4 border-t border-gray-800">
-                            <button onClick={goHome} className="w-full py-3 text-xs text-gray-400 hover:text-white font-light tracking-widest uppercase transition-colors"><i className="fa-solid fa-arrow-left mr-2"></i> Exit</button>
-                        </div>
+                        <div className="p-4 border-t border-gray-800"><button onClick={goHome} className="w-full py-3 text-xs text-gray-400 hover:text-white font-light tracking-widest uppercase transition-colors"><i className="fa-solid fa-arrow-left mr-2"></i> Exit</button></div>
                     </aside>
 
                     <main className="flex-1 p-6 md:p-12 overflow-y-auto">
                         <div className="flex justify-between items-end mb-12 border-b border-gray-200 pb-4">
-                            <h2 className="text-3xl font-light text-charcoal-900 tracking-tight capitalize">
-                                {activeTab.replace('_', ' ')}
-                            </h2>
+                            <h2 className="text-3xl font-light text-charcoal-900 tracking-tight capitalize">{activeTab.replace('_', ' ')}</h2>
                             <button onClick={reloadData} className="text-xs font-medium text-gray-400 hover:text-charcoal-900 tracking-widest uppercase transition-colors"><i className="fa-solid fa-rotate-right mr-1"></i> Sync</button>
                         </div>
 
@@ -1362,10 +1057,7 @@
                         {activeTab === 'summary' && (
                             <div className="bg-white p-8 border border-gray-100 rounded-xl transition-colors">
                                 <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-between">
-                                    <select className="border border-gray-200 p-3 rounded-lg text-sm bg-transparent outline-none flex-grow max-w-sm focus:border-gold-500 transition-colors" value={selectedActivityForSummary} onChange={(e)=>setSelectedActivityForSummary(e.target.value)}>
-                                        <option value="">All Activities</option>
-                                        {data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}
-                                    </select>
+                                    <select className="border border-gray-200 p-3 rounded-lg text-sm bg-transparent outline-none flex-grow max-w-sm focus:border-gold-500 transition-colors" value={selectedActivityForSummary} onChange={(e)=>setSelectedActivityForSummary(e.target.value)}><option value="">All Activities</option>{data.activities.map(a=><option key={a.ActivityID} value={a.ActivityID}>{a.Name}</option>)}</select>
                                     <div className="flex gap-2">
                                         <label className="border border-gray-200 text-charcoal-900 px-4 py-2.5 rounded-lg cursor-pointer text-xs font-medium tracking-widest uppercase hover:bg-gray-50 transition-colors flex items-center"><i className="fa-solid fa-upload mr-2"></i> Import<input type="file" accept=".csv" className="hidden" onChange={handleImportCSV} /></label>
                                         <button onClick={()=>{ const list = selectedActivityForSummary ? data.checkins.filter(c=>c.ActivityID===selectedActivityForSummary) : data.checkins; const csvData = Papa.unparse(list); const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' })); link.download = `Checkins.csv`; link.click(); }} className="btn-primary px-4 py-2.5 rounded-lg text-xs font-medium tracking-widest uppercase flex items-center"><i className="fa-solid fa-download mr-2"></i> Export</button>
@@ -1378,9 +1070,7 @@
                                 </div>
                                 {totalPages > 1 && (
                                     <div className="flex justify-between items-center text-sm">
-                                        <button disabled={currentPage===1} onClick={()=>setCurrentPage(prev=>Math.max(1,prev-1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===1?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Prev</button>
-                                        <span className="text-gray-400 font-light text-xs">Page {currentPage} of {totalPages}</span>
-                                        <button disabled={currentPage===totalPages} onClick={()=>setCurrentPage(prev=>Math.min(totalPages,prev+1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===totalPages?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Next</button>
+                                        <button disabled={currentPage===1} onClick={()=>setCurrentPage(prev=>Math.max(1,prev-1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===1?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Prev</button><span className="text-gray-400 font-light text-xs">Page {currentPage} of {totalPages}</span><button disabled={currentPage===totalPages} onClick={()=>setCurrentPage(prev=>Math.min(totalPages,prev+1))} className={`text-xs uppercase tracking-widest font-medium ${currentPage===totalPages?'text-gray-300':'text-charcoal-900 hover:text-gold-600'}`}>Next</button>
                                     </div>
                                 )}
                             </div>
