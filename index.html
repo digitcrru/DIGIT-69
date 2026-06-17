@@ -130,14 +130,13 @@
         // ==========================================
         // URL ของ GOOGLE APPS SCRIPT
         // ==========================================
-        // อัปเดต URL เป็นเวอร์ชันล่าสุดที่คุณให้มา
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6wkWGyyWSJBMQ90nd6DFqh8JKOWlJ_aWsxzNNSbSstIwX8UDVL47Nn6jtm0P0l3ViWw/exec';
         
         // --- State Management ---
         let currentRole = 'student'; // 'student' or 'admin'
         let currentView = 'events';
         let currentModalOrderId = null;
-        let globalActivities = []; // เพิ่มตัวแปรเก็บข้อมูลกิจกรรมที่ดึงมาจาก Sheet
+        let globalActivities = [];
 
         // --- Menu Definitions ---
         const NAV_STUDENT = [
@@ -166,10 +165,10 @@
         ];
 
         const MOCK_ORDERS = [
-            { id: 'ORD-26-001', studentId: '66010001', name: 'นายรักเรียน ขยันยิ่ง', type: 'เสื้อโปโล', size: 'L', qty: 1, total: 280, date: '17/06/2026 10:30', status: 2 },
-            { id: 'ORD-26-002', studentId: '66010045', name: 'นางสาวเรียนดี สีสด', type: 'เสื้อกิจกรรม', size: 'M', qty: 2, total: 560, date: '17/06/2026 11:15', status: 1 },
-            { id: 'ORD-26-003', studentId: '66010112', name: 'นายสายเสมอ มาทัน', type: 'เสื้อโปโล', size: 'XL', qty: 1, total: 350, date: '16/06/2026 09:00', status: 3 },
-            { id: 'ORD-26-004', studentId: '66010204', name: 'นางสาวใจดี มีสุข', type: 'เสื้อกิจกรรม', size: 'S', qty: 1, total: 280, date: '15/06/2026 14:20', status: 4 }
+            { id: 'ORD-26-001', studentId: '66010001', name: 'นายรักเรียน ขยันยิ่ง', type: 'แพ็คเกจคู่', size: 'โปโล L, กิจกรรม L', qty: 2, total: 560, date: '17/06/2026 10:30', status: 2, hasEdited: false },
+            { id: 'ORD-26-002', studentId: '66010045', name: 'นางสาวเรียนดี สีสด', type: 'แพ็คเกจคู่', size: 'โปโล M, กิจกรรม S', qty: 2, total: 560, date: '17/06/2026 11:15', status: 1, hasEdited: false },
+            { id: 'ORD-26-003', studentId: '66010112', name: 'นายสายเสมอ มาทัน', type: 'แพ็คเกจคู่', size: 'โปโล XL, กิจกรรม XL', qty: 2, total: 700, date: '16/06/2026 09:00', status: 3, hasEdited: true },
+            { id: 'ORD-26-004', studentId: '66010204', name: 'นางสาวใจดี มีสุข', type: 'แพ็คเกจคู่', size: 'โปโล S, กิจกรรม S', qty: 2, total: 560, date: '15/06/2026 14:20', status: 4, hasEdited: false }
         ];
 
         const STATUS_MAP = {
@@ -188,7 +187,6 @@
         function switchRole(role) {
             currentRole = role;
             
-            // Update UI buttons based on role
             const btnStudent = document.getElementById('btn-role-student');
             const btnAdmin = document.getElementById('btn-role-admin');
             const brandIcon = document.getElementById('brand-icon');
@@ -260,6 +258,7 @@
                 else if(viewId === 'shirt') renderShirtShop(content);
                 else if(viewId === 'checkout') renderCheckout(content, param);
                 else if(viewId === 'tracking') renderTracking(content);
+                else if(viewId === 'edit-order') renderEditOrder(content, param);
             } else {
                 if(viewId === 'admin-dash') renderAdminDashboard(content);
                 else if(viewId === 'admin-orders') renderAdminOrders(content);
@@ -281,7 +280,7 @@
             } catch (error) {
                 console.error('Error fetching activities:', error);
             }
-            // Fallback กรณี API ดึงไม่สำเร็จ หรือยังไม่มีข้อมูล
+            // Fallback
             globalActivities = MOCK_EVENTS;
             return globalActivities; 
         }
@@ -290,8 +289,7 @@
         // STUDENT VIEWS
         // ==========================================
 
-        async function renderEvents(container) {
-            // แสดงสถานะกำลังโหลด
+        function renderEvents(container) {
             container.innerHTML = `
                 <div class="fade-in flex flex-col items-center justify-center py-20">
                     <i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i>
@@ -299,59 +297,59 @@
                 </div>
             `;
 
-            const activities = await fetchActivitiesData();
-
-            let html = `
-                <div class="fade-in">
-                    <div class="mb-8 text-center sm:text-left">
-                        <h1 class="text-3xl font-bold text-slate-800">ประกาศรับสมัครกิจกรรม</h1>
-                        <p class="text-slate-500 mt-2">เลือกกิจกรรมที่คุณสนใจเพื่อลงทะเบียนเข้าร่วม</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="events-grid">
-            `;
-
-            activities.forEach(event => {
-                const isOpen = event.status === 'open';
-                const statusBadge = isOpen 
-                    ? `<span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-green-200">เปิดรับสมัคร</span>`
-                    : `<span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-red-200">ปิดรับสมัคร</span>`;
-                
-                const percentFull = Math.round((event.joined / event.spots) * 100) || 0;
-
-                html += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-                        <div class="h-48 overflow-hidden relative">
-                            <img src="${event.image}" alt="${event.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute top-3 right-3">${statusBadge}</div>
+            fetchActivitiesData().then(activities => {
+                let html = `
+                    <div class="fade-in">
+                        <div class="mb-8 text-center sm:text-left">
+                            <h1 class="text-3xl font-bold text-slate-800">ประกาศรับสมัครกิจกรรม</h1>
+                            <p class="text-slate-500 mt-2">เลือกกิจกรรมที่คุณสนใจเพื่อลงทะเบียนเข้าร่วม</p>
                         </div>
-                        <div class="p-5 flex-grow flex flex-col">
-                            <h3 class="text-xl font-bold text-slate-800 mb-2 line-clamp-2">${event.title}</h3>
-                            <div class="space-y-2 mt-auto mb-4 text-sm text-slate-600">
-                                <div class="flex items-center gap-2"><i class="ph ph-calendar-blank text-primary"></i> ${event.date}</div>
-                                <div class="flex items-center gap-2"><i class="ph ph-map-pin text-primary"></i> ${event.location}</div>
-                                <div class="mt-3">
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span>ผู้สมัครแล้ว ${event.joined}/${event.spots} คน</span>
-                                        <span class="font-medium">${percentFull}%</span>
-                                    </div>
-                                    <div class="w-full bg-slate-100 rounded-full h-1.5">
-                                        <div class="bg-primary h-1.5 rounded-full" style="width: ${percentFull}%"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="events-grid">
+                `;
+
+                activities.forEach(event => {
+                    const isOpen = event.status === 'open';
+                    const statusBadge = isOpen 
+                        ? `<span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-green-200">เปิดรับสมัคร</span>`
+                        : `<span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-red-200">ปิดรับสมัคร</span>`;
+                    
+                    const percentFull = Math.round((event.joined / event.spots) * 100) || 0;
+
+                    html += `
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
+                            <div class="h-48 overflow-hidden relative">
+                                <img src="${event.image}" alt="${event.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-3 right-3">${statusBadge}</div>
+                            </div>
+                            <div class="p-5 flex-grow flex flex-col">
+                                <h3 class="text-xl font-bold text-slate-800 mb-2 line-clamp-2">${event.title}</h3>
+                                <div class="space-y-2 mt-auto mb-4 text-sm text-slate-600">
+                                    <div class="flex items-center gap-2"><i class="ph ph-calendar-blank text-primary"></i> ${event.date}</div>
+                                    <div class="flex items-center gap-2"><i class="ph ph-map-pin text-primary"></i> ${event.location}</div>
+                                    <div class="mt-3">
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <span>ผู้สมัครแล้ว ${event.joined}/${event.spots} คน</span>
+                                            <span class="font-medium">${percentFull}%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                            <div class="bg-primary h-1.5 rounded-full" style="width: ${percentFull}%"></div>
+                                        </div>
                                     </div>
                                 </div>
+                                <button 
+                                    onclick="navigate('register', '${event.id}')" 
+                                    ${!isOpen ? 'disabled' : ''} 
+                                    class="w-full mt-2 py-2.5 rounded-xl font-medium transition-colors ${isOpen ? 'bg-primary text-white hover:bg-primary_hover shadow-md shadow-primary/20' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}">
+                                    ${isOpen ? 'ลงทะเบียนเข้าร่วม' : 'เต็มแล้ว'}
+                                </button>
                             </div>
-                            <button 
-                                onclick="navigate('register', '${event.id}')" 
-                                ${!isOpen ? 'disabled' : ''} 
-                                class="w-full mt-2 py-2.5 rounded-xl font-medium transition-colors ${isOpen ? 'bg-primary text-white hover:bg-primary_hover shadow-md shadow-primary/20' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}">
-                                ${isOpen ? 'ลงทะเบียนเข้าร่วม' : 'เต็มแล้ว'}
-                            </button>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
 
-            html += `</div></div>`;
-            container.innerHTML = html;
+                html += `</div></div>`;
+                container.innerHTML = html;
+            });
         }
 
         function renderRegistration(container, eventId) {
@@ -391,8 +389,8 @@
                                 <p id="search-feedback" class="text-xs text-red-500 mt-2 hidden"></p>
                             </div>
 
-                            <!-- ขั้นตอนที่ 2: แสดงข้อมูลและยืนยัน (ซ่อนไว้ก่อนจนกว่าจะค้นหาเจอ หรือเลือกข้าม) -->
-                            <form id="step-form" class="space-y-5 hidden" onsubmit="handleRegistrationSubmit(event, ${eventId})">
+                            <!-- ขั้นตอนที่ 2: แสดงข้อมูลและยืนยัน -->
+                            <form id="step-form" class="space-y-5 hidden" onsubmit="handleRegistrationSubmit(event, '${eventId}')">
                                 <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 flex items-start gap-3">
                                     <i class="ph-fill ph-check-circle text-blue-500 text-xl mt-0.5"></i>
                                     <div>
@@ -415,8 +413,8 @@
                                          <input type="text" id="reg-faculty" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">หมายเลขบัตรประจําตัวประชาชน *</label>
-                                        <input type="text" id="reg-year" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">ชั้นปี *</label>
+                                        <input type="number" id="reg-year" required min="1" max="6" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
                                     </div>
                                 </div>
                                 <div class="pt-6 border-t border-slate-100 flex gap-3 justify-end mt-6">
@@ -425,7 +423,7 @@
                                 </div>
                             </form>
                             
-                            <!-- ตัวเลือกข้ามการค้นหา สำหรับคนที่ไม่มีข้อมูล -->
+                            <!-- ตัวเลือกข้ามการค้นหา -->
                             <div id="step-skip" class="text-center mt-6 pt-4 border-t border-slate-100">
                                  <button onclick="showManualForm()" class="text-sm text-slate-500 hover:text-primary underline transition-colors">ไม่มีข้อมูลในระบบ? ข้ามไปกรอกข้อมูลเอง</button>
                             </div>
@@ -435,8 +433,6 @@
                 </div>
             `;
         }
-
-        // --- Functions สำหรับจัดการหน้าลงทะเบียน ---
         
         async function fetchStudentData() {
             const input = document.getElementById('search-student-id');
@@ -449,7 +445,6 @@
                 return;
             }
 
-            // UI Loading state
             const btn = document.getElementById('btn-fetch-student');
             const originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังค้นหา...';
@@ -457,24 +452,20 @@
             feedback.classList.add('hidden');
 
             try {
-                // เรียก API Google Apps Script แบบ GET พร้อมแนบ action=search และ id
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=search&id=${encodeURIComponent(searchId)}`);
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    // หากพบข้อมูล
                     document.getElementById('reg-student-id').value = searchId;
                     document.getElementById('reg-name').value = result.data.name || '';
                     document.getElementById('reg-faculty').value = result.data.faculty || '';
                     document.getElementById('reg-year').value = result.data.year || '';
                     
-                    // สลับ UI ไปหน้าฟอร์ม
                     document.getElementById('step-search').classList.add('hidden');
                     document.getElementById('step-skip').classList.add('hidden');
                     document.getElementById('step-form').classList.remove('hidden');
                     showToast('ดึงข้อมูลสำเร็จ', 'success');
                 } else {
-                    // ไม่พบข้อมูล
                     feedback.textContent = 'ไม่พบข้อมูลที่ตรงกับรหัสนี้ กรุณาลองใหม่ หรือกรอกข้อมูลเองด้านล่าง';
                     feedback.classList.remove('hidden');
                 }
@@ -482,9 +473,6 @@
                 console.error('Error fetching student:', error);
                 feedback.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่';
                 feedback.classList.remove('hidden');
-                
-                // Fallback (สำหรับทดสอบเมื่อ API พัง)
-                console.log("Fallback to Mock mode for testing.");
                 showManualForm(searchId);
             } finally {
                 btn.innerHTML = originalBtnHtml;
@@ -495,7 +483,7 @@
         function showManualForm(prefillId = '') {
             const searchInput = document.getElementById('search-student-id').value.trim() || prefillId;
             document.getElementById('reg-student-id').value = searchInput;
-            document.getElementById('reg-student-id').readOnly = false; // อนุญาตให้แก้ได้
+            document.getElementById('reg-student-id').readOnly = false;
             document.getElementById('reg-student-id').classList.remove('bg-slate-100', 'cursor-not-allowed');
             document.getElementById('reg-student-id').classList.add('bg-white');
             
@@ -504,7 +492,6 @@
             
             const form = document.getElementById('step-form');
             form.classList.remove('hidden');
-            // ซ่อนกล่องข้อความสีฟ้า (พบข้อมูลในระบบ)
             form.firstElementChild.classList.add('hidden');
         }
 
@@ -515,10 +502,8 @@
             document.getElementById('search-feedback').classList.add('hidden');
             document.getElementById('step-form').reset();
             
-            // คืนค่ากล่องข้อความสีฟ้า
             document.getElementById('step-form').firstElementChild.classList.remove('hidden');
             
-            // คืนสถานะช่องรหัส
             const idField = document.getElementById('reg-student-id');
             idField.readOnly = true;
             idField.classList.add('bg-slate-100', 'cursor-not-allowed');
@@ -533,7 +518,6 @@
             const facultyInput = document.getElementById('reg-faculty').value;
             const yearInput = document.getElementById('reg-year').value;
 
-            // UI Loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> กำลังบันทึก...';
@@ -550,7 +534,6 @@
             };
 
             try {
-                // ส่ง POST request เพื่อบันทึกข้อมูล
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -571,9 +554,23 @@
         }
 
         function renderHistory(container) {
-            // ดึงค่าการค้นหาล่าสุดถ้ามี (สามารถใช้ตัวแปร global หรือ sessionStorage ได้)
             const searchedId = sessionStorage.getItem('historySearchTerm') || '';
             const isSearched = searchedId.length > 0;
+            
+            let historyData = [];
+            let studentName = 'ไม่พบชื่อในระบบ';
+
+            if (isSearched) {
+                try {
+                    const storedData = JSON.parse(sessionStorage.getItem('historyData'));
+                    if (storedData) {
+                        historyData = storedData.history;
+                        studentName = storedData.studentName || studentName;
+                    }
+                } catch (e) {
+                    console.error("Error parsing history data", e);
+                }
+            }
 
             let html = `
                 <div class="fade-in max-w-4xl mx-auto">
@@ -582,7 +579,6 @@
                         <p class="text-slate-500 mt-2">กรุณาระบุรหัสนักศึกษาหรือบัตรประชาชน เพื่อดูประวัติและชั่วโมงกิจกรรมของคุณ</p>
                     </div>
 
-                    <!-- Search Section -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
                         <label class="block text-sm font-medium text-slate-700 mb-2">รหัสนักศึกษา หรือ บัตรประชาชน</label>
                         <div class="flex flex-col sm:flex-row gap-3">
@@ -604,18 +600,15 @@
                     </div>
             `;
 
-            // แสดงผลลัพธ์เฉพาะเมื่อมีการค้นหาแล้ว
             if (isSearched) {
-                // จำลองการคำนวณชั่วโมงจาก MOCK_HISTORY
-                const totalHours = MOCK_HISTORY.reduce((sum, item) => sum + item.hours, 0);
+                const totalHours = historyData.reduce((sum, item) => sum + (Number(item.hours) || 0), 0);
 
                 html += `
-                    <!-- Results Section -->
                     <div class="fade-in">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                             <div>
                                 <h2 class="text-xl font-bold text-slate-800">ผลการค้นหา: ${searchedId}</h2>
-                                <p class="text-slate-500 mt-1">ชื่อ-นามสกุล: <span class="font-medium text-slate-700">นายรักเรียน ขยันยิ่ง</span> (ตัวอย่างข้อมูล)</p>
+                                <p class="text-slate-500 mt-1">ชื่อ-นามสกุล: <span class="font-medium text-slate-700">${studentName}</span></p>
                             </div>
                             <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-4">
                                 <div class="bg-white p-3 rounded-full text-primary shadow-sm"><i class="ph ph-medal text-2xl"></i></div>
@@ -640,8 +633,8 @@
                                     <tbody class="text-sm text-slate-700">
                 `;
                 
-                if (MOCK_HISTORY.length > 0) {
-                    MOCK_HISTORY.forEach(history => {
+                if (historyData.length > 0) {
+                    historyData.forEach(history => {
                         html += `
                             <tr class="border-b border-slate-50 hover:bg-slate-50/50">
                                 <td class="p-4 font-medium text-slate-800">${history.eventName}</td>
@@ -655,21 +648,14 @@
                     html += `<tr><td colspan="4" class="p-8 text-center text-slate-400">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</td></tr>`;
                 }
 
-                html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                html += `</tbody></table></div></div></div>`;
             }
 
             html += `</div>`;
             container.innerHTML = html;
         }
 
-        // --- Functions สำหรับหน้าประวัติ ---
-        function fetchHistoryData() {
+        async function fetchHistoryData() {
             const input = document.getElementById('search-history-id');
             const searchId = input.value.trim();
             
@@ -677,25 +663,43 @@
                 showToast('กรุณากรอกรหัสนักศึกษา หรือ บัตรประชาชน', 'error');
                 return;
             }
-
-            // ในระบบจริงตรงนี้จะเรียก fetch() ไปยัง Google Apps Script (doGet) เพื่อดึงข้อมูลประวัติ
-            // ปัจจุบันใช้ Mock Data ไปก่อน
             
             const btn = document.getElementById('btn-fetch-history');
             const originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังค้นหา...';
             btn.disabled = true;
 
-            // จำลองการโหลดข้อมูล 0.5 วินาที
-            setTimeout(() => {
-                sessionStorage.setItem('historySearchTerm', searchId);
-                showToast('ดึงข้อมูลประวัติสำเร็จ', 'success');
+            try {
+                // เรียก API ไปยัง Google Apps Script ส่ง action=getHistory
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getHistory&id=${encodeURIComponent(searchId)}`);
+                const result = await response.json();
+
+                if (result.success && result.data && result.data.length > 0) {
+                    sessionStorage.setItem('historySearchTerm', searchId);
+                    sessionStorage.setItem('historyData', JSON.stringify({
+                        studentName: result.studentName,
+                        history: result.data
+                    }));
+                    showToast('ค้นหาประวัติสำเร็จ', 'success');
+                } else {
+                    // หาไม่เจอ แต่ก็ให้เปิดหน้าต่างขึ้นมาโชว์ว่าหาไม่เจอ
+                    sessionStorage.setItem('historySearchTerm', searchId);
+                    sessionStorage.setItem('historyData', JSON.stringify({ studentName: '', history: [] }));
+                    showToast('ไม่พบประวัติสำหรับรหัสนี้', 'warning');
+                }
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+            } finally {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
                 renderHistory(document.getElementById('app-content'));
-            }, 500);
+            }
         }
 
         function clearHistorySearch() {
             sessionStorage.removeItem('historySearchTerm');
+            sessionStorage.removeItem('historyData');
             renderHistory(document.getElementById('app-content'));
         }
 
@@ -707,9 +711,58 @@
                         <p class="text-slate-500 mt-2">นักศึกษาชั้นปีที่ 1 <span class="text-red-500 font-medium">จำเป็นต้องสั่งจองทั้งเสื้อโปโลและเสื้อกิจกรรม</span></p>
                     </div>
 
-                    <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                    <!-- Step 1: Search -->
+                    <div id="order-step-search" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8 mb-8 max-w-2xl mx-auto">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="ph-fill ph-identification-card text-3xl"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-800">ยืนยันตัวตนก่อนสั่งจอง</h2>
+                            <p class="text-sm text-slate-500 mt-1">ดึงข้อมูลจากฐานข้อมูลนักศึกษา</p>
+                        </div>
+                        
+                        <label class="block text-sm font-medium text-slate-700 mb-2">ระบุรหัสนักศึกษา หรือ บัตรประชาชน</label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="ph ph-magnifying-glass text-slate-400 text-lg"></i>
+                                </div>
+                                <input type="text" id="search-order-id" 
+                                    class="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-primary focus:border-primary block w-full pl-10 p-3 outline-none transition-colors" 
+                                    placeholder="เช่น 66010001 หรือ 1100000000000"
+                                    onkeypress="if(event.key === 'Enter') fetchStudentForOrder()">
+                            </div>
+                            <button onclick="fetchStudentForOrder()" id="btn-fetch-order" class="px-6 py-3 bg-slate-800 text-white text-sm font-medium rounded-xl hover:bg-black transition-colors whitespace-nowrap shadow-sm flex items-center justify-center gap-2">
+                                ค้นหาข้อมูล
+                            </button>
+                        </div>
+                        <p id="search-order-feedback" class="text-xs text-red-500 mt-2 hidden"></p>
+                        
+                        <div class="text-center mt-6 pt-4 border-t border-slate-100">
+                             <button onclick="skipOrderSearch()" class="text-sm text-slate-500 hover:text-primary underline transition-colors">ไม่มีข้อมูลในระบบ? ข้ามไปกรอกข้อมูลเอง</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Form -->
+                    <div id="order-step-form" class="hidden bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
                         <form id="orderForm" onsubmit="mockOrderSubmit(event)" class="space-y-8">
                             
+                            <!-- Student Info Display -->
+                            <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center gap-4 relative overflow-hidden">
+                                <div class="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-blue-100/50 to-transparent"></div>
+                                <div class="flex-grow z-10">
+                                    <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">รหัสนักศึกษา / บัตรประชาชน</label>
+                                    <input type="text" id="order-student-id" required class="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-900 font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                                </div>
+                                <div class="flex-grow z-10">
+                                    <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">ชื่อ-นามสกุล</label>
+                                    <input type="text" id="order-student-name" required class="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-900 font-medium outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                                </div>
+                                <div class="mt-2 sm:mt-0 flex-shrink-0 self-end sm:self-center z-10">
+                                     <button type="button" onclick="resetOrderSearch()" class="text-sm font-medium text-blue-600 hover:text-blue-800 bg-white px-3 py-1.5 rounded-lg border border-blue-200 shadow-sm transition-colors">เปลี่ยนผู้สั่งจอง</button>
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <!-- Polo Shirt Section -->
                                 <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 flex flex-col">
@@ -825,30 +878,101 @@
                     </div>
                 </div>
             `;
-            // Call once to set initial price correctly based on default selection
+        }
+
+        async function fetchStudentForOrder() {
+            const input = document.getElementById('search-order-id');
+            const searchId = input.value.trim();
+            const feedback = document.getElementById('search-order-feedback');
+            
+            if(!searchId) {
+                feedback.textContent = 'กรุณากรอกรหัสนักศึกษา หรือ บัตรประชาชน';
+                feedback.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('btn-fetch-order');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังค้นหา...';
+            btn.disabled = true;
+            feedback.classList.add('hidden');
+
+            try {
+                // เรียก API ไปยัง Google Apps Script ส่ง action=searchStudentOrder
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=searchStudentOrder&id=${encodeURIComponent(searchId)}`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const idField = document.getElementById('order-student-id');
+                    const nameField = document.getElementById('order-student-name');
+                    
+                    idField.value = searchId;
+                    nameField.value = result.data.name || '';
+                    
+                    idField.readOnly = true;
+                    nameField.readOnly = true;
+                    idField.classList.replace('bg-white', 'bg-blue-100/50');
+                    nameField.classList.replace('bg-white', 'bg-blue-100/50');
+
+                    document.getElementById('order-step-search').classList.add('hidden');
+                    document.getElementById('order-step-form').classList.remove('hidden');
+                    showToast('ดึงข้อมูลสำเร็จ', 'success');
+                    setTimeout(recalculatePrice, 50);
+                } else {
+                    feedback.textContent = 'ไม่พบข้อมูลที่ตรงกับรหัสนี้ กรุณาลองใหม่ หรือข้ามไปกรอกข้อมูลเอง';
+                    feedback.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error fetching student:', error);
+                feedback.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+                feedback.classList.remove('hidden');
+                // Fallback (จำลองว่าไม่เจอข้อมูล ให้กดข้ามไปกรอกเอง)
+            } finally {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
+            }
+        }
+
+        function skipOrderSearch(prefillId = '') {
+            const searchInput = document.getElementById('search-order-id').value.trim() || prefillId;
+            const idField = document.getElementById('order-student-id');
+            const nameField = document.getElementById('order-student-name');
+            
+            idField.value = searchInput;
+            nameField.value = '';
+            
+            idField.readOnly = false;
+            nameField.readOnly = false;
+            idField.classList.replace('bg-blue-100/50', 'bg-white');
+            nameField.classList.replace('bg-blue-100/50', 'bg-white');
+
+            document.getElementById('order-step-search').classList.add('hidden');
+            document.getElementById('order-step-form').classList.remove('hidden');
             setTimeout(recalculatePrice, 50);
+        }
+
+        function resetOrderSearch() {
+            document.getElementById('order-step-form').classList.add('hidden');
+            document.getElementById('order-step-search').classList.remove('hidden');
+            document.getElementById('search-order-feedback').classList.add('hidden');
+            document.getElementById('orderForm').reset();
         }
 
         function recalculatePrice() {
             const form = document.getElementById('orderForm');
             if(!form) return;
 
-            // Calculate Polo Price
             let poloSize = form.elements['poloSize'] ? form.elements['poloSize'].value : 'S';
             let poloUnitPrice = (poloSize === 'XL' || poloSize === '2XL') ? 350 : 280;
             const poloQtyInput = document.getElementById('poloQty');
             let poloQty = poloQtyInput ? (parseInt(poloQtyInput.value) || 1) : 1;
             
-            // Calculate Activity Price
             let actSize = form.elements['actSize'] ? form.elements['actSize'].value : 'S';
             let actUnitPrice = (actSize === 'XL' || actSize === '2XL') ? 350 : 280;
             const actQtyInput = document.getElementById('actQty');
             let actQty = actQtyInput ? (parseInt(actQtyInput.value) || 1) : 1;
 
-            // Total
             const totalPrice = (poloUnitPrice * poloQty) + (actUnitPrice * actQty);
-
-            // Update UI
             document.getElementById('priceDisplay').innerText = `฿ ${totalPrice.toLocaleString()}`;
         }
 
@@ -856,11 +980,11 @@
             const input = document.getElementById(type + 'Qty');
             if(!input) return;
             let val = parseInt(input.value) + change;
-            if(val < 1) val = 1; // บังคับว่าต้องมีอย่างน้อยแบบละ 1 ตัว
+            if(val < 1) val = 1; 
             if(val > 10) val = 10;
             input.value = val;
             
-            recalculatePrice(); // Recalculate price when quantity changes
+            recalculatePrice(); 
         }
 
         function mockOrderSubmit(e) {
@@ -871,16 +995,18 @@
             const actSize = form.actSize.value;
             const actQty = parseInt(document.getElementById('actQty').value);
             
-            // คำนวณราคาอีกครั้งเพื่อส่งไปหน้าสรุป
+            // ดึงข้อมูลรหัสและชื่อที่ถูกส่งมาจากขั้นตอนการค้นหา
+            const studentId = document.getElementById('order-student-id').value;
+            const studentName = document.getElementById('order-student-name').value;
+            
             const poloPrice = (poloSize === 'XL' || poloSize === '2XL') ? 350 : 280;
             const actPrice = (actSize === 'XL' || actSize === '2XL') ? 350 : 280;
             const totalPrice = (poloPrice * poloQty) + (actPrice * actQty);
             
-            // สร้างข้อมูล Order จำลอง
             const orderData = {
-                id: 'ORD-26-' + Math.floor(1000 + Math.random() * 9000), // สร้างเลขสุ่ม 4 หลัก
-                studentId: '66010001', // จำลองรหัส นศ. ที่ล็อกอิน
-                name: 'นายรักเรียน ขยันยิ่ง', // จำลองชื่อ นศ.
+                id: 'ORD-26-' + Math.floor(1000 + Math.random() * 9000), 
+                studentId: studentId, 
+                name: studentName, 
                 items: [
                     { name: '1. เสื้อโปโลคณะ', size: poloSize, qty: poloQty, price: poloPrice, subtotal: poloPrice * poloQty },
                     { name: '2. เสื้อกิจกรรม', size: actSize, qty: actQty, price: actPrice, subtotal: actPrice * actQty }
@@ -888,7 +1014,6 @@
                 total: totalPrice
             };
 
-            // เปลี่ยนไปหน้า Checkout
             navigate('checkout', orderData);
         }
 
@@ -915,7 +1040,6 @@
                     </button>
 
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        
                         <!-- Left: Order Summary -->
                         <div class="lg:col-span-2 space-y-6">
                             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
@@ -1028,7 +1152,6 @@
                                     <i class="ph ph-printer text-xl"></i> ยืนยันและบันทึกใบแจ้งชำระ
                                 </button>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -1040,7 +1163,7 @@
         let countdownInterval;
         function startCountdown() {
             clearInterval(countdownInterval);
-            let time = 15 * 60; // 15 minutes
+            let time = 15 * 60; 
             const display = document.getElementById('countdown');
             if(!display) return;
 
@@ -1086,7 +1209,7 @@
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
-                    placeholder.classList.add('opacity-0'); // ซ่อนข้อความแต่ยังกดได้
+                    placeholder.classList.add('opacity-0'); 
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -1094,7 +1217,7 @@
 
         function submitPayment(e, method) {
             if(e) e.preventDefault();
-            clearInterval(countdownInterval); // หยุดเวลา
+            clearInterval(countdownInterval); 
             
             if(method === 'qr') {
                 showToast('ส่งหลักฐานสำเร็จ! ระบบกำลังตรวจสอบ (ใช้เวลา 1-2 วัน)', 'success');
@@ -1102,12 +1225,11 @@
                 showToast('บันทึกใบแจ้งชำระสำเร็จ! โปรดนำไปชำระที่ห้องสโมสรฯ', 'success');
             }
             
-            // รอ 2 วิ แล้วไปหน้า ติดตามสถานะ
             setTimeout(() => navigate('tracking'), 2500);
         }
 
         function renderTracking(container) {
-            const myOrder = MOCK_ORDERS[1]; // จำลองดึงข้อมูลคนที่ 2
+            const myOrder = MOCK_ORDERS[1]; 
             const currentStep = myOrder.status;
 
             let html = `
@@ -1119,9 +1241,7 @@
 
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-6 overflow-hidden">
                         <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center">
-                            <!-- Background Line -->
                             <div class="hidden md:block absolute top-6 left-10 right-10 h-1 bg-slate-100 z-0 rounded-full"></div>
-                            <!-- Active Line -->
                             <div class="hidden md:block absolute top-6 left-10 h-1 bg-primary z-0 rounded-full transition-all duration-1000" style="width: ${((currentStep-1)/3)*100}%;"></div>
             `;
 
@@ -1150,21 +1270,139 @@
                 `;
             });
 
+            const canEdit = !myOrder.hasEdited && currentStep === 1;
+
             html += `
                         </div>
                     </div>
 
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex items-start gap-4">
-                        <i class="ph-fill ph-info text-2xl text-primary mt-0.5"></i>
-                        <div>
-                            <h4 class="font-semibold text-indigo-900">รายละเอียดคำสั่งซื้อ</h4>
-                            <p class="text-sm text-indigo-700 mt-1">${myOrder.type} ไซส์ ${myOrder.size} จำนวน ${myOrder.qty} ตัว (ยอดรวม ฿${myOrder.total})</p>
-                            <p class="text-xs text-indigo-500 mt-2">อัปเดตล่าสุด: ${myOrder.date}</p>
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-4">
+                            <i class="ph-fill ph-info text-2xl text-primary mt-0.5"></i>
+                            <div>
+                                <h4 class="font-semibold text-indigo-900">รายละเอียดคำสั่งซื้อ</h4>
+                                <p class="text-sm text-indigo-700 mt-1">${myOrder.type} ไซส์ ${myOrder.size} จำนวน ${myOrder.qty} ตัว (ยอดรวม ฿${myOrder.total})</p>
+                                <p class="text-xs text-indigo-500 mt-2">อัปเดตล่าสุด: ${myOrder.date}</p>
+                            </div>
                         </div>
+                        
+                        ${canEdit ? `
+                            <button onclick="navigate('edit-order', '${myOrder.id}')" class="px-4 py-2.5 bg-white text-primary text-sm font-bold rounded-xl shadow-sm border border-indigo-200 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 whitespace-nowrap self-end sm:self-auto">
+                                <i class="ph ph-pencil-simple"></i> แก้ไขข้อมูล (1 ครั้ง)
+                            </button>
+                        ` : (myOrder.hasEdited ? `
+                            <div class="bg-slate-200/50 text-slate-500 px-3 py-1.5 rounded-lg text-xs font-medium self-end sm:self-auto flex items-center gap-1 border border-slate-200">
+                                <i class="ph-fill ph-lock-key"></i> แก้ไขข้อมูลแล้ว
+                            </div>
+                        ` : '')}
                     </div>
                 </div>
             `;
             container.innerHTML = html;
+        }
+
+        function renderEditOrder(container, orderId) {
+            const order = MOCK_ORDERS.find(o => o.id === orderId);
+            if(!order) return navigate('tracking');
+
+            let html = `
+                <div class="fade-in max-w-3xl mx-auto pb-10">
+                    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold text-slate-800">แก้ไขข้อมูลการสั่งจอง</h1>
+                            <p class="text-red-500 text-sm mt-1 font-medium flex items-center gap-1">
+                                <i class="ph-fill ph-warning-circle text-lg"></i> คุณสามารถแก้ไขข้อมูลได้เพียง 1 ครั้งเท่านั้น
+                            </p>
+                        </div>
+                        <button onclick="navigate('tracking')" class="px-4 py-2 text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors text-sm font-medium">
+                            ยกเลิก
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100">
+                        <form onsubmit="submitEditOrder(event, '${order.id}')" class="space-y-6">
+                            
+                            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                                <p class="text-sm text-blue-800"><span class="font-bold">ออเดอร์เดิม:</span> ${order.type} ไซส์ ${order.size} จำนวน ${order.qty} ตัว (ยอดรวม ฿${order.total})</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <label class="block text-base font-bold text-slate-800 mb-3">1. เสื้อโปโลคณะ</label>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 mb-1">เลือกไซส์ใหม่</label>
+                                            <select id="editPoloSize" class="w-full p-3 rounded-xl border border-slate-300 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                                                <option value="S">S (280฿)</option>
+                                                <option value="M" selected>M (280฿)</option>
+                                                <option value="L">L (280฿)</option>
+                                                <option value="XL">XL (350฿)</option>
+                                                <option value="2XL">2XL (350฿)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 mb-1">จำนวน (ตัว)</label>
+                                            <input type="number" id="editPoloQty" value="1" min="1" max="10" class="w-full p-3 rounded-xl border border-slate-300 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                    <label class="block text-base font-bold text-slate-800 mb-3">2. เสื้อกิจกรรม</label>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 mb-1">เลือกไซส์ใหม่</label>
+                                            <select id="editActSize" class="w-full p-3 rounded-xl border border-slate-300 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                                                <option value="S" selected>S (280฿)</option>
+                                                <option value="M">M (280฿)</option>
+                                                <option value="L">L (280฿)</option>
+                                                <option value="XL">XL (350฿)</option>
+                                                <option value="2XL">2XL (350฿)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-600 mb-1">จำนวน (ตัว)</label>
+                                            <input type="number" id="editActQty" value="1" min="1" max="10" class="w-full p-3 rounded-xl border border-slate-300 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full py-4 mt-4 rounded-xl font-bold text-white bg-primary hover:bg-primary_hover transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/30">
+                                <i class="ph ph-floppy-disk text-xl"></i> บันทึกการแก้ไข (คุณจะไม่สามารถแก้ไขได้อีก)
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function submitEditOrder(e, orderId) {
+            e.preventDefault();
+            const order = MOCK_ORDERS.find(o => o.id === orderId);
+            if(order) {
+                const poloSize = document.getElementById('editPoloSize').value;
+                const poloQty = parseInt(document.getElementById('editPoloQty').value);
+                const actSize = document.getElementById('editActSize').value;
+                const actQty = parseInt(document.getElementById('editActQty').value);
+                
+                const poloPrice = (poloSize === 'XL' || poloSize === '2XL') ? 350 : 280;
+                const actPrice = (actSize === 'XL' || actSize === '2XL') ? 350 : 280;
+                const total = (poloPrice * poloQty) + (actPrice * actQty);
+
+                order.size = `โปโล ${poloSize}, กิจกรรม ${actSize}`;
+                order.qty = poloQty + actQty; 
+                order.total = total;
+                order.hasEdited = true;
+                order.type = 'แพ็คเกจคู่';
+                
+                const now = new Date();
+                order.date = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+
+                showToast('อัปเดตข้อมูลสำเร็จ! รายการถูกล็อกการแก้ไขแล้ว', 'success');
+                navigate('tracking');
+            }
         }
 
         // ==========================================
@@ -1381,11 +1619,10 @@
         }
 
         async function renderAdminEvents(container) {
-            // แสดง Loading
             container.innerHTML = `
                 <div class="fade-in flex flex-col items-center justify-center py-20">
                     <i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i>
-                    <p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรมจากฐานข้อมูล...</p>
+                    <p class="text-slate-500 font-medium">กำลังโหลดข้อมูลจาก Google Sheets...</p>
                 </div>
             `;
 
@@ -1393,11 +1630,9 @@
 
             let html = `
                 <div class="fade-in">
-                    <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-                        <div>
-                            <h1 class="text-3xl font-bold text-slate-800">จัดการกิจกรรม</h1>
-                            <p class="text-slate-500 mt-1">สร้างกิจกรรมใหม่และเปิด/ปิดการรับสมัคร</p>
-                        </div>
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-bold text-slate-800">จัดการกิจกรรม</h1>
+                        <p class="text-slate-500 mt-1">ดึงข้อมูลจาก Google Sheets (Sheet: Activities)</p>
                     </div>
 
                     <!-- Create Event Form -->
@@ -1418,13 +1653,13 @@
                             </div>
                             <div class="md:col-span-1">
                                 <button type="submit" class="w-full px-6 py-2.5 bg-admin text-white font-medium rounded-xl hover:bg-admin_hover transition-colors shadow-sm flex items-center justify-center gap-2">
-                                    บันทึกกิจกรรม
+                                    <i class="ph ph-floppy-disk text-lg"></i> บันทึกกิจกรรม
                                 </button>
                             </div>
                         </form>
                     </div>
 
-                    <!-- Events List -->
+                    <!-- Events List Table -->
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[800px]">
@@ -1447,7 +1682,7 @@
                     const isOpen = event.status === 'open';
                     html += `
                         <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                            <td class="p-4 text-slate-500 text-xs">${event.timestamp || 'N/A'}</td>
+                            <td class="p-4 text-slate-500 text-xs">${event.timestamp || '-'}</td>
                             <td class="p-4 font-bold text-slate-800">${event.title}</td>
                             <td class="p-4 text-slate-600">${event.date}</td>
                             <td class="p-4 text-slate-600">${event.location}</td>
@@ -1473,7 +1708,6 @@
             const date = document.getElementById('new-event-date').value;
             const location = document.getElementById('new-event-location').value;
             
-            // Loading State บนปุ่ม
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังบันทึก...';
@@ -1481,7 +1715,7 @@
 
             const now = new Date();
             const timestamp = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-            const newId = Date.now().toString();
+            const newId = 'ACT-' + Date.now().toString();
 
             const payload = {
                 action: 'createActivity',
@@ -1492,21 +1726,19 @@
                 location: location,
                 status: 'open',
                 image: 'https://images.unsplash.com/photo-1523580494112-071d16940a1c?auto=format&fit=crop&q=80&w=800', 
-                spots: 100, // ค่าจำลองจำนวนรับสมัคร
+                spots: 100, 
                 joined: 0
             };
             
             try {
-                // ส่งข้อมูล POST ไปยัง Google Apps Script
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
-                showToast('สร้างกิจกรรมใหม่ลงฐานข้อมูลสำเร็จ', 'success');
+                showToast('บันทึกข้อมูลลง Google Sheets สำเร็จ', 'success');
             } catch (error) {
-                console.error('Error creating activity:', error);
-                // Fallback ทำงานจำลองถ้าเชื่อมต่อไม่ได้
+                console.warn('เชื่อมต่อล้มเหลว ใช้ข้อมูลจำลอง', error);
                 globalActivities.unshift(payload); 
                 showToast('จำลองการสร้าง (เชื่อมต่อฐานข้อมูลล้มเหลว)', 'warning');
             } finally {
@@ -1518,7 +1750,6 @@
 
         async function toggleEventStatus(id, currentStatus) {
             const newStatus = currentStatus === 'open' ? 'closed' : 'open';
-            
             const payload = {
                 action: 'toggleActivity',
                 id: String(id),
@@ -1531,13 +1762,13 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
-                showToast(`อัปเดตสถานะเป็น ${newStatus === 'open' ? 'เปิด' : 'ปิด'} รับสมัครแล้ว`, 'success');
+                showToast(`อัปเดตสถานะเป็น ${newStatus === 'open' ? 'เปิด' : 'ปิด'} รับสมัครเรียบร้อย`, 'success');
             } catch (error) {
-                console.error('Error toggling status:', error);
+                console.warn('เชื่อมต่อล้มเหลว ใช้ข้อมูลจำลอง', error);
+                const event = globalActivities.find(e => String(e.id) === String(id));
+                if (event) event.status = newStatus;
                 showToast('อัปเดตสถานะจำลอง (เชื่อมต่อฐานข้อมูลล้มเหลว)', 'warning');
             }
-            
-            // Re-render เพื่อดึงข้อมูลอัปเดต
             renderAdminEvents(document.getElementById('app-content'));
         }
 
