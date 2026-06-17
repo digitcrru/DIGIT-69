@@ -130,13 +130,14 @@
         // ==========================================
         // URL ของ GOOGLE APPS SCRIPT
         // ==========================================
-        // ต้องเปลี่ยน URL นี้เป็น URL ที่ได้จากการ Deploy Google Apps Script ใหม่
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqOH9_OFQTE2Is2TvAEC2WsGUIjbWw7XPBnhFnSYCZ2DH7CWe4Ucx4VM1Dn65RvpLu/exec'; // URL เดิม
+        // อัปเดต URL เป็นเวอร์ชันล่าสุดที่คุณให้มา
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6wkWGyyWSJBMQ90nd6DFqh8JKOWlJ_aWsxzNNSbSstIwX8UDVL47Nn6jtm0P0l3ViWw/exec';
         
         // --- State Management ---
         let currentRole = 'student'; // 'student' or 'admin'
         let currentView = 'events';
         let currentModalOrderId = null;
+        let globalActivities = []; // เพิ่มตัวแปรเก็บข้อมูลกิจกรรมที่ดึงมาจาก Sheet
 
         // --- Menu Definitions ---
         const NAV_STUDENT = [
@@ -149,13 +150,14 @@
         const NAV_ADMIN = [
             { id: 'admin-dash', label: 'ภาพรวม (Dashboard)', icon: 'ph-chart-pie-slice' },
             { id: 'admin-orders', label: 'จัดการคำสั่งซื้อ', icon: 'ph-list-checks' },
+            { id: 'admin-events', label: 'จัดการกิจกรรม', icon: 'ph-calendar-plus' }
         ];
 
         // --- Mock Data ---
         const MOCK_EVENTS = [
-            { id: 1, title: 'ค่ายอาสาพัฒนาชนบท รุ่นที่ 25', date: '15-18 ตุลาคม 2026', location: 'โรงเรียนบ้านหนองบัว จ.เชียงใหม่', status: 'open', image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&q=80&w=800', spots: 50, joined: 32 },
-            { id: 2, title: 'สัมมนา AI in Modern Business', date: '5 พฤศจิกายน 2026', location: 'หอประชุมใหญ่ คณะบริหารธุรกิจ', status: 'open', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800', spots: 200, joined: 185 },
-            { id: 3, title: 'แข่งขันกีฬาภายใน (Freshy Games)', date: '20 สิงหาคม 2026', location: 'สนามกีฬาหลัก', status: 'closed', image: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&q=80&w=800', spots: 500, joined: 500 }
+            { id: 1, timestamp: '10/06/2026 09:00', title: 'ค่ายอาสาพัฒนาชนบท รุ่นที่ 25', date: '15-18 ตุลาคม 2026', location: 'โรงเรียนบ้านหนองบัว จ.เชียงใหม่', status: 'open', image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&q=80&w=800', spots: 50, joined: 32 },
+            { id: 2, timestamp: '12/06/2026 14:30', title: 'สัมมนา AI in Modern Business', date: '5 พฤศจิกายน 2026', location: 'หอประชุมใหญ่ คณะบริหารธุรกิจ', status: 'open', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800', spots: 200, joined: 185 },
+            { id: 3, timestamp: '01/06/2026 10:15', title: 'แข่งขันกีฬาภายใน (Freshy Games)', date: '20 สิงหาคม 2026', location: 'สนามกีฬาหลัก', status: 'closed', image: 'https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&q=80&w=800', spots: 500, joined: 500 }
         ];
 
         const MOCK_HISTORY = [
@@ -261,14 +263,44 @@
             } else {
                 if(viewId === 'admin-dash') renderAdminDashboard(content);
                 else if(viewId === 'admin-orders') renderAdminOrders(content);
+                else if(viewId === 'admin-events') renderAdminEvents(content);
             }
+        }
+
+        // ==========================================
+        // ฟังก์ชันโหลดข้อมูลกิจกรรมจาก Google Sheets
+        // ==========================================
+        async function fetchActivitiesData() {
+            try {
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities`);
+                const result = await response.json();
+                if (result.success && result.data && result.data.length > 0) {
+                    globalActivities = result.data;
+                    return globalActivities;
+                }
+            } catch (error) {
+                console.error('Error fetching activities:', error);
+            }
+            // Fallback กรณี API ดึงไม่สำเร็จ หรือยังไม่มีข้อมูล
+            globalActivities = MOCK_EVENTS;
+            return globalActivities; 
         }
 
         // ==========================================
         // STUDENT VIEWS
         // ==========================================
 
-        function renderEvents(container) {
+        async function renderEvents(container) {
+            // แสดงสถานะกำลังโหลด
+            container.innerHTML = `
+                <div class="fade-in flex flex-col items-center justify-center py-20">
+                    <i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i>
+                    <p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรม...</p>
+                </div>
+            `;
+
+            const activities = await fetchActivitiesData();
+
             let html = `
                 <div class="fade-in">
                     <div class="mb-8 text-center sm:text-left">
@@ -278,13 +310,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="events-grid">
             `;
 
-            MOCK_EVENTS.forEach(event => {
+            activities.forEach(event => {
                 const isOpen = event.status === 'open';
                 const statusBadge = isOpen 
                     ? `<span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-green-200">เปิดรับสมัคร</span>`
                     : `<span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-red-200">ปิดรับสมัคร</span>`;
                 
-                const percentFull = Math.round((event.joined / event.spots) * 100);
+                const percentFull = Math.round((event.joined / event.spots) * 100) || 0;
 
                 html += `
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
@@ -308,7 +340,7 @@
                                 </div>
                             </div>
                             <button 
-                                onclick="navigate('register', ${event.id})" 
+                                onclick="navigate('register', '${event.id}')" 
                                 ${!isOpen ? 'disabled' : ''} 
                                 class="w-full mt-2 py-2.5 rounded-xl font-medium transition-colors ${isOpen ? 'bg-primary text-white hover:bg-primary_hover shadow-md shadow-primary/20' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}">
                                 ${isOpen ? 'ลงทะเบียนเข้าร่วม' : 'เต็มแล้ว'}
@@ -323,7 +355,7 @@
         }
 
         function renderRegistration(container, eventId) {
-            const event = MOCK_EVENTS.find(e => e.id === eventId);
+            const event = globalActivities.find(e => String(e.id) === String(eventId));
             if(!event) return navigate('events');
 
             container.innerHTML = `
@@ -383,8 +415,8 @@
                                          <input type="text" id="reg-faculty" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">ชั้นปี *</label>
-                                        <input type="number" id="reg-year" required min="1" max="6" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">หมายเลขบัตรประจําตัวประชาชน *</label>
+                                        <input type="text" id="reg-year" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
                                     </div>
                                 </div>
                                 <div class="pt-6 border-t border-slate-100 flex gap-3 justify-end mt-6">
@@ -539,42 +571,132 @@
         }
 
         function renderHistory(container) {
+            // ดึงค่าการค้นหาล่าสุดถ้ามี (สามารถใช้ตัวแปร global หรือ sessionStorage ได้)
+            const searchedId = sessionStorage.getItem('historySearchTerm') || '';
+            const isSearched = searchedId.length > 0;
+
             let html = `
                 <div class="fade-in max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-                        <div>
-                            <h1 class="text-3xl font-bold text-slate-800">ประวัติการเข้าร่วมกิจกรรม</h1>
-                            <p class="text-slate-500 mt-2">ข้อมูลผู้ใช้: นายรักเรียน ขยันยิ่ง (รหัส 66010001)</p>
+                    <div class="mb-8 text-center sm:text-left">
+                        <h1 class="text-3xl font-bold text-slate-800">ตรวจสอบประวัติการเข้าร่วมกิจกรรม</h1>
+                        <p class="text-slate-500 mt-2">กรุณาระบุรหัสนักศึกษาหรือบัตรประชาชน เพื่อดูประวัติและชั่วโมงกิจกรรมของคุณ</p>
+                    </div>
+
+                    <!-- Search Section -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">รหัสนักศึกษา หรือ บัตรประชาชน</label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="ph ph-identification-card text-slate-400 text-lg"></i>
+                                </div>
+                                <input type="text" id="search-history-id" 
+                                    class="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-primary focus:border-primary block w-full pl-10 p-3 outline-none transition-colors" 
+                                    placeholder="เช่น 66010001 หรือ 1100000000000"
+                                    value="${searchedId}"
+                                    onkeypress="if(event.key === 'Enter') fetchHistoryData()">
+                            </div>
+                            <button onclick="fetchHistoryData()" id="btn-fetch-history" class="px-6 py-3 bg-primary text-white text-sm font-medium rounded-xl hover:bg-primary_hover transition-colors whitespace-nowrap shadow-sm shadow-primary/20 flex items-center justify-center gap-2">
+                                <i class="ph ph-magnifying-glass"></i> ตรวจสอบประวัติ
+                            </button>
+                             ${isSearched ? `<button onclick="clearHistorySearch()" class="px-4 py-3 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200 transition-colors whitespace-nowrap"><i class="ph ph-x"></i></button>` : ''}
                         </div>
-                        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-4">
-                            <div class="bg-white p-3 rounded-full text-primary shadow-sm"><i class="ph ph-medal text-2xl"></i></div>
+                    </div>
+            `;
+
+            // แสดงผลลัพธ์เฉพาะเมื่อมีการค้นหาแล้ว
+            if (isSearched) {
+                // จำลองการคำนวณชั่วโมงจาก MOCK_HISTORY
+                const totalHours = MOCK_HISTORY.reduce((sum, item) => sum + item.hours, 0);
+
+                html += `
+                    <!-- Results Section -->
+                    <div class="fade-in">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                             <div>
-                                <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">ชั่วโมงกิจกรรมรวม</p>
-                                <p class="text-2xl font-bold text-slate-800">9 <span class="text-sm font-normal text-slate-500">ชั่วโมง</span></p>
+                                <h2 class="text-xl font-bold text-slate-800">ผลการค้นหา: ${searchedId}</h2>
+                                <p class="text-slate-500 mt-1">ชื่อ-นามสกุล: <span class="font-medium text-slate-700">นายรักเรียน ขยันยิ่ง</span> (ตัวอย่างข้อมูล)</p>
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-4">
+                                <div class="bg-white p-3 rounded-full text-primary shadow-sm"><i class="ph ph-medal text-2xl"></i></div>
+                                <div>
+                                    <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">ชั่วโมงกิจกรรมรวม</p>
+                                    <p class="text-2xl font-bold text-slate-800">${totalHours} <span class="text-sm font-normal text-slate-500">ชั่วโมง</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm">
+                                            <th class="p-4 font-medium">ชื่อกิจกรรม</th>
+                                            <th class="p-4 font-medium">วันที่จัด</th>
+                                            <th class="p-4 font-medium text-center">ชั่วโมงที่ได้รับ</th>
+                                            <th class="p-4 font-medium text-center">สถานะ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-sm text-slate-700">
+                `;
+                
+                if (MOCK_HISTORY.length > 0) {
+                    MOCK_HISTORY.forEach(history => {
+                        html += `
+                            <tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                                <td class="p-4 font-medium text-slate-800">${history.eventName}</td>
+                                <td class="p-4 text-slate-500">${history.date}</td>
+                                <td class="p-4 text-center font-medium text-primary">+${history.hours}</td>
+                                <td class="p-4 text-center"><span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200"><i class="ph-fill ph-check-circle"></i> ผ่าน</span></td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    html += `<tr><td colspan="4" class="p-8 text-center text-slate-400">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</td></tr>`;
+                }
+
+                html += `
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm">
-                                    <th class="p-4 font-medium">ชื่อกิจกรรม</th><th class="p-4 font-medium">วันที่จัด</th><th class="p-4 font-medium text-center">ชั่วโมง</th><th class="p-4 font-medium text-center">สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody class="text-sm text-slate-700">
-            `;
-            MOCK_HISTORY.forEach(history => {
-                html += `
-                    <tr class="border-b border-slate-50 hover:bg-slate-50/50">
-                        <td class="p-4 font-medium text-slate-800">${history.eventName}</td>
-                        <td class="p-4 text-slate-500">${history.date}</td>
-                        <td class="p-4 text-center font-medium">${history.hours}</td>
-                        <td class="p-4 text-center"><span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200"><i class="ph-fill ph-check-circle"></i> เข้าร่วมแล้ว</span></td>
-                    </tr>
                 `;
-            });
-            html += `</tbody></table></div></div>`;
+            }
+
+            html += `</div>`;
             container.innerHTML = html;
+        }
+
+        // --- Functions สำหรับหน้าประวัติ ---
+        function fetchHistoryData() {
+            const input = document.getElementById('search-history-id');
+            const searchId = input.value.trim();
+            
+            if(!searchId) {
+                showToast('กรุณากรอกรหัสนักศึกษา หรือ บัตรประชาชน', 'error');
+                return;
+            }
+
+            // ในระบบจริงตรงนี้จะเรียก fetch() ไปยัง Google Apps Script (doGet) เพื่อดึงข้อมูลประวัติ
+            // ปัจจุบันใช้ Mock Data ไปก่อน
+            
+            const btn = document.getElementById('btn-fetch-history');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังค้นหา...';
+            btn.disabled = true;
+
+            // จำลองการโหลดข้อมูล 0.5 วินาที
+            setTimeout(() => {
+                sessionStorage.setItem('historySearchTerm', searchId);
+                showToast('ดึงข้อมูลประวัติสำเร็จ', 'success');
+                renderHistory(document.getElementById('app-content'));
+            }, 500);
+        }
+
+        function clearHistorySearch() {
+            sessionStorage.removeItem('historySearchTerm');
+            renderHistory(document.getElementById('app-content'));
         }
 
         function renderShirtShop(container) {
@@ -797,9 +919,14 @@
                         <!-- Left: Order Summary -->
                         <div class="lg:col-span-2 space-y-6">
                             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                                <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3 mb-3 flex items-center gap-2">
-                                    <i class="ph-fill ph-receipt text-primary"></i> สรุปรายการสั่งจอง
-                                </h3>
+                                <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-3">
+                                    <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <i class="ph-fill ph-receipt text-primary"></i> สรุปรายการสั่งจอง
+                                    </h3>
+                                    <button onclick="navigate('shirt')" class="text-sm font-medium text-primary hover:text-primary_hover flex items-center gap-1 bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">
+                                        <i class="ph ph-pencil-simple text-base"></i> แก้ไข
+                                    </button>
+                                </div>
                                 <div class="mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <p class="text-xs text-slate-500">รหัสคำสั่งซื้อ</p>
                                     <p class="font-bold text-slate-800 tracking-wide">${orderData.id}</p>
@@ -1251,6 +1378,167 @@
                 navigate(currentView); 
                 if(currentView !== 'admin-dash') showToast(`อัปเดตสถานะ ${orderId} เป็น "${STATUS_MAP[newStatus].text}" แล้ว`, 'success');
             }
+        }
+
+        async function renderAdminEvents(container) {
+            // แสดง Loading
+            container.innerHTML = `
+                <div class="fade-in flex flex-col items-center justify-center py-20">
+                    <i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i>
+                    <p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรมจากฐานข้อมูล...</p>
+                </div>
+            `;
+
+            const activities = await fetchActivitiesData();
+
+            let html = `
+                <div class="fade-in">
+                    <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-800">จัดการกิจกรรม</h1>
+                            <p class="text-slate-500 mt-1">สร้างกิจกรรมใหม่และเปิด/ปิดการรับสมัคร</p>
+                        </div>
+                    </div>
+
+                    <!-- Create Event Form -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
+                        <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2"><i class="ph-fill ph-plus-circle text-primary"></i> สร้างกิจกรรมใหม่</h3>
+                        <form onsubmit="createNewEvent(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-1">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อกิจกรรม *</label>
+                                <input type="text" id="new-event-title" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="ระบุชื่อกิจกรรม">
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">วันที่จัด *</label>
+                                <input type="text" id="new-event-date" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="เช่น 20 ต.ค. 2026">
+                            </div>
+                            <div class="md:col-span-1">
+                                <label class="block text-sm font-medium text-slate-700 mb-1">สถานที่ *</label>
+                                <input type="text" id="new-event-location" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" placeholder="ระบุสถานที่">
+                            </div>
+                            <div class="md:col-span-1">
+                                <button type="submit" class="w-full px-6 py-2.5 bg-admin text-white font-medium rounded-xl hover:bg-admin_hover transition-colors shadow-sm flex items-center justify-center gap-2">
+                                    บันทึกกิจกรรม
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Events List -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm">
+                                        <th class="p-4 font-medium">Timestamp</th>
+                                        <th class="p-4 font-medium">ชื่อกิจกรรม</th>
+                                        <th class="p-4 font-medium">วันที่จัด</th>
+                                        <th class="p-4 font-medium">สถานที่</th>
+                                        <th class="p-4 font-medium text-center">เปิด/ปิด รับสมัคร</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm text-slate-700">
+            `;
+
+            if (activities.length === 0) {
+                html += `<tr><td colspan="5" class="p-8 text-center text-slate-400">ยังไม่มีข้อมูลกิจกรรมในระบบ</td></tr>`;
+            } else {
+                activities.forEach(event => {
+                    const isOpen = event.status === 'open';
+                    html += `
+                        <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                            <td class="p-4 text-slate-500 text-xs">${event.timestamp || 'N/A'}</td>
+                            <td class="p-4 font-bold text-slate-800">${event.title}</td>
+                            <td class="p-4 text-slate-600">${event.date}</td>
+                            <td class="p-4 text-slate-600">${event.location}</td>
+                            <td class="p-4 text-center">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" ${isOpen ? 'checked' : ''} onchange="toggleEventStatus('${event.id}', '${event.status}')">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                </label>
+                                <span class="block text-xs mt-1 font-medium ${isOpen ? 'text-green-600' : 'text-slate-400'}">${isOpen ? 'เปิด' : 'ปิด'}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += `</tbody></table></div></div></div>`;
+            container.innerHTML = html;
+        }
+
+        async function createNewEvent(e) {
+            e.preventDefault();
+            const title = document.getElementById('new-event-title').value;
+            const date = document.getElementById('new-event-date').value;
+            const location = document.getElementById('new-event-location').value;
+            
+            // Loading State บนปุ่ม
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> กำลังบันทึก...';
+            submitBtn.disabled = true;
+
+            const now = new Date();
+            const timestamp = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
+            const newId = Date.now().toString();
+
+            const payload = {
+                action: 'createActivity',
+                id: newId,
+                timestamp: timestamp,
+                title: title,
+                date: date,
+                location: location,
+                status: 'open',
+                image: 'https://images.unsplash.com/photo-1523580494112-071d16940a1c?auto=format&fit=crop&q=80&w=800', 
+                spots: 100, // ค่าจำลองจำนวนรับสมัคร
+                joined: 0
+            };
+            
+            try {
+                // ส่งข้อมูล POST ไปยัง Google Apps Script
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                showToast('สร้างกิจกรรมใหม่ลงฐานข้อมูลสำเร็จ', 'success');
+            } catch (error) {
+                console.error('Error creating activity:', error);
+                // Fallback ทำงานจำลองถ้าเชื่อมต่อไม่ได้
+                globalActivities.unshift(payload); 
+                showToast('จำลองการสร้าง (เชื่อมต่อฐานข้อมูลล้มเหลว)', 'warning');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                renderAdminEvents(document.getElementById('app-content'));
+            }
+        }
+
+        async function toggleEventStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'open' ? 'closed' : 'open';
+            
+            const payload = {
+                action: 'toggleActivity',
+                id: String(id),
+                status: newStatus
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                showToast(`อัปเดตสถานะเป็น ${newStatus === 'open' ? 'เปิด' : 'ปิด'} รับสมัครแล้ว`, 'success');
+            } catch (error) {
+                console.error('Error toggling status:', error);
+                showToast('อัปเดตสถานะจำลอง (เชื่อมต่อฐานข้อมูลล้มเหลว)', 'warning');
+            }
+            
+            // Re-render เพื่อดึงข้อมูลอัปเดต
+            renderAdminEvents(document.getElementById('app-content'));
         }
 
         // --- Utils: Toast Notification ---
