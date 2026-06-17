@@ -137,7 +137,7 @@
         let currentView = 'events';
         let currentModalOrderId = null;
         let globalActivities = [];
-        let currentCheckoutOrder = null; // ตัวแปรเก็บข้อมูลออเดอร์ล่าสุดเพื่อใช้ส่ง API
+        let currentCheckoutOrder = null;
 
         // --- Menu Definitions ---
         const NAV_STUDENT = [
@@ -161,8 +161,8 @@
         ];
 
         const MOCK_HISTORY = [
-            { eventName: 'ปฐมนิเทศนักศึกษาใหม่ 2026', date: '10 มิถุนายน 2026', hours: 6, status: 'completed' },
-            { eventName: 'อบรมมารยาททางสังคม', date: '15 กรกฎาคม 2026', hours: 3, status: 'completed' }
+            { eventName: 'ปฐมนิเทศนักศึกษาใหม่ 2026', date: '10/06/2026' },
+            { eventName: 'อบรมมารยาททางสังคม', date: '15/07/2026' }
         ];
 
         const MOCK_ORDERS = [
@@ -184,7 +184,6 @@
             switchRole('student');
         });
 
-        // --- Core Functions ---
         function switchRole(role) {
             currentRole = role;
             
@@ -281,7 +280,6 @@
             } catch (error) {
                 console.error('Error fetching activities:', error);
             }
-            // Fallback
             globalActivities = MOCK_EVENTS;
             return globalActivities; 
         }
@@ -392,6 +390,11 @@
 
                             <!-- ขั้นตอนที่ 2: แสดงข้อมูลและยืนยัน -->
                             <form id="step-form" class="space-y-5 hidden" onsubmit="handleRegistrationSubmit(event, '${eventId}')">
+                                
+                                <!-- Hidden fields สำหรับแยกรหัส/บัตรประชาชน ส่งให้ API -->
+                                <input type="hidden" id="reg-hidden-student-id" value="">
+                                <input type="hidden" id="reg-hidden-citizen-id" value="">
+
                                 <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4 flex items-start gap-3">
                                     <i class="ph-fill ph-check-circle text-blue-500 text-xl mt-0.5"></i>
                                     <div>
@@ -400,27 +403,24 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div class="md:col-span-2">
+                                <div class="space-y-4">
+                                    <div>
                                          <label class="block text-sm font-medium text-slate-700 mb-1">รหัสนักศึกษา/บัตรประชาชน</label>
                                          <input type="text" id="reg-student-id" required readonly class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-600 focus:outline-none cursor-not-allowed">
                                     </div>
-                                    <div class="md:col-span-2">
+                                    <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อ-นามสกุล *</label>
-                                        <input type="text" id="reg-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
+                                        <input type="text" id="reg-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-colors">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-1">คณะ *</label>
-                                         <input type="text" id="reg-faculty" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">ชั้นปี *</label>
-                                        <input type="number" id="reg-year" required min="1" max="6" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white">
+                                         <input type="text" id="reg-faculty" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white transition-colors">
                                     </div>
                                 </div>
+                                
                                 <div class="pt-6 border-t border-slate-100 flex gap-3 justify-end mt-6">
-                                    <button type="button" onclick="resetSearchForm()" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200">ค้นหาใหม่</button>
-                                    <button type="submit" class="px-8 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primary_hover shadow-md shadow-primary/20 flex items-center gap-2">ยืนยันการลงทะเบียน</button>
+                                    <button type="button" onclick="resetSearchForm()" class="px-6 py-2.5 rounded-xl font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">ค้นหาใหม่</button>
+                                    <button type="submit" class="px-8 py-2.5 rounded-xl font-medium text-white bg-primary hover:bg-primary_hover shadow-md shadow-primary/20 flex items-center gap-2 transition-colors">ยืนยันการลงทะเบียน</button>
                                 </div>
                             </form>
                             
@@ -457,10 +457,25 @@
                 const result = await response.json();
 
                 if (result.success && result.data) {
-                    document.getElementById('reg-student-id').value = searchId;
-                    document.getElementById('reg-name').value = result.data.name || '';
-                    document.getElementById('reg-faculty').value = result.data.faculty || '';
-                    document.getElementById('reg-year').value = result.data.year || '';
+                    // แสดงรหัสนักศึกษา (หรือเลขที่ใช้ค้นหา)
+                    document.getElementById('reg-student-id').value = result.data.studentId || searchId;
+                    
+                    // บันทึกรหัสนักศึกษาและบัตรประชาชนซ่อนไว้ เพื่อส่งให้ API
+                    document.getElementById('reg-hidden-student-id').value = result.data.studentId || '';
+                    document.getElementById('reg-hidden-citizen-id').value = result.data.citizenId || '';
+                    
+                    const nameField = document.getElementById('reg-name');
+                    const facultyField = document.getElementById('reg-faculty');
+
+                    nameField.value = result.data.name || '';
+                    facultyField.value = result.data.faculty || '';
+                    
+                    [nameField, facultyField].forEach(field => {
+                        if (field.value) {
+                            field.readOnly = true;
+                            field.classList.replace('bg-white', 'bg-slate-100');
+                        }
+                    });
                     
                     document.getElementById('step-search').classList.add('hidden');
                     document.getElementById('step-skip').classList.add('hidden');
@@ -503,21 +518,46 @@
             document.getElementById('search-feedback').classList.add('hidden');
             document.getElementById('step-form').reset();
             
+            // ล้างค่าซ่อน
+            document.getElementById('reg-hidden-student-id').value = '';
+            document.getElementById('reg-hidden-citizen-id').value = '';
+            
             document.getElementById('step-form').firstElementChild.classList.remove('hidden');
             
             const idField = document.getElementById('reg-student-id');
             idField.readOnly = true;
             idField.classList.add('bg-slate-100', 'cursor-not-allowed');
             idField.classList.remove('bg-white');
+
+            ['reg-name', 'reg-faculty'].forEach(id => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.readOnly = false;
+                    field.classList.replace('bg-slate-100', 'bg-white');
+                }
+            });
         }
 
         async function handleRegistrationSubmit(e, eventId) {
             e.preventDefault();
             
-            const idInput = document.getElementById('reg-student-id').value;
+            const visibleIdInput = document.getElementById('reg-student-id').value.trim();
+            let hiddenStudentId = document.getElementById('reg-hidden-student-id').value;
+            let hiddenCitizenId = document.getElementById('reg-hidden-citizen-id').value;
             const nameInput = document.getElementById('reg-name').value;
             const facultyInput = document.getElementById('reg-faculty').value;
-            const yearInput = document.getElementById('reg-year').value;
+
+            // กรณีที่กรอกเอง (ฟิลด์ reg-student-id ถูกเปิดให้กรอก)
+            if (!document.getElementById('reg-student-id').readOnly) {
+                // ถ้ากรอกมา 13 หลักและเป็นตัวเลข ให้ถือว่าเป็นบัตรประชาชน
+                if (visibleIdInput.length === 13 && !isNaN(visibleIdInput)) {
+                    hiddenCitizenId = visibleIdInput;
+                    hiddenStudentId = '';
+                } else {
+                    hiddenStudentId = visibleIdInput;
+                    hiddenCitizenId = '';
+                }
+            }
 
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalBtnText = submitBtn.innerHTML;
@@ -527,15 +567,14 @@
             const event = globalActivities.find(e => String(e.id) === String(eventId));
             const eventName = event ? event.title : 'กิจกรรมทั่วไป';
 
-            // ส่งข้อมูลไปบันทึกชีต CheckIns (แทน Registrations แบบเดิม)
             const payload = {
                 action: 'checkIn',
                 eventId: eventId,
                 eventName: eventName,
-                studentId: idInput,
+                studentId: hiddenStudentId,
+                citizenId: hiddenCitizenId,
                 name: nameInput,
                 faculty: facultyInput,
-                year: yearInput,
                 timestamp: new Date().toLocaleString('th-TH')
             };
 
@@ -564,14 +603,12 @@
             const isSearched = searchedId.length > 0;
             
             let historyData = [];
-            let studentName = 'ไม่พบชื่อในระบบ';
 
             if (isSearched) {
                 try {
                     const storedData = JSON.parse(sessionStorage.getItem('historyData'));
                     if (storedData) {
                         historyData = storedData.history;
-                        studentName = storedData.studentName || studentName;
                     }
                 } catch (e) {
                     console.error("Error parsing history data", e);
@@ -582,7 +619,7 @@
                 <div class="fade-in max-w-4xl mx-auto">
                     <div class="mb-8 text-center sm:text-left">
                         <h1 class="text-3xl font-bold text-slate-800">ตรวจสอบประวัติการเข้าร่วมกิจกรรม</h1>
-                        <p class="text-slate-500 mt-2">กรุณาระบุรหัสนักศึกษาหรือบัตรประชาชน เพื่อดูประวัติและชั่วโมงกิจกรรมของคุณ</p>
+                        <p class="text-slate-500 mt-2">กรุณาระบุรหัสนักศึกษาหรือบัตรประชาชน เพื่อดูประวัติกิจกรรมของคุณ</p>
                     </div>
 
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-8">
@@ -607,33 +644,19 @@
             `;
 
             if (isSearched) {
-                const totalHours = historyData.reduce((sum, item) => sum + (Number(item.hours) || 0), 0);
-
                 html += `
                     <div class="fade-in">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                            <div>
-                                <h2 class="text-xl font-bold text-slate-800">ผลการค้นหา: ${searchedId}</h2>
-                                <p class="text-slate-500 mt-1">ชื่อ-นามสกุล: <span class="font-medium text-slate-700">${studentName}</span></p>
-                            </div>
-                            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 flex items-center gap-4">
-                                <div class="bg-white p-3 rounded-full text-primary shadow-sm"><i class="ph ph-medal text-2xl"></i></div>
-                                <div>
-                                    <p class="text-xs text-indigo-600 font-semibold uppercase tracking-wider">ชั่วโมงกิจกรรมรวม</p>
-                                    <p class="text-2xl font-bold text-slate-800">${totalHours} <span class="text-sm font-normal text-slate-500">ชั่วโมง</span></p>
-                                </div>
-                            </div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold text-slate-800">ผลการค้นหา: ${searchedId}</h2>
                         </div>
 
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                             <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse min-w-[600px]">
+                                <table class="w-full text-left border-collapse min-w-[500px]">
                                     <thead>
                                         <tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-sm">
-                                            <th class="p-4 font-medium">ชื่อกิจกรรม</th>
-                                            <th class="p-4 font-medium">วันที่จัด</th>
-                                            <th class="p-4 font-medium text-center">ชั่วโมงที่ได้รับ</th>
-                                            <th class="p-4 font-medium text-center">สถานะ</th>
+                                            <th class="p-4 font-medium w-2/3">ชื่อกิจกรรม</th>
+                                            <th class="p-4 font-medium w-1/3">วันที่จัด</th>
                                         </tr>
                                     </thead>
                                     <tbody class="text-sm text-slate-700">
@@ -645,13 +668,11 @@
                             <tr class="border-b border-slate-50 hover:bg-slate-50/50">
                                 <td class="p-4 font-medium text-slate-800">${history.eventName}</td>
                                 <td class="p-4 text-slate-500">${history.date}</td>
-                                <td class="p-4 text-center font-medium text-primary">+${history.hours}</td>
-                                <td class="p-4 text-center"><span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-medium border border-green-200"><i class="ph-fill ph-check-circle"></i> ผ่าน</span></td>
                             </tr>
                         `;
                     });
                 } else {
-                    html += `<tr><td colspan="4" class="p-8 text-center text-slate-400">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</td></tr>`;
+                    html += `<tr><td colspan="2" class="p-8 text-center text-slate-400">ยังไม่มีประวัติการเข้าร่วมกิจกรรม</td></tr>`;
                 }
 
                 html += `</tbody></table></div></div></div>`;
@@ -676,21 +697,18 @@
             btn.disabled = true;
 
             try {
-                // เรียก API ไปยัง Google Apps Script ส่ง action=getHistory
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getHistory&id=${encodeURIComponent(searchId)}`);
                 const result = await response.json();
 
                 if (result.success && result.data && result.data.length > 0) {
                     sessionStorage.setItem('historySearchTerm', searchId);
                     sessionStorage.setItem('historyData', JSON.stringify({
-                        studentName: result.studentName,
                         history: result.data
                     }));
                     showToast('ค้นหาประวัติสำเร็จ', 'success');
                 } else {
-                    // หาไม่เจอ แต่ก็ให้เปิดหน้าต่างขึ้นมาโชว์ว่าหาไม่เจอ
                     sessionStorage.setItem('historySearchTerm', searchId);
-                    sessionStorage.setItem('historyData', JSON.stringify({ studentName: '', history: [] }));
+                    sessionStorage.setItem('historyData', JSON.stringify({ history: [] }));
                     showToast('ไม่พบประวัติสำหรับรหัสนี้', 'warning');
                 }
             } catch (error) {
@@ -904,7 +922,6 @@
             feedback.classList.add('hidden');
 
             try {
-                // เรียก API ไปยัง Google Apps Script ส่ง action=searchStudentOrder
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=searchStudentOrder&id=${encodeURIComponent(searchId)}`);
                 const result = await response.json();
 
@@ -932,7 +949,6 @@
                 console.error('Error fetching student:', error);
                 feedback.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
                 feedback.classList.remove('hidden');
-                // Fallback (จำลองว่าไม่เจอข้อมูล ให้กดข้ามไปกรอกเอง)
             } finally {
                 btn.innerHTML = originalBtnHtml;
                 btn.disabled = false;
@@ -1001,7 +1017,6 @@
             const actSize = form.actSize.value;
             const actQty = parseInt(document.getElementById('actQty').value);
             
-            // ดึงข้อมูลรหัสและชื่อที่ถูกส่งมาจากขั้นตอนการค้นหา
             const studentId = document.getElementById('order-student-id').value;
             const studentName = document.getElementById('order-student-name').value;
             
