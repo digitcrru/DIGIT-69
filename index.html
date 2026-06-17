@@ -137,6 +137,7 @@
         let currentView = 'events';
         let currentModalOrderId = null;
         let globalActivities = [];
+        let currentCheckoutOrder = null; // ตัวแปรเก็บข้อมูลออเดอร์ล่าสุดเพื่อใช้ส่ง API
 
         // --- Menu Definitions ---
         const NAV_STUDENT = [
@@ -523,14 +524,19 @@
             submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i> กำลังบันทึก...';
             submitBtn.disabled = true;
 
+            const event = globalActivities.find(e => String(e.id) === String(eventId));
+            const eventName = event ? event.title : 'กิจกรรมทั่วไป';
+
+            // ส่งข้อมูลไปบันทึกชีต CheckIns (แทน Registrations แบบเดิม)
             const payload = {
-                action: 'register',
+                action: 'checkIn',
                 eventId: eventId,
+                eventName: eventName,
                 studentId: idInput,
                 name: nameInput,
                 faculty: facultyInput,
                 year: yearInput,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toLocaleString('th-TH')
             };
 
             try {
@@ -1003,10 +1009,13 @@
             const actPrice = (actSize === 'XL' || actSize === '2XL') ? 350 : 280;
             const totalPrice = (poloPrice * poloQty) + (actPrice * actQty);
             
-            const orderData = {
+            currentCheckoutOrder = {
                 id: 'ORD-26-' + Math.floor(1000 + Math.random() * 9000), 
                 studentId: studentId, 
                 name: studentName, 
+                type: 'แพ็คเกจคู่',
+                size: `โปโล ${poloSize}, กิจกรรม ${actSize}`,
+                qty: poloQty + actQty,
                 items: [
                     { name: '1. เสื้อโปโลคณะ', size: poloSize, qty: poloQty, price: poloPrice, subtotal: poloPrice * poloQty },
                     { name: '2. เสื้อกิจกรรม', size: actSize, qty: actQty, price: actPrice, subtotal: actPrice * actQty }
@@ -1014,7 +1023,7 @@
                 total: totalPrice
             };
 
-            navigate('checkout', orderData);
+            navigate('checkout', currentCheckoutOrder);
         }
 
         function renderCheckout(container, orderData) {
@@ -1215,17 +1224,48 @@
             }
         }
 
-        function submitPayment(e, method) {
+        async function submitPayment(e, method) {
             if(e) e.preventDefault();
             clearInterval(countdownInterval); 
             
-            if(method === 'qr') {
-                showToast('ส่งหลักฐานสำเร็จ! ระบบกำลังตรวจสอบ (ใช้เวลา 1-2 วัน)', 'success');
-            } else {
-                showToast('บันทึกใบแจ้งชำระสำเร็จ! โปรดนำไปชำระที่ห้องสโมสรฯ', 'success');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> กำลังบันทึก...';
+            submitBtn.disabled = true;
+
+            const payload = {
+                action: 'createOrder',
+                orderId: currentCheckoutOrder.id,
+                studentId: currentCheckoutOrder.studentId,
+                name: currentCheckoutOrder.name,
+                type: currentCheckoutOrder.type,
+                size: currentCheckoutOrder.size,
+                qty: currentCheckoutOrder.qty,
+                total: currentCheckoutOrder.total,
+                paymentMethod: method,
+                timestamp: new Date().toLocaleString('th-TH')
+            };
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if(method === 'qr') {
+                    showToast('ส่งหลักฐานสำเร็จ! ระบบกำลังตรวจสอบ (ใช้เวลา 1-2 วัน)', 'success');
+                } else {
+                    showToast('บันทึกใบแจ้งชำระสำเร็จ! โปรดนำไปชำระที่ห้องสโมสรฯ', 'success');
+                }
+            } catch(error) {
+                console.error("Error creating order", error);
+                showToast('จำลองการสั่งจอง (ไม่สามารถเชื่อมต่อฐานข้อมูลได้)', 'warning');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                setTimeout(() => navigate('tracking'), 2000);
             }
-            
-            setTimeout(() => navigate('tracking'), 2500);
         }
 
         function renderTracking(container) {
