@@ -168,7 +168,7 @@
                 <i class="ph ph-x text-lg font-bold"></i>
             </button>
             <div class="h-40 sm:h-56 w-full bg-slate-200 relative">
-                <img id="popup-banner-img" src="" alt="Banner" class="w-full h-full object-cover">
+                <img id="popup-banner-img" src="" alt="Banner" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400?text=No+Image'">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                 <div class="absolute bottom-5 left-6 right-6">
                     <span class="inline-block px-2.5 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg mb-2 shadow-sm">ประกาศสำคัญ</span>
@@ -405,7 +405,6 @@
         // FAST API FETCHERS
         // ==========================================
         async function fetchActivitiesData() {
-            // เพิ่ม t=${new Date().getTime()} ป้องกันการแคชของ Mobile
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities&t=${new Date().getTime()}`)
                 .then(res => res.json())
                 .then(async actResult => {
@@ -616,7 +615,7 @@
 
             let html = `
                 <div class="fade-in max-w-4xl mx-auto">
-                    <div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ประวัติการเข้าร่วมกิจกรรม</h1><p class="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2">ตรวจสอบประวัติกิจกรรมและชั่วโมงของคุณ</p></div>
+                    <div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ประวัติการเข้าร่วมกิจกรรม</h1><p class="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2">ตรวจสอบประวัติกิจกรรมของคุณ</p></div>
                     <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 p-5 sm:p-8 mb-6 sm:mb-8">
                         <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2">รหัสนักศึกษา หรือ หมายเลขบัตรประชาชน</label>
                         <div class="flex flex-col sm:flex-row gap-3">
@@ -629,24 +628,22 @@
                     </div>
             `;
             if (isSearched) {
-                const totalHours = historyData.reduce((sum, item) => sum + (Number(item.hours) || 0), 0);
                 html += `
                     <div class="fade-in">
                         <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-4 sm:mb-6 gap-4">
                             <div><h2 class="text-lg sm:text-xl font-bold text-slate-800">ผลการค้นหา: <span class="text-primary">${searchedId}</span></h2><p class="text-xs sm:text-sm text-slate-500 mt-1">รายการกิจกรรมที่เคยเข้าร่วม</p></div>
-                            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                                <div class="bg-white p-2.5 sm:p-3 rounded-full text-indigo-500 shadow-sm"><i class="ph-fill ph-medal text-xl sm:text-2xl"></i></div>
-                                <div><p class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">ชั่วโมงรวม</p><p class="text-xl sm:text-2xl font-bold text-slate-800">${totalHours} <span class="text-xs sm:text-sm font-medium text-slate-500">ชม.</span></p></div>
-                            </div>
                         </div>
                         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse min-w-[500px]">
-                                    <thead><tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs sm:text-sm"><th class="p-3 sm:p-4 font-bold w-1/2">ชื่อกิจกรรม</th><th class="p-3 sm:p-4 font-bold text-center">วันที่จัด</th><th class="p-3 sm:p-4 font-bold text-center">ชั่วโมง</th><th class="p-3 sm:p-4 font-bold text-center">สถานะ</th></tr></thead>
+                                    <thead><tr class="bg-slate-50 border-b border-slate-100 text-slate-500 text-xs sm:text-sm"><th class="p-3 sm:p-4 font-bold w-1/2">ชื่อกิจกรรม</th><th class="p-3 sm:p-4 font-bold text-center">วันที่จัด</th><th class="p-3 sm:p-4 font-bold text-center">สถานะ</th></tr></thead>
                                     <tbody class="text-xs sm:text-sm text-slate-700">
                 `;
-                if (historyData.length > 0) historyData.forEach(h => html += `<tr class="border-b border-slate-50 hover:bg-slate-50/50"><td class="p-3 sm:p-4 font-bold text-slate-800">${h.eventName}</td><td class="p-3 sm:p-4 text-slate-500 text-center whitespace-nowrap">${h.date}</td><td class="p-3 sm:p-4 font-bold text-primary text-center">+${h.hours || 0}</td><td class="p-3 sm:p-4 text-center"><span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-md sm:rounded-full text-[10px] sm:text-xs font-bold border border-green-200"><i class="ph-fill ph-check-circle"></i> ผ่าน</span></td></tr>`);
-                else html += `<tr><td colspan="4" class="p-8 text-center text-slate-400 font-medium"><i class="ph ph-files text-3xl sm:text-4xl mb-2"></i><br>ยังไม่มีประวัติ</td></tr>`;
+                if (historyData.length > 0) {
+                    historyData.forEach(h => html += `<tr class="border-b border-slate-50 hover:bg-slate-50/50"><td class="p-3 sm:p-4 font-bold text-slate-800">${h.eventName}</td><td class="p-3 sm:p-4 text-slate-500 text-center whitespace-nowrap">${h.date}</td><td class="p-3 sm:p-4 text-center"><span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2 py-1 rounded-md sm:rounded-full text-[10px] sm:text-xs font-bold border border-green-200"><i class="ph-fill ph-check-circle"></i> ผ่าน</span></td></tr>`);
+                } else {
+                    html += `<tr><td colspan="3" class="p-8 text-center text-slate-400 font-medium"><i class="ph ph-files text-3xl sm:text-4xl mb-2"></i><br>ยังไม่มีประวัติ</td></tr>`;
+                }
                 html += `</tbody></table></div></div></div>`;
             }
             html += `</div>`; container.innerHTML = html;
@@ -907,18 +904,17 @@
                 return navigate('shirt');
             }
 
-            // ⚡ Optimistic Save: กลับไปหน้าติดตามสถานะทันที เพื่อให้ไม่ต้องรอ
-            currentCheckoutOrder.status = 1; // ตั้งสถานะเป็น 1 (รอตรวจสอบ)
+            // ⚡ Optimistic Save
+            currentCheckoutOrder.status = 1; 
             currentCheckoutOrder.paymentMethod = method;
             currentCheckoutOrder.date = formatThaiDate(new Date(), true);
-            appCache.orders.unshift(currentCheckoutOrder); // แอบเพิ่มลง Cache จำลอง
+            appCache.orders.unshift(currentCheckoutOrder); 
 
             navigate('tracking');
             showToast('กำลังบันทึกข้อมูล...', 'success');
 
             const payload = { action: 'createOrder', orderId: currentCheckoutOrder.id, studentId: currentCheckoutOrder.studentId, name: currentCheckoutOrder.name, type: currentCheckoutOrder.type, size: currentCheckoutOrder.size, qty: currentCheckoutOrder.qty, total: currentCheckoutOrder.total, paymentMethod: method, timestamp: new Date().toLocaleString('th-TH') };
             
-            // Background Sync
             fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
                .then(() => showToast(method === 'qr' ? 'อัปโหลดสลิปเรียบร้อย!' : 'บันทึกแจ้งชำระเงินสดเรียบร้อย!', 'success'))
                .catch(() => showToast('เกิดปัญหาการบันทึก', 'warning'));
@@ -952,7 +948,7 @@
                 return;
             }
 
-            const myOrder = appCache.orders[0] || MOCK_ORDERS[1]; // ดึง Order ล่าสุดจาก Cache
+            const myOrder = appCache.orders[0] || MOCK_ORDERS[1]; 
             const currentStep = myOrder.status;
             let html = `
                 <div class="fade-in max-w-3xl mx-auto">
@@ -1462,6 +1458,9 @@
             html += `</tbody></table></div></div></div>`; if(container.innerHTML !== html) container.innerHTML = html;
         }
 
+        // ==========================================
+        // MASTER CONTROL & SETTINGS
+        // ==========================================
         function toggleMasterControl(isChecked) {
             isShirtShopOpen = isChecked;
             const textEl = document.getElementById('shirt-toggle-text');
@@ -1524,13 +1523,11 @@
                                 <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">หัวข้อประกาศ (เว้นบรรทัดได้)</label><textarea id="setting-popup-title" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-bold text-sm bg-slate-50">${popupSettings.title}</textarea></div>
                                 <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รายละเอียดเนื้อหา (เว้นบรรทัดได้)</label><textarea id="setting-popup-desc" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50">${popupSettings.description}</textarea></div>
                                 <div>
-                                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รูปภาพแบนเนอร์ (อัปโหลดจากเครื่อง)</label>
-                                    <input type="hidden" id="setting-popup-image" value="${popupSettings.imageUrl}">
-                                    <label class="flex flex-col items-center justify-center w-full h-28 sm:h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors relative overflow-hidden group">
-                                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500 z-10"><i class="ph ph-upload-simple text-2xl sm:text-4xl mb-2 text-primary group-hover:scale-110 transition-transform"></i><p class="text-[10px] sm:text-sm font-bold text-primary">คลิกเปลี่ยนรูปภาพ</p></div>
-                                        <img id="setting-popup-preview" src="${popupSettings.imageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity">
-                                        <input type="file" class="hidden" accept="image/*" onchange="previewSettingsPopupImage(this)" />
-                                    </label>
+                                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">ลิงก์รูปภาพแบนเนอร์ (URL Image)</label>
+                                    <input type="text" id="setting-popup-image" value="${popupSettings.imageUrl}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50 mb-3" placeholder="วางลิงก์รูปภาพ (เช่น https://...)" oninput="document.getElementById('setting-popup-preview').src = this.value || 'https://placehold.co/800x400?text=No+Image';">
+                                    <div class="w-full h-28 sm:h-40 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden relative shadow-inner">
+                                        <img id="setting-popup-preview" src="${popupSettings.imageUrl || 'https://placehold.co/800x400?text=No+Image'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400?text=Image+Not+Found'">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1541,13 +1538,6 @@
                         </div>
                     </form>
                 </div>`;
-        }
-
-        function previewSettingsPopupImage(input) {
-            if (input.files && input.files[0]) {
-                const r = new FileReader(); r.onload = function(e) { document.getElementById('setting-popup-image').value = e.target.result; document.getElementById('setting-popup-preview').src = e.target.result; }
-                r.readAsDataURL(input.files[0]);
-            }
         }
 
         function previewCurrentPopup() {
