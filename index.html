@@ -522,7 +522,8 @@
                                         <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1">เลขบัตรประชาชน *</label><input type="text" id="reg-citizen-id" required pattern="[0-9]{13}" class="w-full px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white font-medium placeholder:text-slate-300 text-sm" placeholder="13 หลัก"></div>
                                     </div>
                                 </div>
-                                <div class="pt-5 sm:pt-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end mt-6 sm:mt-8">
+                                <p id="reg-error-message" class="text-sm font-bold text-red-600 text-center mt-4 hidden bg-red-50 p-3 rounded-xl border border-red-200 shadow-sm"></p>
+                                <div class="pt-4 sm:pt-5 border-t border-slate-100 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end mt-4">
                                     <button type="button" onclick="resetSearchForm()" class="px-6 py-3 sm:py-3.5 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors w-full sm:w-auto text-sm">ค้นหาใหม่</button>
                                     <button type="submit" class="px-8 py-3 sm:py-3.5 rounded-xl font-bold text-white bg-primary hover:bg-primary_hover shadow-md shadow-primary/20 flex items-center justify-center gap-2 transition-colors w-full sm:w-auto text-sm"><i class="ph ph-check-square-offset text-lg"></i> ยืนยันการลงทะเบียน</button>
                                 </div>
@@ -564,6 +565,7 @@
         function resetSearchForm() {
             document.getElementById('step-form').classList.add('hidden'); document.getElementById('step-search').classList.remove('hidden'); document.getElementById('search-feedback').classList.add('hidden'); document.getElementById('step-form').reset();
             document.getElementById('reg-hidden-student-id').value = ''; document.getElementById('reg-hidden-citizen-id').value = ''; document.getElementById('step-form').firstElementChild.classList.remove('hidden');
+            const errorMsgEl = document.getElementById('reg-error-message'); if (errorMsgEl) errorMsgEl.classList.add('hidden');
             ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f) { f.readOnly = false; f.classList.replace('bg-slate-50', 'bg-white/70'); f.classList.remove('text-slate-500', 'shadow-inner'); } });
         }
 
@@ -573,6 +575,9 @@
             const cid = document.getElementById('reg-citizen-id').value.trim();
             const eventObj = appCache.activities.find(ev => String(ev.id) === String(eventId));
             const eventName = eventObj?.title || 'กิจกรรม';
+            const errorMsgEl = document.getElementById('reg-error-message');
+            
+            if (errorMsgEl) errorMsgEl.classList.add('hidden'); // รีเซ็ตข้อความแจ้งเตือนสีแดง
 
             // 1. เช็คจากแคชในเครื่อง (ดักจับการกดรัวๆ เบื้องต้น)
             const hasRegisteredLocally = appCache.checkIns.some(row => {
@@ -583,7 +588,11 @@
             });
 
             if (hasRegisteredLocally) {
-                showToast('ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!', 'error');
+                if (errorMsgEl) {
+                    errorMsgEl.innerHTML = '<i class="ph-fill ph-warning-circle text-lg inline-block align-middle mr-1"></i> ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!';
+                    errorMsgEl.classList.remove('hidden');
+                }
+                showToast('พบข้อมูลการลงทะเบียนซ้ำซ้อน!', 'error');
                 return;
             }
 
@@ -593,7 +602,7 @@
             submitBtn.disabled = true;
 
             try {
-                // 2. เช็คจากเซิร์ฟเวอร์แบบ Real-time เพื่อความแม่นยำ 100%
+                // 2. เช็คจากเซิร์ฟเวอร์แบบ Real-time เพื่อความแม่นยำ 100% ป้องกันทำรายการพร้อมกันหลายเครื่อง
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns&_nocache=${new Date().getTime()}`);
                 const result = await res.json();
                 
@@ -607,7 +616,11 @@
                     });
 
                     if (isActuallyRegistered) {
-                        showToast('ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!', 'error');
+                        if (errorMsgEl) {
+                            errorMsgEl.innerHTML = '<i class="ph-fill ph-warning-circle text-lg inline-block align-middle mr-1"></i> ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!';
+                            errorMsgEl.classList.remove('hidden');
+                        }
+                        showToast('ระบบฐานข้อมูลกลางพบข้อมูลซ้ำซ้อน!', 'error');
                         submitBtn.innerHTML = originalBtnText;
                         submitBtn.disabled = false;
                         return;
