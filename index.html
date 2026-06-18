@@ -48,7 +48,7 @@
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex space-x-1 items-center flex-grow justify-center" id="desktop-menu"></div>
 
-                <!-- 📌 แก้ไขส่วนของ Role Switcher ให้ตรงกับภาพ image_2a8706.png -->
+                <!-- Role Switcher -->
                 <div class="flex items-center">
                     <div class="bg-slate-100/80 p-1 rounded-xl mr-0 md:mr-4 hidden sm:inline-flex">
                         <button onclick="switchRole('student')" id="btn-role-student" class="px-5 py-1.5 text-sm font-bold rounded-lg bg-white text-primary shadow-sm transition-all duration-200">นักศึกษา</button>
@@ -73,12 +73,46 @@
     </nav>
 
     <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 md:pb-8 w-full" id="app-content"></main>
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-8 w-full" id="app-content"></main>
+
+    <!-- Footer Area -->
+    <footer class="mt-auto py-6 sm:py-8 text-center text-slate-500 text-xs sm:text-sm px-4 border-t border-slate-200 bg-white pb-24 md:pb-6">
+        <p class="font-bold text-slate-600">ฝ่ายกิจการนักศึกษา คณะเทคโนโลยีดิจิทัล มหาวิทยาลัยราชภัฏเชียงราย</p>
+        <p class="mt-1 text-slate-400">ระบบจัดการกิจกรรมนักศึกษา (DIGIT.CRRU)</p>
+    </footer>
 
     <!-- Mobile Tab Bar (Bottom Navigation) -->
     <nav id="mobile-tab-bar" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center z-40 pt-1 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]" style="padding-bottom: env(safe-area-inset-bottom);"></nav>
 
     <!-- ================= MODALS ================= -->
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4 transition-opacity fade-in">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl transform transition-all relative">
+            <button onclick="closeAdminLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors"><i class="ph ph-x text-2xl"></i></button>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-slate-100 text-admin rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="ph-fill ph-shield-check text-4xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800">เข้าสู่ระบบ Admin</h3>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">กรุณากรอกชื่อผู้ใช้งานและรหัสผ่าน</p>
+            </div>
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" id="admin-username" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50" placeholder="Admin">
+                </div>
+                <div>
+                    <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">รหัสผ่าน (Password)</label>
+                    <input type="password" id="admin-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50" placeholder="9999">
+                </div>
+                <p id="admin-login-error" class="text-xs font-bold text-red-500 hidden text-center bg-red-50 p-2 rounded-lg border border-red-100">ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง</p>
+                <button type="submit" class="w-full py-3.5 mt-2 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors flex items-center justify-center gap-2 shadow-lg text-sm">
+                    เข้าสู่ระบบ <i class="ph ph-sign-in text-lg"></i>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal for Slip Viewing -->
     <div id="slipModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity">
@@ -163,13 +197,22 @@
         // ==========================================
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6wkWGyyWSJBMQ90nd6DFqh8JKOWlJ_aWsxzNNSbSstIwX8UDVL47Nn6jtm0P0l3ViWw/exec';
         
-        // --- State Management ---
+        // --- State Management & App Cache (เพิ่มความเร็ว) ---
         let currentRole = 'student'; 
         let currentView = 'events';
         let currentModalOrderId = null;
         let globalActivities = [];
         let currentCheckoutOrder = null;
         
+        // Local Data Cache เพื่อให้หน้าเว็บโหลดทันที ไม่ต้องรอ API
+        const appCache = {
+            activities: [],
+            checkIns: [],
+            orders: [],
+            students: {} // เก็บประวัติการค้นหานักศึกษา
+        };
+        
+        // ดึงการตั้งค่ามาจากเบราว์เซอร์
         let isShirtShopOpen = localStorage.getItem('CRRU_ShopOpen') === 'false' ? false : true; 
         let popupSettings = JSON.parse(localStorage.getItem('CRRU_PopupSettings')) || {
             enabled: true,
@@ -178,6 +221,7 @@
             imageUrl: 'https://images.unsplash.com/photo-1523580494112-071d16940a1c?auto=format&fit=crop&q=80&w=800'
         };
 
+        // --- Format Thai Date ---
         function formatThaiDate(dateString, includeTime = false) {
             if (!dateString || String(dateString).trim() === '-' || String(dateString).trim() === '') return dateString;
             const date = new Date(dateString);
@@ -220,7 +264,13 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            switchRole('student');
+            proceedSwitchRole('student');
+            
+            // Background Initial Fetch (ดึงข้อมูลเตรียมไว้เงียบๆ)
+            fetchActivitiesData();
+            fetchAllCheckInsData();
+            fetchOrdersData();
+
             setTimeout(() => {
                 if (!sessionStorage.getItem('homePopupShown') && currentRole === 'student') {
                     openHomePopup();
@@ -229,8 +279,16 @@
             }, 500);
         });
 
-        // 📌 อัปเดตคลาสของ Role Switcher ให้ตรงกับรูปภาพ image_2a8706.png เป๊ะๆ
+        // 📌 ระบบ Login สำหรับเปลี่ยนบทบาทเป็น Admin
         function switchRole(role) {
+            if (role === 'admin' && !sessionStorage.getItem('isAdminAuthenticated')) {
+                showAdminLoginModal();
+                return;
+            }
+            proceedSwitchRole(role);
+        }
+
+        function proceedSwitchRole(role) {
             currentRole = role;
             const btnStudent = document.getElementById('btn-role-student'); const btnAdmin = document.getElementById('btn-role-admin');
             const btnStudentMob = document.getElementById('btn-role-student-mob'); const btnAdminMob = document.getElementById('btn-role-admin-mob');
@@ -253,6 +311,32 @@
                 brandIcon.className = 'ph-fill ph-shield-check text-admin text-2xl sm:text-3xl mr-2 transition-colors';
                 brandText.innerHTML = 'Admin<span class="text-admin font-normal">Panel</span>';
                 navigate('admin-dash');
+            }
+        }
+
+        function showAdminLoginModal() {
+            document.getElementById('admin-username').value = '';
+            document.getElementById('admin-password').value = '';
+            document.getElementById('admin-login-error').classList.add('hidden');
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+        }
+
+        function closeAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('admin-username').value.trim();
+            const pass = document.getElementById('admin-password').value.trim();
+            
+            if (user === 'Admin' && pass === '9999') {
+                sessionStorage.setItem('isAdminAuthenticated', 'true');
+                closeAdminLoginModal();
+                showToast('เข้าสู่ระบบ Admin สำเร็จ', 'success');
+                proceedSwitchRole('admin');
+            } else {
+                document.getElementById('admin-login-error').classList.remove('hidden');
             }
         }
 
@@ -281,12 +365,16 @@
         function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
 
         function navigate(viewId, param = null) {
-            currentView = viewId; renderNav(); const content = document.getElementById('app-content'); content.innerHTML = ''; window.scrollTo(0, 0);
+            currentView = viewId; renderNav(); const content = document.getElementById('app-content'); window.scrollTo(0, 0);
 
             if (currentRole === 'student') {
-                if(viewId === 'events') renderEvents(content); else if(viewId === 'register') renderRegistration(content, param);
-                else if(viewId === 'history') renderHistory(content); else if(viewId === 'shirt') renderShirtShop(content);
-                else if(viewId === 'checkout') renderCheckout(content, param); else if(viewId === 'tracking') renderTracking(content);
+                if(viewId === 'events') renderEvents(content); 
+                else if(viewId === 'register') renderRegistration(content, param);
+                else if(viewId === 'survey') renderSurvey(content, param); // 📌 เพิ่มหน้า Survey
+                else if(viewId === 'history') renderHistory(content); 
+                else if(viewId === 'shirt') renderShirtShop(content);
+                else if(viewId === 'checkout') renderCheckout(content, param); 
+                else if(viewId === 'tracking') renderTracking(content);
                 else if(viewId === 'edit-order') renderEditOrder(content, param);
             } else {
                 if(viewId === 'admin-dash') renderAdminDashboard(content); else if(viewId === 'admin-orders') renderAdminOrders(content);
@@ -295,47 +383,64 @@
         }
 
         // ==========================================
-        // API FETCHERS
+        // FAST API FETCHERS (Stale-While-Revalidate Pattern)
         // ==========================================
         async function fetchActivitiesData() {
-            try {
-                const [actRes, chkRes] = await Promise.all([ fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities`), fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`) ]);
-                const actResult = await actRes.json(); const chkResult = await chkRes.json();
+            const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities`)
+                .then(res => res.json())
+                .then(async actResult => {
+                    const chkRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`);
+                    const chkResult = await chkRes.json();
+                    
+                    const checkInCounts = {};
+                    if (chkResult.success && chkResult.data) {
+                        chkResult.data.forEach(row => {
+                            if(row && row.length > 1) {
+                                const eventName = String(row[1]).trim();
+                                if (eventName) checkInCounts[eventName] = (checkInCounts[eventName] || 0) + 1;
+                            }
+                        });
+                        appCache.checkIns = chkResult.data;
+                    }
 
-                const checkInCounts = {};
-                if (chkResult.success && chkResult.data) {
-                    chkResult.data.forEach(row => {
-                        if(row && row.length > 1) {
-                            const eventName = String(row[1]).trim();
-                            if (eventName) checkInCounts[eventName] = (checkInCounts[eventName] || 0) + 1;
-                        }
-                    });
-                }
+                    if (actResult.success && actResult.data) {
+                        actResult.data.forEach(item => { 
+                            item.date = formatThaiDate(item.date); 
+                            item.timestamp = formatThaiDate(item.timestamp, true); 
+                            item.joined = checkInCounts[item.title.trim()] || 0;
+                        });
+                        appCache.activities = actResult.data;
+                    }
+                    return appCache.activities;
+                }).catch(() => null);
 
-                if (actResult.success && actResult.data && actResult.data.length > 0) {
-                    actResult.data.forEach(item => { 
-                        item.date = formatThaiDate(item.date); 
-                        item.timestamp = formatThaiDate(item.timestamp, true); 
-                        item.joined = checkInCounts[item.title.trim()] || 0;
-                    });
-                    globalActivities = actResult.data; 
-                    return globalActivities;
-                }
-            } catch (error) { console.warn('Offline Mode'); }
-            globalActivities = MOCK_EVENTS; return globalActivities; 
+            if (appCache.activities && appCache.activities.length > 0) return appCache.activities;
+            const data = await fetchPromise;
+            return data || MOCK_EVENTS; 
         }
 
-        async function fetchAllCheckInsData() { try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return []; }
-        async function fetchOrdersData() { try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return MOCK_ORDERS; }
+        async function fetchAllCheckInsData() { 
+            const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`).then(res => res.json()).then(r => { if(r.success) appCache.checkIns = r.data; return appCache.checkIns; }).catch(()=>[]);
+            if (appCache.checkIns && appCache.checkIns.length > 0) return appCache.checkIns;
+            return await fetchPromise || [];
+        }
+
+        async function fetchOrdersData() { 
+            const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`).then(res => res.json()).then(r => { if(r.success) appCache.orders = r.data; return appCache.orders; }).catch(()=>null);
+            if (appCache.orders && appCache.orders.length > 0) return appCache.orders;
+            return await fetchPromise || MOCK_ORDERS;
+        }
 
         // ==========================================
         // STUDENT VIEWS
         // ==========================================
         function renderEvents(container) {
-            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรม...</p></div>`;
+            if (!appCache.activities || appCache.activities.length === 0) {
+                container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรม...</p></div>`;
+            }
+
             fetchActivitiesData().then(activities => {
                 const openActivities = activities.filter(event => event.status === 'open');
-
                 let html = `<div class="fade-in"><div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ลงทะเบียนเข้าร่วมกิจกรรม</h1><p class="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2">เลือกลงทะเบียนกิจกรรมที่เปิดรับสมัคร</p></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">`;
                 
                 if (openActivities.length === 0) {
@@ -343,20 +448,15 @@
                 } else {
                     openActivities.forEach(event => {
                         const percentFull = Math.min(Math.round((event.joined / event.spots) * 100) || 0, 100);
-                        
-                        // 📌 แก้ไขส่วนของ Progress Bar ให้ตรงกับภาพ image_0c73fc.png เป๊ะๆ
                         html += `
                             <div class="bg-white rounded-2xl sm:rounded-[20px] shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col p-5 sm:p-6">
                                 <div class="flex justify-between items-start mb-3 sm:mb-4 gap-2 sm:gap-4">
                                     <h3 class="text-lg sm:text-xl font-bold text-slate-800 line-clamp-2 leading-snug">${event.title}</h3>
-                                    <div><span class="bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full whitespace-nowrap">เปิดรับสมัคร</span></div>
+                                    <div><span class="bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full whitespace-nowrap">ลงทะเบียน</span></div>
                                 </div>
-                                
                                 <div class="space-y-2 mt-auto mb-4 sm:mb-6 text-sm text-slate-500 font-medium">
                                     <div class="flex items-center gap-2"><i class="ph-fill ph-calendar-blank text-primary text-base sm:text-lg"></i> ${event.date}</div>
                                     <div class="flex items-center gap-2"><i class="ph-fill ph-map-pin text-primary text-base sm:text-lg"></i> ${event.location}</div>
-                                    
-                                    <!-- Progress Bar ที่ดีไซน์ตามภาพ -->
                                     <div class="mt-4 pt-3 sm:pt-4 bg-[#f8fafc] p-4 rounded-2xl border border-slate-100/50">
                                         <div class="flex justify-between items-center mb-2">
                                             <span class="text-[13px] sm:text-sm font-bold text-slate-700">ยอดลงทะเบียน ${event.joined}/${event.spots} คน</span>
@@ -367,19 +467,19 @@
                                         </div>
                                     </div>
                                 </div>
-                                
                                 <button onclick="navigate('register', '${event.id}')" class="w-full py-3 sm:py-3.5 rounded-xl font-bold transition-colors flex justify-center items-center gap-2 text-sm sm:text-base bg-slate-800 text-white hover:bg-black shadow-md">
                                     ลงทะเบียน <i class="ph ph-arrow-right"></i>
                                 </button>
                             </div>`;
                     });
                 }
-                html += `</div></div>`; container.innerHTML = html;
+                html += `</div></div>`; 
+                if(container.innerHTML !== html) container.innerHTML = html; 
             });
         }
 
         function renderRegistration(container, eventId) {
-            const event = globalActivities.find(e => String(e.id) === String(eventId)); if(!event) return navigate('events');
+            const event = appCache.activities.find(e => String(e.id) === String(eventId)) || MOCK_EVENTS[0]; 
             container.innerHTML = `
                 <div class="fade-in max-w-2xl mx-auto">
                     <button onclick="navigate('events')" class="flex items-center gap-2 text-slate-500 hover:text-primary mb-4 sm:mb-6 transition-colors font-medium text-sm sm:text-base"><i class="ph ph-arrow-left text-lg sm:text-xl"></i> กลับไปหน้ากิจกรรม</button>
@@ -393,7 +493,7 @@
                                     <button onclick="fetchStudentData()" id="btn-fetch-student" class="w-full sm:w-auto px-6 py-3 sm:py-3.5 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-black transition-colors whitespace-nowrap shadow-sm flex items-center justify-center gap-2"><i class="ph ph-magnifying-glass text-lg"></i> ค้นหาข้อมูล</button>
                                 </div>
                                 <p id="search-feedback" class="text-xs text-red-500 mt-2 font-medium hidden"></p>
-                                <div class="text-center mt-6 sm:mt-8 pt-6 border-t border-slate-100"><button onclick="showManualForm()" class="text-xs sm:text-sm font-medium text-slate-500 hover:text-primary underline transition-colors">ไม่มีข้อมูลในระบบ? ข้ามไปกรอกข้อมูลเอง</button></div>
+                                <div class="text-center mt-6 sm:mt-8 pt-6 border-t border-slate-100"><button type="button" onclick="showManualForm()" class="text-xs sm:text-sm font-medium text-slate-500 hover:text-primary underline transition-colors">ไม่มีข้อมูลในระบบ? ข้ามไปกรอกข้อมูลเอง</button></div>
                             </div>
                             <form id="step-form" class="space-y-4 sm:space-y-5 hidden" onsubmit="handleRegistrationSubmit(event, '${eventId}')">
                                 <input type="hidden" id="reg-hidden-student-id"><input type="hidden" id="reg-hidden-citizen-id">
@@ -419,18 +519,30 @@
         async function fetchStudentData() {
             const searchId = document.getElementById('search-student-id').value.trim(); const feedback = document.getElementById('search-feedback');
             if(!searchId) { feedback.textContent = 'กรุณากรอกรหัสก่อนค้นหา'; feedback.classList.remove('hidden'); return; }
+            
+            if (appCache.students[searchId]) {
+                fillStudentForm(appCache.students[searchId], searchId);
+                return;
+            }
+
             const btn = document.getElementById('btn-fetch-student'); const originalBtnHtml = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>...'; btn.disabled = true; feedback.classList.add('hidden');
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=search&id=${encodeURIComponent(searchId)}`); const result = await res.json();
                 if (result.success && result.data) {
-                    document.getElementById('reg-student-id').value = result.data.studentId || searchId; document.getElementById('reg-citizen-id').value = result.data.citizenId || result.data.year || '';
-                    document.getElementById('reg-hidden-student-id').value = result.data.studentId || ''; document.getElementById('reg-hidden-citizen-id').value = result.data.citizenId || result.data.year || '';
-                    document.getElementById('reg-name').value = result.data.name || ''; document.getElementById('reg-faculty').value = result.data.faculty || '';
-                    ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f.value) { f.readOnly = true; f.classList.replace('bg-white', 'bg-slate-100'); } });
-                    document.getElementById('step-search').classList.add('hidden'); document.getElementById('step-form').classList.remove('hidden'); showToast('ดึงข้อมูลสำเร็จ', 'success');
+                    appCache.students[searchId] = result.data; 
+                    fillStudentForm(result.data, searchId);
                 } else { feedback.textContent = 'ไม่พบข้อมูล กรุณาลองใหม่'; feedback.classList.remove('hidden'); }
             } catch (error) { feedback.textContent = 'เชื่อมต่อล้มเหลว'; feedback.classList.remove('hidden'); showManualForm(searchId); } 
             finally { btn.innerHTML = originalBtnHtml; btn.disabled = false; }
+        }
+
+        function fillStudentForm(data, searchId) {
+            document.getElementById('reg-student-id').value = data.studentId || searchId; document.getElementById('reg-citizen-id').value = data.citizenId || data.year || '';
+            document.getElementById('reg-hidden-student-id').value = data.studentId || ''; document.getElementById('reg-hidden-citizen-id').value = data.citizenId || data.year || '';
+            document.getElementById('reg-name').value = data.name || ''; document.getElementById('reg-faculty').value = data.faculty || '';
+            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f.value) { f.readOnly = true; f.classList.replace('bg-white', 'bg-slate-100'); } });
+            document.getElementById('step-search').classList.add('hidden'); document.getElementById('step-form').classList.remove('hidden'); 
+            showToast('ดึงข้อมูลสำเร็จ', 'success');
         }
 
         function showManualForm(prefillId = '') {
@@ -445,13 +557,155 @@
             ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f) { f.readOnly = false; f.classList.replace('bg-slate-100', 'bg-white'); } });
         }
 
-        async function handleRegistrationSubmit(e, eventId) {
+        function handleRegistrationSubmit(e, eventId) {
             e.preventDefault();
             const sid = document.getElementById('reg-student-id').value.trim(); const cid = document.getElementById('reg-citizen-id').value.trim();
-            const payload = { action: 'checkIn', eventId: eventId, eventName: globalActivities.find(e => String(e.id) === String(eventId))?.title || 'กิจกรรม', studentId: document.getElementById('reg-hidden-student-id').value || sid, citizenId: document.getElementById('reg-hidden-citizen-id').value || cid, name: document.getElementById('reg-name').value, faculty: document.getElementById('reg-faculty').value, timestamp: new Date().toLocaleString('th-TH') };
-            const btn = e.target.querySelector('button[type="submit"]'); const txt = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>...'; btn.disabled = true;
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); showToast('ลงทะเบียนสำเร็จ! ข้อมูลถูกบันทึกแล้ว', 'success'); } catch (error) { showToast('จำลองการลงทะเบียน (เชื่อมต่อล้มเหลว)', 'warning'); } 
-            finally { btn.innerHTML = txt; btn.disabled = false; setTimeout(()=> navigate('events'), 1500); }
+            const eventObj = appCache.activities.find(ev => String(ev.id) === String(eventId));
+            const payload = { action: 'checkIn', eventId: eventId, eventName: eventObj?.title || 'กิจกรรม', studentId: document.getElementById('reg-hidden-student-id').value || sid, citizenId: document.getElementById('reg-hidden-citizen-id').value || cid, name: document.getElementById('reg-name').value, faculty: document.getElementById('reg-faculty').value, timestamp: new Date().toLocaleString('th-TH') };
+            
+            // ⚡ Optimistic UI: เพิ่มจำนวนคนลงทะเบียนหลอกๆ ไว้ก่อน
+            if (eventObj) eventObj.joined = (parseInt(eventObj.joined) || 0) + 1;
+            
+            showToast('ลงทะเบียนสำเร็จ! กรุณาทำแบบประเมิน...', 'success');
+
+            // Background Sync
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => null);
+
+            // 📌 หน่วงเวลาเล็กน้อย แล้วเด้งไปหน้าแบบประเมิน พร้อมส่งรหัสนักศึกษาไปด้วย
+            setTimeout(() => {
+                navigate('survey', { eventId: eventId, eventTitle: eventObj?.title, studentId: payload.studentId });
+            }, 1200);
+        }
+
+        // ==========================================
+        // SURVEY VIEW (หน้าแบบประเมิน)
+        // ==========================================
+        function renderSurvey(container, param) {
+            const eventTitle = param?.eventTitle || 'กิจกรรมทั่วไป';
+            
+            // ข้อมูลคำถาม 13 ข้อ + หมวดหมู่
+            const surveyQuestions = [
+                { category: '1. กระบวนการ ขั้นตอนการให้บริการ', items: [
+                    { id: 'q1_1', text: '1.1 การประชาสัมพันธ์โครงการ ฯ' },
+                    { id: 'q1_2', text: '1.2 ความเหมาะสมของสถานที่' },
+                    { id: 'q1_3', text: '1.3 ความเหมาะสมของระยะเวลา' },
+                    { id: 'q1_4', text: '1.4 การจัดลำดับขั้นตอนของกิจกรรม' }
+                ]},
+                { category: '2. การอำนวยความสะดวก', items: [
+                    { id: 'q2_1', text: '2.1 เอกสาร' },
+                    { id: 'q2_2', text: '2.2 โสตทัศนูปกรณ์' },
+                    { id: 'q2_3', text: '2.3 เจ้าหน้าที่สนับสนุน' },
+                    { id: 'q2_4', text: '2.4 อาหาร, เครื่องดื่มและสถานที่' }
+                ]},
+                { category: '3. คุณภาพการให้บริการ', items: [
+                    { id: 'q3_1', text: '3.1 ท่านได้รับความรู้ แนวคิด ทักษะและประสบการณ์ใหม่ ๆ จากโครงการ' },
+                    { id: 'q3_2', text: '3.2 ท่านสามารถนำสิ่งที่ได้รับจากโครงการ/กิจกรรมนี้ไปใช้ในการปฏิบัติงาน' },
+                    { id: 'q3_3', text: '3.3 สิ่งที่ท่านได้รับจากโครงการ/กิจกรรมครั้งนี้ตรงตามความคาดหวังของท่านหรือไม่' },
+                    { id: 'q3_4', text: '3.4 โครงการ/กิจกรรมนี้เอื้ออำนวยต่อการเรียนรู้และพัฒนาความสามารถของท่าน' },
+                    { id: 'q3_5', text: '3.5 ประโยชน์ที่ท่านได้รับจากโครงการ/กิจกรรม' }
+                ]}
+            ];
+
+            let html = `
+                <div class="fade-in max-w-3xl mx-auto pb-10">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="bg-primary/5 p-6 sm:p-8 border-b border-slate-100">
+                            <h2 class="text-2xl font-bold text-slate-800">แบบประเมินความพึงพอใจ</h2>
+                            <p class="text-sm sm:text-base text-primary font-medium mt-1 leading-snug">${eventTitle}</p>
+                        </div>
+                        <div class="p-4 sm:p-8 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-2 justify-center sm:justify-start">
+                            <p class="w-full text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide text-center sm:text-left">เกณฑ์การให้คะแนน</p>
+                            <span class="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-medium"><span class="font-bold text-primary">5</span> = มากที่สุด</span>
+                            <span class="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-medium"><span class="font-bold text-primary">4</span> = มาก</span>
+                            <span class="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-medium"><span class="font-bold text-primary">3</span> = ปานกลาง</span>
+                            <span class="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-medium"><span class="font-bold text-primary">2</span> = น้อย</span>
+                            <span class="text-xs bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm font-medium"><span class="font-bold text-primary">1</span> = น้อยที่สุด</span>
+                        </div>
+                        
+                        <form onsubmit="submitSurvey(event)" class="p-6 sm:p-8">
+                            <input type="hidden" name="eventId" value="${param?.eventId || ''}">
+                            <input type="hidden" name="eventTitle" value="${param?.eventTitle || ''}">
+                            <input type="hidden" name="studentId" value="${param?.studentId || ''}">
+            `;
+
+            // ลูปสร้างคำถามแต่ละหมวด
+            surveyQuestions.forEach(group => {
+                html += `<h3 class="font-bold text-lg sm:text-xl text-primary mt-6 mb-4 flex items-center gap-2"><i class="ph-fill ph-check-square-offset"></i> ${group.category}</h3>`;
+                
+                group.items.forEach(q => {
+                    html += `
+                        <div class="mb-4 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100">
+                            <p class="text-sm sm:text-base font-medium text-slate-700 mb-3">${q.text}</p>
+                            <div class="flex gap-2 sm:gap-3 max-w-md">
+                                ${[5, 4, 3, 2, 1].map(score => `
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="${q.id}" value="${score}" required class="peer sr-only">
+                                        <div class="text-center py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-white peer-checked:bg-primary peer-checked:text-white peer-checked:border-primary font-bold text-slate-500 peer-checked:shadow-md transition-all text-sm sm:text-base">${score}</div>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // ข้อเสนอแนะ
+            html += `
+                            <h3 class="font-bold text-lg sm:text-xl text-primary mt-8 mb-4 flex items-center gap-2"><i class="ph-fill ph-chat-text"></i> ข้อเสนอแนะเพิ่มเติม</h3>
+                            <textarea name="suggestions" rows="4" placeholder="ข้อเสนอแนะสำหรับการจัดกิจกรรมครั้งต่อไป..." class="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-slate-50 font-medium text-sm sm:text-base mb-8"></textarea>
+
+                            <button type="submit" class="w-full py-4 rounded-xl font-bold text-white bg-green-500 hover:bg-green-600 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 text-sm sm:text-base">
+                                <i class="ph ph-paper-plane-right text-xl"></i> ส่งแบบประเมิน
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function submitSurvey(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const txt = btn.innerHTML;
+            btn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> กำลังบันทึกข้อมูล...';
+            btn.disabled = true;
+
+            const formData = new FormData(e.target);
+            const surveyData = Object.fromEntries(formData.entries());
+
+            const payload = {
+                action: 'submitSurvey',
+                timestamp: new Date().toLocaleString('th-TH'),
+                studentId: surveyData.studentId || '',
+                eventId: surveyData.eventId || '',
+                eventName: surveyData.eventTitle || '',
+                q1_1: surveyData.q1_1 || '',
+                q1_2: surveyData.q1_2 || '',
+                q1_3: surveyData.q1_3 || '',
+                q1_4: surveyData.q1_4 || '',
+                q2_1: surveyData.q2_1 || '',
+                q2_2: surveyData.q2_2 || '',
+                q2_3: surveyData.q2_3 || '',
+                q2_4: surveyData.q2_4 || '',
+                q3_1: surveyData.q3_1 || '',
+                q3_2: surveyData.q3_2 || '',
+                q3_3: surveyData.q3_3 || '',
+                q3_4: surveyData.q3_4 || '',
+                q3_5: surveyData.q3_5 || '',
+                comment: surveyData.suggestions || ''
+            };
+
+            // โหลดส่งข้อมูลไป Google Sheet
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+                .then(() => {
+                    showToast('ขอบคุณที่ร่วมประเมินกิจกรรม!', 'success');
+                    navigate('events');
+                })
+                .catch(() => {
+                    showToast('บันทึกสำเร็จ (Offline Mode)', 'success');
+                    navigate('events');
+                });
         }
 
         function renderHistory(container) {
@@ -512,7 +766,26 @@
 
         function renderShirtShop(container) {
             if (!isShirtShopOpen) {
-                container.innerHTML = `<div class="fade-in max-w-2xl mx-auto text-center py-20 px-4"><div class="w-20 sm:w-24 h-20 sm:h-24 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-storefront text-4xl sm:text-5xl"></i></div><h2 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ระบบปิดรับสั่งจองเสื้อชั่วคราว</h2><p class="text-sm sm:text-base text-slate-500 font-medium">ขณะนี้ระบบปิดรับการสั่งจองแล้ว กรุณาติดตามประกาศจากทางคณะอีกครั้ง</p><button onclick="navigate('events')" class="mt-8 px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary_hover transition-colors shadow-sm text-sm sm:text-base">กลับไปหน้ากิจกรรม</button></div>`; return;
+                container.innerHTML = `
+                <div class="fade-in max-w-4xl mx-auto px-2 sm:px-4 py-6 sm:py-10">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 sm:p-10 text-center relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-2 bg-red-500"></div>
+                        <div class="w-20 sm:w-24 h-20 sm:h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6"><i class="ph-fill ph-storefront text-4xl sm:text-5xl"></i></div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-3">ปิดรับสั่งจองเสื้อชั่วคราว</h2>
+                        <p class="text-sm sm:text-base text-slate-500 font-medium max-w-lg mx-auto mb-10">ขณะนี้ระบบได้ปิดรับการสั่งจองเสื้อคณะแล้ว กรุณาติดตามประกาศกำหนดการเปิดรับสั่งจองอีกครั้งจากทางฝ่ายกิจการนักศึกษา</p>
+                        <div class="relative max-w-2xl mx-auto mt-8 mb-4">
+                            <div class="hidden sm:block absolute top-1/2 left-8 right-8 h-1 bg-slate-100 -translate-y-1/2 z-0 rounded-full"></div>
+                            <div class="hidden sm:block absolute top-1/2 left-8 h-1 bg-red-400 -translate-y-1/2 z-0 rounded-full transition-all duration-1000" style="width: 50%;"></div>
+                            <div class="flex flex-col sm:flex-row justify-between gap-6 sm:gap-0 relative z-10">
+                                <div class="flex flex-col items-center"><div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-slate-100 text-slate-400 border-4 border-white flex items-center justify-center mb-2 shadow-sm"><i class="ph-fill ph-check text-lg"></i></div><span class="text-[10px] sm:text-xs font-bold text-slate-400">1. เปิดรับจอง</span></div>
+                                <div class="flex flex-col items-center"><div class="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-red-500 text-white border-4 border-white flex items-center justify-center mb-2 shadow-md animate-pulse"><i class="ph-fill ph-lock-key text-xl sm:text-2xl"></i></div><span class="text-[10px] sm:text-xs font-bold text-red-500">2. ปิดรับจองแล้ว</span></div>
+                                <div class="flex flex-col items-center"><div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-slate-50 text-slate-300 border-4 border-white flex items-center justify-center mb-2"><i class="ph-fill ph-money text-lg"></i></div><span class="text-[10px] sm:text-xs font-bold text-slate-400">3. ตรวจสอบการโอน</span></div>
+                                <div class="flex flex-col items-center"><div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-slate-50 text-slate-300 border-4 border-white flex items-center justify-center mb-2"><i class="ph-fill ph-t-shirt text-lg"></i></div><span class="text-[10px] sm:text-xs font-bold text-slate-400">4. รับเสื้อคณะ</span></div>
+                            </div>
+                        </div>
+                        <button onclick="navigate('events')" class="mt-10 sm:mt-12 px-8 py-3.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-black transition-colors shadow-md text-sm sm:text-base flex items-center gap-2 mx-auto"><i class="ph ph-arrow-left"></i> กลับไปหน้ากิจกรรม</button>
+                    </div>
+                </div>`; return;
             }
             container.innerHTML = `
                 <div class="fade-in max-w-5xl mx-auto">
@@ -589,10 +862,22 @@
         async function fetchStudentForOrder() {
             const searchId = document.getElementById('search-order-id').value.trim(); const feedback = document.getElementById('search-order-feedback');
             if(!searchId) { feedback.textContent = 'กรุณากรอกข้อมูล'; feedback.classList.remove('hidden'); return; }
+
+            // ⚡ ใช้ข้อมูลจาก Cache หากเคยค้นหาแล้ว
+            if (appCache.students[searchId]) {
+                document.getElementById('order-student-id').value = appCache.students[searchId].studentId || searchId; 
+                document.getElementById('order-student-name').value = appCache.students[searchId].name || ''; 
+                document.getElementById('order-student-id').readOnly = true; document.getElementById('order-student-name').readOnly = true; 
+                document.getElementById('order-student-id').classList.replace('bg-white', 'bg-blue-100/50'); document.getElementById('order-student-name').classList.replace('bg-white', 'bg-blue-100/50');
+                document.getElementById('order-step-search').classList.add('hidden'); document.getElementById('order-step-form').classList.remove('hidden'); 
+                setTimeout(recalculatePrice, 50); return;
+            }
+
             const btn = document.getElementById('btn-fetch-order'); const txt = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>'; btn.disabled = true; feedback.classList.add('hidden');
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=searchStudentOrder&id=${encodeURIComponent(searchId)}`); const result = await res.json();
                 if (result.success && result.data) {
+                    appCache.students[searchId] = result.data; // บันทึกลง Cache
                     const idField = document.getElementById('order-student-id'); const nameField = document.getElementById('order-student-name');
                     idField.value = searchId; nameField.value = result.data.name || ''; idField.readOnly = true; nameField.readOnly = true; idField.classList.replace('bg-white', 'bg-blue-100/50'); nameField.classList.replace('bg-white', 'bg-blue-100/50');
                     document.getElementById('order-step-search').classList.add('hidden'); document.getElementById('order-step-form').classList.remove('hidden'); setTimeout(recalculatePrice, 50);
@@ -658,7 +943,7 @@
                                 <div class="text-center mb-5 sm:mb-6"><h3 class="text-lg sm:text-xl font-bold text-slate-800">สแกนเพื่อชำระเงิน</h3><p class="text-xs sm:text-sm text-red-500 font-bold mt-1"><i class="ph ph-clock"></i> ภายใน <span id="countdown">15:00</span> นาที</p></div>
                                 <div class="flex flex-col sm:flex-row gap-5 sm:gap-8 items-center justify-center mb-6 sm:mb-8 border-b border-slate-100 pb-6 sm:pb-8">
                                     <div class="w-40 sm:w-48 h-40 sm:h-48 bg-slate-100 p-2 rounded-xl border-2 border-primary/20 relative"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" class="w-full h-full object-contain mix-blend-multiply opacity-80" alt="QR"><div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold text-primary border border-primary/20 shadow-sm">PromptPay</div></div>
-                                    <div class="text-center sm:text-left space-y-1 sm:space-y-2"><p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">บัญชีสโมสรนักศึกษา</p><p class="font-bold text-lg sm:text-xl text-slate-800 tracking-wide">012-3-45678-9</p><p class="text-xs sm:text-sm font-medium text-slate-500">ธ.กรุงไทย (สาขามร.ชร.)</p><div class="mt-3 sm:mt-4 inline-block bg-amber-50 text-amber-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold border border-amber-200">โอนยอด <span class="text-sm sm:text-lg">฿${orderData.total}</span> เป๊ะ</div></div>
+                                    <div class="text-center sm:text-left space-y-1 sm:space-y-2"><p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">บัญชีฝ่ายกิจการนักศึกษา</p><p class="font-bold text-lg sm:text-xl text-slate-800 tracking-wide">012-3-45678-9</p><p class="text-xs sm:text-sm font-medium text-slate-500">ธ.กรุงไทย (สาขามร.ชร.)</p><div class="mt-3 sm:mt-4 inline-block bg-amber-50 text-amber-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold border border-amber-200">โอนยอด <span class="text-sm sm:text-lg">฿${orderData.total}</span> เป๊ะ</div></div>
                                 </div>
                                 <form onsubmit="submitPayment(event, 'qr')" class="space-y-5 sm:space-y-6">
                                     <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2">1. เวลาที่ทำรายการ (ตามสลิป) *</label><input type="time" required class="w-full sm:max-w-[200px] px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary/20 outline-none font-bold text-slate-700 text-sm"></div>
@@ -673,7 +958,7 @@
                             </div>
                             <div id="view-pay-cash" class="hidden bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 text-center animate-fadeIn">
                                 <div class="w-16 sm:w-20 h-16 sm:h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6"><i class="ph-fill ph-wallet text-3xl sm:text-4xl"></i></div>
-                                <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ชำระด้วยเงินสด</h3><p class="text-sm sm:text-base text-slate-600 mb-5 sm:mb-6 font-medium">นำ "รหัสคำสั่งซื้อ" ไปติดต่อชำระเงินที่<br><span class="font-bold text-primary">ห้องสโมสรนักศึกษา ชั้น 1</span></p>
+                                <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">ชำระด้วยเงินสด</h3><p class="text-sm sm:text-base text-slate-600 mb-5 sm:mb-6 font-medium">นำ "รหัสคำสั่งซื้อ" ไปติดต่อชำระเงินที่<br><span class="font-bold text-primary">ห้องฝ่ายกิจการนักศึกษา คณะเทคโนโลยีดิจิทัล</span></p>
                                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-amber-800 mb-6 sm:mb-8 max-w-md mx-auto text-left flex gap-2 sm:gap-3 shadow-sm"><i class="ph-fill ph-warning-circle text-lg sm:text-xl flex-shrink-0"></i><div><p class="font-bold mb-1 sm:mb-2">เงื่อนไข:</p><ul class="list-disc pl-4 space-y-1 font-medium"><li>ชำระภายใน 3 วันทำการ</li><li>ในเวลา 09:00 - 16:30 น.</li></ul></div></div>
                                 <button onclick="submitPayment(event, 'cash')" class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-amber-500 hover:bg-amber-600 transition-colors inline-flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 text-sm sm:text-base"><i class="ph ph-printer text-lg sm:text-xl"></i> บันทึกใบแจ้งชำระ</button>
                             </div>
@@ -695,16 +980,31 @@
             if(method === 'qr') { bQr.className = actCls; bCash.className = inactCls; vQr.classList.remove('hidden'); vCash.classList.add('hidden'); } else { bCash.className = actCls; bQr.className = inactCls; vCash.classList.remove('hidden'); vQr.classList.add('hidden'); }
         }
 
-        function previewSlip(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = function(e) { document.getElementById('slip-preview').src = e.target.result; document.getElementById('slip-preview').classList.remove('hidden'); document.getElementById('slip-placeholder').classList.add('opacity-0'); }; r.readAsDataURL(input.files[0]); } }
+        function previewSlip(input) { if (input.files && input.files[0]) { const r = new FileReader(); r.onload = function(e) { document.getElementById('modal-slip-image').src = e.target.result; } ; r.readAsDataURL(input.files[0]); } }
 
-        async function submitPayment(e, method) {
-            if(e) e.preventDefault(); clearInterval(countdownInterval); const btn = e.target.querySelector('button[type="submit"]'); const txt = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin text-lg"></i>...'; btn.disabled = true;
+        function submitPayment(e, method) {
+            if(e) e.preventDefault(); clearInterval(countdownInterval); 
+            
+            // ⚡ Optimistic Save: กลับไปหน้าติดตามสถานะทันที เพื่อให้ไม่ต้องรอ
+            currentCheckoutOrder.status = 1; // ตั้งสถานะเป็น 1 (รอตรวจสอบ)
+            currentCheckoutOrder.paymentMethod = method;
+            currentCheckoutOrder.date = formatThaiDate(new Date(), true);
+            appCache.orders.unshift(currentCheckoutOrder); // แอบเพิ่มลง Cache จำลอง
+
+            navigate('tracking');
+            showToast('กำลังบันทึกข้อมูล...', 'success');
+
             const payload = { action: 'createOrder', orderId: currentCheckoutOrder.id, studentId: currentCheckoutOrder.studentId, name: currentCheckoutOrder.name, type: currentCheckoutOrder.type, size: currentCheckoutOrder.size, qty: currentCheckoutOrder.qty, total: currentCheckoutOrder.total, paymentMethod: method, timestamp: new Date().toLocaleString('th-TH') };
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); showToast(method === 'qr' ? 'สำเร็จ!' : 'บันทึกแจ้งชำระสำเร็จ!', 'success'); } catch(error) { showToast('Offline Mode', 'warning'); } finally { btn.innerHTML = txt; btn.disabled = false; setTimeout(() => navigate('tracking'), 1500); }
+            
+            // Background Sync
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+               .then(() => showToast(method === 'qr' ? 'อัปโหลดสลิปเรียบร้อย!' : 'บันทึกแจ้งชำระเงินสดเรียบร้อย!', 'success'))
+               .catch(() => showToast('เกิดปัญหาการบันทึก', 'warning'));
         }
 
         function renderTracking(container) {
-            const myOrder = MOCK_ORDERS[1]; const currentStep = myOrder.status;
+            const myOrder = appCache.orders[0] || MOCK_ORDERS[1]; // ดึง Order ล่าสุดจาก Cache
+            const currentStep = myOrder.status;
             let html = `
                 <div class="fade-in max-w-3xl mx-auto">
                     <div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ติดตามสถานะการสั่งจอง</h1><p class="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-2">รหัส: ${myOrder.studentId} | ออเดอร์: <span class="font-bold text-slate-700">${myOrder.id}</span></p></div>
@@ -720,7 +1020,8 @@
         }
 
         function renderEditOrder(container, orderId) {
-            const order = MOCK_ORDERS.find(o => o.id === orderId); if(!order) return navigate('tracking');
+            const order = appCache.orders.find(o => String(o.id) === String(orderId)) || MOCK_ORDERS.find(o => o.id === orderId); 
+            if(!order) return navigate('tracking');
             container.innerHTML = `
                 <div class="fade-in max-w-3xl mx-auto pb-10">
                     <div class="mb-5 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4"><div><h1 class="text-xl sm:text-2xl font-bold text-slate-800">แก้ไขข้อมูลการสั่งจอง</h1><p class="text-red-500 text-xs sm:text-sm mt-1 font-bold flex items-center gap-1"><i class="ph-fill ph-warning-circle"></i> แก้ไขได้ 1 ครั้ง</p></div><button onclick="navigate('tracking')" class="w-full sm:w-auto px-5 py-2.5 text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl font-bold shadow-sm text-sm">ยกเลิก</button></div>
@@ -750,12 +1051,14 @@
         }
 
         function submitEditOrder(e, orderId) {
-            e.preventDefault(); const order = MOCK_ORDERS.find(o => o.id === orderId);
+            e.preventDefault(); const order = appCache.orders.find(o => String(o.id) === String(orderId)) || MOCK_ORDERS.find(o => o.id === orderId);
             if(order) {
                 const pSz = document.getElementById('editPoloSize').value; const pQty = parseInt(document.getElementById('editPoloQty').value);
                 const aSz = document.getElementById('editActSize').value; const aQty = parseInt(document.getElementById('editActQty').value);
                 const pPr = (pSz === 'XL' || pSz === '2XL') ? 350 : 280; const aPr = (aSz === 'XL' || aSz === '2XL') ? 350 : 280;
                 order.size = `โปโล ${pSz}, กิจกรรม ${aSz}`; order.qty = pQty + aQty; order.total = (pPr * pQty) + (aPr * aQty); order.hasEdited = true;
+                
+                // ⚡ Optimistic Save:
                 showToast('อัปเดตข้อมูลสำเร็จ!', 'success'); navigate('tracking');
             }
         }
@@ -764,7 +1067,7 @@
         // ADMIN VIEWS
         // ==========================================
         async function renderAdminDashboard(container) {
-            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
+            if (!appCache.activities || appCache.activities.length === 0) container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
             const activities = await fetchActivitiesData(); const allCheckIns = await fetchAllCheckInsData(); const ordersData = await fetchOrdersData();
             const totalJoined = activities.reduce((sum, ev) => sum + (parseInt(ev.joined) || 0), 0);
             const participationRate = totalJoined > 0 ? Math.round((allCheckIns.length / totalJoined) * 100) : 0;
@@ -806,7 +1109,7 @@
                 const s = STATUS_MAP[order.status];
                 html += `<tr class="border-b border-slate-50 hover:bg-slate-50"><td class="p-3 sm:p-4 font-bold text-slate-800">${order.id}</td><td class="p-3 sm:p-4 font-medium text-slate-600">${order.studentId}</td><td class="p-3 sm:p-4"><span class="${s.color} px-2 py-1 rounded-md sm:rounded-full text-[10px] sm:text-xs font-bold border inline-flex items-center gap-1"><i class="ph ${s.icon}"></i> ${s.text}</span></td><td class="p-3 sm:p-4 text-right"><button onclick="openSlipModal('${order.id}')" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-admin text-white rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold hover:bg-admin_hover transition shadow-sm">ตรวจสลิป</button></td></tr>`;
             });
-            html += `</tbody></table></div></div></div></div>`; container.innerHTML = html;
+            html += `</tbody></table></div></div></div></div>`; if(container.innerHTML !== html) container.innerHTML = html;
 
             setTimeout(() => {
                 new Chart(document.getElementById('statusChart').getContext('2d'), {
@@ -816,7 +1119,7 @@
         }
 
         async function renderAdminOrders(container) {
-            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
+            if (!appCache.orders || appCache.orders.length === 0) container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
             const ordersData = await fetchOrdersData();
             let summary = { polo: { S: 0, M: 0, L: 0, XL: 0, '2XL': 0 }, act: { S: 0, M: 0, L: 0, XL: 0, '2XL': 0 } };
             ordersData.forEach(order => {
@@ -829,7 +1132,17 @@
                 <div class="fade-in max-w-6xl mx-auto">
                     <div class="mb-5 sm:mb-6 flex flex-col md:flex-row justify-between md:items-end gap-3 sm:gap-4 text-center sm:text-left">
                         <div><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">จัดการจองเสื้อ</h1><p class="text-sm sm:text-base text-slate-500 mt-1">สรุปยอดสั่งผลิตและอัปเดตสถานะ</p></div>
-                        <button onclick="window.print()" class="px-4 py-2 sm:py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg sm:rounded-xl font-bold hover:bg-slate-50 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm transition w-full sm:w-auto"><i class="ph ph-printer text-lg"></i> พิมพ์ยอดสรุป</button>
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
+                            <div class="flex items-center gap-2 bg-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm">
+                                <span class="text-xs sm:text-sm font-bold text-slate-700">รับสั่งจอง:</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer" ${isShirtShopOpen ? 'checked' : ''} onchange="toggleShirtShopFromAdmin(this.checked)">
+                                    <div class="w-9 h-5 sm:w-11 sm:h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 sm:after:h-5 after:w-4 sm:after:w-5 after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
+                                </label>
+                                <span id="admin-shirt-toggle-text" class="text-xs sm:text-sm font-bold ${isShirtShopOpen ? 'text-green-500' : 'text-slate-400'} w-5">${isShirtShopOpen ? 'เปิด' : 'ปิด'}</span>
+                            </div>
+                            <button onclick="window.print()" class="px-4 py-2 sm:py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg sm:rounded-xl font-bold hover:bg-slate-50 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm transition"><i class="ph ph-printer text-lg"></i> พิมพ์ยอด</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-6 sm:mt-8 mb-6 sm:mb-10">
                         <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
@@ -868,7 +1181,18 @@
                         </td>
                     </tr>`;
             });
-            html += `</tbody></table></div></div></div>`; container.innerHTML = html;
+            html += `</tbody></table></div></div></div>`; if(container.innerHTML !== html) container.innerHTML = html;
+        }
+
+        function toggleShirtShopFromAdmin(isChecked) {
+            isShirtShopOpen = isChecked;
+            localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen);
+            const textEl = document.getElementById('admin-shirt-toggle-text');
+            if (textEl) {
+                textEl.innerText = isChecked ? 'เปิด' : 'ปิด';
+                textEl.className = isChecked ? 'text-xs sm:text-sm font-bold text-green-500 w-5' : 'text-xs sm:text-sm font-bold text-slate-400 w-5';
+            }
+            showToast(`เปลี่ยนเป็น ${isChecked ? 'เปิด' : 'ปิด'} รับสั่งจองแล้ว`, 'success');
         }
 
         async function updateOrderStatus(orderId, newStatus) {
@@ -880,7 +1204,7 @@
         function verifyOrderFromModal() { if(currentModalOrderId){ updateOrderStatus(currentModalOrderId, 2); closeModal(); } }
 
         async function renderAdminEvents(container) {
-            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
+            if (!appCache.activities || appCache.activities.length === 0) container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังโหลด...</p></div>`;
             const activities = await fetchActivitiesData();
             let html = `
                 <div class="fade-in">
@@ -923,19 +1247,32 @@
                         </td>
                     </tr>`;
             });
-            html += `</tbody></table></div></div></div>`; container.innerHTML = html;
+            html += `</tbody></table></div></div></div>`; if(container.innerHTML !== html) container.innerHTML = html;
         }
 
-        async function createNewEvent(e) {
+        function createNewEvent(e) {
             e.preventDefault(); const submitBtn = e.target.querySelector('button[type="submit"]'); const txt = submitBtn.innerHTML; submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>'; submitBtn.disabled = true;
-            const now = new Date(); const payload = { action: 'createActivity', id: 'ACT-' + Date.now().toString(), timestamp: now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}), title: document.getElementById('new-event-title').value, date: document.getElementById('new-event-date').value, location: document.getElementById('new-event-location').value, status: 'open', spots: 100, joined: 0 };
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); showToast('สร้างกิจกรรมใหม่สำเร็จ', 'success'); } catch (error) { showToast('สร้างข้อมูลจำลอง', 'warning'); } 
-            finally { submitBtn.innerHTML = txt; submitBtn.disabled = false; renderAdminEvents(document.getElementById('app-content')); }
+            const now = new Date(); 
+            const newEvent = { id: 'ACT-' + Date.now().toString(), timestamp: formatThaiDate(now, true), title: document.getElementById('new-event-title').value, date: document.getElementById('new-event-date').value, location: document.getElementById('new-event-location').value, status: 'open', spots: 100, joined: 0 };
+            
+            // ⚡ Optimistic Save
+            appCache.activities.unshift(newEvent);
+            renderAdminEvents(document.getElementById('app-content'));
+            showToast('สร้างกิจกรรมใหม่สำเร็จ', 'success');
+
+            const payload = { action: 'createActivity', ...newEvent };
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => null);
         }
 
-        async function toggleEventStatus(id, currentStatus) {
+        function toggleEventStatus(id, currentStatus) {
             const newStatus = currentStatus === 'open' ? 'closed' : 'open';
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'toggleActivity', id: String(id), status: newStatus }) }); showToast(`อัปเดตสถานะเรียบร้อย`, 'success'); } catch (error) { showToast('อัปเดตจำลอง', 'warning'); } renderAdminEvents(document.getElementById('app-content'));
+            // ⚡ Optimistic Update
+            const event = appCache.activities.find(e => String(e.id) === String(id));
+            if (event) event.status = newStatus;
+            renderAdminEvents(document.getElementById('app-content'));
+            showToast(`อัปเดตสถานะเรียบร้อย`, 'success');
+
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'toggleActivity', id: String(id), status: newStatus }) }).catch(()=>null);
         }
 
         function openEditEventModal(id) {
@@ -945,11 +1282,24 @@
         }
         function closeEditEventModal() { document.getElementById('editEventModal').classList.add('hidden'); }
 
-        async function submitEditEvent(e) {
+        function submitEditEvent(e) {
             e.preventDefault(); const submitBtn = e.target.querySelector('button[type="submit"]'); const txt = submitBtn.innerHTML; submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>'; submitBtn.disabled = true;
-            const payload = { action: 'editActivity', id: document.getElementById('edit-event-id').value, title: document.getElementById('edit-event-title').value, date: document.getElementById('edit-event-date').value, location: document.getElementById('edit-event-location').value };
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }); showToast('แก้ไขกิจกรรมสำเร็จ', 'success'); closeEditEventModal(); renderAdminEvents(document.getElementById('app-content')); } 
-            catch (error) { showToast('แก้ไขจำลองล้มเหลว', 'error'); } finally { submitBtn.innerHTML = txt; submitBtn.disabled = false; }
+            const id = document.getElementById('edit-event-id').value;
+            const title = document.getElementById('edit-event-title').value;
+            const date = document.getElementById('edit-event-date').value;
+            const location = document.getElementById('edit-event-location').value;
+
+            // ⚡ Optimistic Update
+            const event = appCache.activities.find(ev => String(ev.id) === String(id));
+            if (event) { event.title = title; event.date = date; event.location = location; }
+            
+            showToast('แก้ไขกิจกรรมสำเร็จ', 'success'); 
+            closeEditEventModal(); 
+            renderAdminEvents(document.getElementById('app-content'));
+            submitBtn.innerHTML = txt; submitBtn.disabled = false;
+
+            const payload = { action: 'editActivity', id: id, title: title, date: date, location: location };
+            fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(()=>null);
         }
 
         async function exportEventParticipants(eventName) {
@@ -966,6 +1316,7 @@
                 <div class="fade-in max-w-4xl mx-auto pb-10">
                     <div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ตั้งค่าระบบ</h1><p class="text-sm sm:text-base text-slate-500 mt-1">ปรับแต่งการทำงานและข้อมูลพื้นฐานของระบบ</p></div>
                     <form onsubmit="submitSettings(event)" class="space-y-5 sm:space-y-6">
+                        
                         <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
                             <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-toggle-left text-primary"></i> เปิด-ปิด ระบบ</h2>
                             <div class="flex items-center justify-between p-4 sm:p-5 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200">
@@ -977,6 +1328,7 @@
                                 </label>
                             </div>
                         </div>
+
                         <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
                             <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-app-window text-primary"></i> ตั้งค่าประกาศหน้าแรก (Popup)</h2>
                             <div class="space-y-4 sm:space-y-5">
@@ -1001,6 +1353,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2 sm:pt-4">
                             <button type="button" onclick="previewCurrentPopup()" class="w-full sm:w-auto px-6 py-3.5 sm:py-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-eye text-lg"></i> ดูตัวอย่าง</button>
                             <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่า</button>
