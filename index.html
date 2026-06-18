@@ -301,7 +301,7 @@
                     if(result.data.popupSettings) popupSettings = result.data.popupSettings;
                     localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen ? 'true' : 'false');
                     localStorage.setItem('CRRU_PopupSettings', JSON.stringify(popupSettings));
-                    if(currentView === 'shirt' || currentView === 'admin-settings') navigate(currentView);
+                    if(currentView === 'shirt' || currentView === 'tracking' || currentView === 'admin-settings') navigate(currentView);
                 }
             } catch(e) {}
         }
@@ -1462,33 +1462,63 @@
             html += `</tbody></table></div></div></div>`; if(container.innerHTML !== html) container.innerHTML = html;
         }
 
+        function toggleMasterControl(isChecked) {
+            isShirtShopOpen = isChecked;
+            const textEl = document.getElementById('shirt-toggle-text');
+            if (textEl) {
+                textEl.innerText = isChecked ? 'เปิด' : 'ปิด';
+                textEl.className = isChecked ? 'ml-3 text-sm font-bold text-green-500 w-8' : 'ml-3 text-sm font-bold text-slate-400 w-8';
+            }
+            localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen ? 'true' : 'false');
+            
+            showToast('กำลังซิงค์ข้อมูลกับเซิร์ฟเวอร์...', 'warning');
+            
+            fetch(GOOGLE_SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'saveSettings', 
+                    isShirtShopOpen: isShirtShopOpen, 
+                    popupSettings: popupSettings 
+                }) 
+            }).then(res => res.json())
+              .then(data => {
+                  if(data.success) {
+                      showToast(`ระบบสั่งจองและติดตามสถานะ: ${isChecked ? 'เปิด' : 'ปิด'} เรียบร้อยแล้ว`, 'success');
+                  } else {
+                      showToast('เกิดข้อผิดพลาด โปรดรีเฟรชหน้าเว็บ', 'error');
+                  }
+              }).catch(() => {
+                  showToast('บันทึกสถานะได้เฉพาะในเครื่องนี้ (Offline Mode)', 'warning');
+              });
+        }
+
         function renderAdminSettings(container) {
             container.innerHTML = `
                 <div class="fade-in max-w-4xl mx-auto pb-10">
                     <div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ตั้งค่าระบบ</h1><p class="text-sm sm:text-base text-slate-500 mt-1">ปรับแต่งการทำงานและข้อมูลพื้นฐานของระบบ</p></div>
-                    <form onsubmit="submitSettings(event)" class="space-y-5 sm:space-y-6">
-                        
-                        <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
-                            <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-toggle-left text-primary"></i> เปิด-ปิด ระบบจองเสื้อและติดตามสถานะ (Master Control)</h2>
-                            <div class="flex items-center justify-between p-4 sm:p-5 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200">
-                                <div><p class="font-bold text-slate-800 text-sm sm:text-base">ระบบสั่งจองและติดตามสถานะ</p><p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">บังคับเปิด-ปิดฟอร์มจองและสถานะ 100%</p></div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="setting-shirt-toggle" class="sr-only peer" ${isShirtShopOpen ? 'checked' : ''} onchange="document.getElementById('shirt-toggle-text').innerText = this.checked ? 'เปิด' : 'ปิด'; document.getElementById('shirt-toggle-text').className = this.checked ? 'ml-3 text-sm font-bold text-green-500 w-6' : 'ml-3 text-sm font-bold text-slate-400 w-6'">
-                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
-                                    <span id="shirt-toggle-text" class="ml-3 text-sm font-bold ${isShirtShopOpen ? 'text-green-500' : 'text-slate-400'} w-6">${isShirtShopOpen ? 'เปิด' : 'ปิด'}</span>
-                                </label>
-                            </div>
+                    
+                    <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100 mb-6 sm:mb-8">
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-toggle-left text-primary"></i> เปิด-ปิด ระบบจองเสื้อและติดตามสถานะ (Master Control)</h2>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 gap-4">
+                            <div><p class="font-bold text-slate-800 text-sm sm:text-base">ระบบสั่งจองและติดตามสถานะ</p><p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">บังคับเปิด-ปิดฟอร์มจองและสถานะ 100% สำหรับทุกอุปกรณ์</p></div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input type="checkbox" id="setting-shirt-toggle" class="sr-only peer" ${isShirtShopOpen ? 'checked' : ''} onchange="toggleMasterControl(this.checked)">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
+                                <span id="shirt-toggle-text" class="ml-3 text-sm font-bold ${isShirtShopOpen ? 'text-green-500' : 'text-slate-400'} w-8">${isShirtShopOpen ? 'เปิด' : 'ปิด'}</span>
+                            </label>
                         </div>
+                    </div>
 
+                    <form onsubmit="submitSettings(event)" class="space-y-5 sm:space-y-6">
                         <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
                             <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-app-window text-primary"></i> ตั้งค่าประกาศหน้าแรก (Popup)</h2>
                             <div class="space-y-4 sm:space-y-5">
                                 <div class="flex items-center justify-between p-4 sm:p-5 bg-indigo-50 rounded-xl sm:rounded-2xl border border-indigo-100">
                                     <div><p class="font-bold text-indigo-900 text-sm sm:text-base">เปิดใช้งาน Popup แจ้งเตือน</p><p class="text-xs sm:text-sm text-indigo-700 mt-0.5 font-medium">แสดงประกาศเมื่อเข้าหน้าเว็บครั้งแรก</p></div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="setting-popup-toggle" class="sr-only peer" ${popupSettings.enabled ? 'checked' : ''} onchange="document.getElementById('popup-toggle-text').innerText = this.checked ? 'เปิด' : 'ปิด'; document.getElementById('popup-toggle-text').className = this.checked ? 'ml-3 text-sm font-bold text-primary w-6' : 'ml-3 text-sm font-bold text-slate-400 w-6'">
+                                        <input type="checkbox" id="setting-popup-toggle" class="sr-only peer" ${popupSettings.enabled ? 'checked' : ''} onchange="document.getElementById('popup-toggle-text').innerText = this.checked ? 'เปิด' : 'ปิด'; document.getElementById('popup-toggle-text').className = this.checked ? 'ml-3 text-sm font-bold text-primary w-8' : 'ml-3 text-sm font-bold text-slate-400 w-8'">
                                         <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
-                                        <span id="popup-toggle-text" class="ml-3 text-sm font-bold ${popupSettings.enabled ? 'text-primary' : 'text-slate-400'} w-6">${popupSettings.enabled ? 'เปิด' : 'ปิด'}</span>
+                                        <span id="popup-toggle-text" class="ml-3 text-sm font-bold ${popupSettings.enabled ? 'text-primary' : 'text-slate-400'} w-8">${popupSettings.enabled ? 'เปิด' : 'ปิด'}</span>
                                     </label>
                                 </div>
                                 <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">หัวข้อประกาศ (เว้นบรรทัดได้)</label><textarea id="setting-popup-title" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-bold text-sm bg-slate-50">${popupSettings.title}</textarea></div>
@@ -1507,7 +1537,7 @@
 
                         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2 sm:pt-4">
                             <button type="button" onclick="previewCurrentPopup()" class="w-full sm:w-auto px-6 py-3.5 sm:py-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-eye text-lg"></i> ดูตัวอย่าง</button>
-                            <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่า</button>
+                            <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่าประกาศ</button>
                         </div>
                     </form>
                 </div>`;
@@ -1530,13 +1560,11 @@
         function submitSettings(e) {
             e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); const txt = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> บันทึก...'; btn.disabled = true;
             
-            isShirtShopOpen = document.getElementById('setting-shirt-toggle').checked;
             popupSettings.enabled = document.getElementById('setting-popup-toggle').checked; 
             popupSettings.title = document.getElementById('setting-popup-title').value; 
             popupSettings.description = document.getElementById('setting-popup-desc').value; 
             popupSettings.imageUrl = document.getElementById('setting-popup-image').value;
 
-            localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen ? 'true' : 'false');
             localStorage.setItem('CRRU_PopupSettings', JSON.stringify(popupSettings));
             sessionStorage.removeItem('homePopupShown');
 
@@ -1548,7 +1576,7 @@
                     popupSettings: popupSettings 
                 }) 
             }).then(() => {
-                showToast('บันทึกการตั้งค่าลงฐานข้อมูลส่วนกลางเรียบร้อยแล้ว', 'success'); 
+                showToast('บันทึกการตั้งค่าประกาศหน้าแรกเรียบร้อยแล้ว', 'success'); 
                 btn.innerHTML = txt; btn.disabled = false; 
             }).catch(() => {
                 showToast('บันทึกสำเร็จ (Offline Mode)', 'warning');
