@@ -100,11 +100,11 @@
             <form onsubmit="handleAdminLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">ชื่อผู้ใช้งาน (Username)</label>
-                    <input type="text" id="admin-username" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50" placeholder="Admin">
+                    <input type="text" id="admin-username" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">รหัสผ่าน (Password)</label>
-                    <input type="password" id="admin-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50" placeholder="9999">
+                    <input type="password" id="admin-password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-admin/20 focus:border-admin outline-none font-medium text-sm bg-slate-50">
                 </div>
                 <p id="admin-login-error" class="text-xs font-bold text-red-500 hidden text-center bg-red-50 p-2 rounded-lg border border-red-100">ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง</p>
                 <button type="submit" class="w-full py-3.5 mt-2 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors flex items-center justify-center gap-2 shadow-lg text-sm">
@@ -162,27 +162,22 @@
     </div>
 
     <!-- Home Announcement Popup -->
-    <div id="homePopupModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 transition-opacity fade-in">
-        <div class="bg-white rounded-3xl overflow-hidden max-w-md w-full shadow-2xl transform transition-all relative">
-            <button onclick="closeHomePopup()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-10 backdrop-blur-md">
-                <i class="ph ph-x text-lg font-bold"></i>
+    <div id="homePopupModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-[32px] overflow-hidden max-w-md w-full shadow-2xl scale-in relative">
+            <button onclick="closeHomePopup()" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-20 backdrop-blur-md shadow-sm">
+                <i class="ph ph-x text-xl font-bold"></i>
             </button>
-            <div class="h-40 sm:h-56 w-full bg-slate-200 relative">
-                <img id="popup-banner-img" src="" alt="Banner" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400?text=No+Image'">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                <div class="absolute bottom-5 left-6 right-6">
-                    <span class="inline-block px-2.5 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg mb-2 shadow-sm">ประกาศสำคัญ</span>
-                    <h2 id="popup-title" class="text-xl sm:text-2xl font-bold text-white leading-snug"></h2>
+            <div class="h-48 sm:h-64 w-full bg-slate-100 relative group">
+                <img id="popup-banner-img" src="" alt="Banner" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" onerror="this.src='https://placehold.co/800x400?text=Announcement'">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6">
+                    <span class="inline-block px-3 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg mb-3 shadow-md border border-red-400/50">ประกาศสำคัญ</span>
+                    <h2 id="popup-title" class="text-xl sm:text-3xl font-bold text-white leading-tight drop-shadow-md"></h2>
                 </div>
             </div>
-            <div class="p-6 sm:p-8">
-                <p id="popup-desc" class="text-slate-600 text-sm leading-relaxed mb-6 font-medium whitespace-pre-line"></p>
-                <div class="flex gap-3">
-                    <button onclick="closeHomePopup()" class="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition-colors text-sm">ปิด</button>
-                    <button onclick="closeHomePopup(); navigate('shirt');" class="flex-[2] py-3.5 rounded-xl font-bold text-white bg-primary hover:bg-primary_hover shadow-md shadow-primary/30 transition-colors flex items-center justify-center gap-2 text-sm">
-                        สั่งจองเสื้อ <i class="ph ph-arrow-right text-lg"></i>
-                    </button>
-                </div>
+            <div class="p-6 sm:p-8 bg-white">
+                <p id="popup-desc" class="text-slate-600 text-sm leading-relaxed mb-8 font-medium whitespace-pre-line"></p>
+                <button onclick="closeHomePopup()" class="w-full px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">ปิดประกาศ</button>
             </div>
         </div>
     </div>
@@ -217,6 +212,12 @@
             imageUrl: 'https://images.unsplash.com/photo-1523580494112-071d16940a1c?auto=format&fit=crop&q=80&w=800'
         };
 
+        let promptPaySettings = JSON.parse(localStorage.getItem('CRRU_PromptPaySettings')) || {
+            accountName: 'ฝ่ายกิจการนักศึกษา',
+            accountNumber: '012-3-45678-9',
+            bankName: 'ธ.กรุงไทย (สาขามร.ชร.)'
+        };
+
         function formatThaiDate(dateString, includeTime = false) {
             if (!dateString || String(dateString).trim() === '-' || String(dateString).trim() === '') return dateString;
             const date = new Date(dateString);
@@ -228,42 +229,16 @@
         }
 
         const NAV_STUDENT = [
-            { id: 'events', label: 'ลงทะเบียนเข้าร่วมกิจกรรม', tabLabel: 'กิจกรรม', icon: 'ph-megaphone' },
-            { id: 'history', label: 'ประวัติของฉัน', tabLabel: 'ประวัติ', icon: 'ph-clock-counter-clockwise' },
-            { id: 'shirt', label: 'สั่งจองเสื้อ', tabLabel: 'สั่งจอง', icon: 'ph-t-shirt' },
-            { id: 'tracking', label: 'ติดตามสถานะ', tabLabel: 'ติดตาม', icon: 'ph-truck' }
+            { id: 'events', label: 'กิจกรรม', tabLabel: 'กิจกรรม', icon: 'ph-megaphone' },
+            { id: 'history', label: 'ประวัติของฉัน', tabLabel: 'ประวัติ', icon: 'ph-clock-counter-clockwise' }
         ];
 
         const NAV_ADMIN = [
-            { id: 'admin-dash', label: 'ภาพรวม (Dashboard)', tabLabel: 'ภาพรวม', icon: 'ph-chart-pie-slice' },
-            { id: 'admin-orders', label: 'จัดการสั่งจองเสื้อ', tabLabel: 'จองเสื้อ', icon: 'ph-t-shirt' },
+            { id: 'admin-dash', label: 'ภาพรวม', tabLabel: 'ภาพรวม', icon: 'ph-chart-pie-slice' },
+            { id: 'admin-orders', label: 'จัดการจองเสื้อ', tabLabel: 'จองเสื้อ', icon: 'ph-t-shirt' },
             { id: 'admin-events', label: 'จัดการกิจกรรม', tabLabel: 'กิจกรรม', icon: 'ph-calendar-plus' },
             { id: 'admin-spss', label: 'รายงานผล (SPSS)', tabLabel: 'SPSS', icon: 'ph-chart-bar' },
             { id: 'admin-settings', label: 'ตั้งค่าระบบ', tabLabel: 'ตั้งค่า', icon: 'ph-gear' } 
-        ];
-
-        const MOCK_EVENTS = [
-            { id: 'ACT-1', timestamp: '10/06/2026 09:00', title: 'ปฐมนิเทศนักศึกษาใหม่ Dek69', date: '15 ตุลาคม 2569', location: 'หอประชุมใหญ่', status: 'open', spots: 50, joined: 6 },
-            { id: 'ACT-2', timestamp: '12/06/2026 14:30', title: 'กิจกรรมรับน้อง Dek68 และ Dek69', date: '5 พฤศจิกายน 2569', location: 'ลานกิจกรรม', status: 'open', spots: 200, joined: 185 }
-        ];
-
-        const MOCK_ORDERS = [
-            { id: 'ORD-26-001', studentId: '69010001', name: 'นายรักเรียน ขยันยิ่ง', type: 'แพ็คเกจคู่', size: 'โปโล L, กิจกรรม L', qty: 2, total: 560, date: '17 มิ.ย. 2569', status: 2, hasEdited: false },
-            { id: 'ORD-26-002', studentId: '69010045', name: 'นางสาวเรียนดี สีสด', type: 'แพ็คเกจคู่', size: 'โปโล M, กิจกรรม S', qty: 2, total: 560, date: '17 มิ.ย. 2569', status: 1, hasEdited: false }
-        ];
-
-        const MOCK_CHECKINS = [
-            ['10/06/2569 09:00', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010001', '1234567890123', 'นายรักเรียน ขยันยิ่ง', 'เทคโนโลยีดิจิทัล', 3],
-            ['10/06/2569 09:05', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010045', '1234567890124', 'นางสาวเรียนดี สีสด', 'เทคโนโลยีดิจิทัล', 3],
-            ['10/06/2569 09:10', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010050', '1234567890125', 'นายสมชาย ใจดี', 'เทคโนโลยีดิจิทัล', 3],
-            ['10/06/2569 09:15', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010055', '1234567890126', 'น.ส.มานี มีแชร์', 'เทคโนโลยีดิจิทัล', 3]
-        ];
-
-        const MOCK_EVALUATIONS = [
-            ['10/06/2569 12:00', '69010001', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 'กิจกรรมดีมากครับ จัดอีกบ่อยๆ'],
-            ['10/06/2569 12:05', '69010045', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 4, 4, 3, 4, 4, 4, 5, 4, 4, 4, 3, 4, 4, 'สถานที่แคบไปนิดนึงค่ะ'],
-            ['10/06/2569 12:10', '69010050', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 'ได้ความรู้เยอะมากครับ'],
-            ['10/06/2569 12:15', '69010055', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 4, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 5, 'โดยรวมจัดงานออกมาได้ดีมากค่ะ']
         ];
 
         const STATUS_MAP = {
@@ -298,10 +273,26 @@
                 const result = await res.json();
                 if (result.success && result.data) {
                     isShirtShopOpen = (result.data.isShirtShopOpen === true || String(result.data.isShirtShopOpen).toLowerCase() === 'true');
+                    
                     if(result.data.popupSettings) popupSettings = result.data.popupSettings;
+                    if(result.data.promptPaySettings) promptPaySettings = result.data.promptPaySettings;
+                    
                     localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen ? 'true' : 'false');
                     localStorage.setItem('CRRU_PopupSettings', JSON.stringify(popupSettings));
-                    if(currentView === 'shirt' || currentView === 'tracking' || currentView === 'admin-settings') navigate(currentView);
+                    localStorage.setItem('CRRU_PromptPaySettings', JSON.stringify(promptPaySettings));
+                    
+                    // Update Nav based on setting
+                    if(isShirtShopOpen) {
+                        if(!NAV_STUDENT.find(n => n.id === 'shirt')) {
+                            NAV_STUDENT.push({ id: 'shirt', label: 'สั่งจองเสื้อ', tabLabel: 'สั่งจอง', icon: 'ph-t-shirt' });
+                            NAV_STUDENT.push({ id: 'tracking', label: 'ติดตามสถานะ', tabLabel: 'ติดตาม', icon: 'ph-truck' });
+                            if(currentRole === 'student') renderNav();
+                        }
+                    } else {
+                        const sIdx = NAV_STUDENT.findIndex(n => n.id === 'shirt');
+                        if(sIdx > -1) NAV_STUDENT.splice(sIdx, 2);
+                        if(currentRole === 'student') renderNav();
+                    }
                 }
             } catch(e) {}
         }
@@ -441,19 +432,19 @@
         async function fetchAllCheckInsData() { 
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns&t=${new Date().getTime()}`).then(res => res.json()).then(r => { if(r.success) appCache.checkIns = r.data; return appCache.checkIns; }).catch(()=>[]);
             if (appCache.checkIns && appCache.checkIns.length > 0) return appCache.checkIns;
-            return await fetchPromise || MOCK_CHECKINS;
+            return await fetchPromise || [];
         }
 
         async function fetchOrdersData() { 
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders&t=${new Date().getTime()}`).then(res => res.json()).then(r => { if(r.success) appCache.orders = r.data; return appCache.orders; }).catch(()=>null);
             if (appCache.orders && appCache.orders.length > 0) return appCache.orders;
-            return await fetchPromise || MOCK_ORDERS;
+            return await fetchPromise || [];
         }
 
         async function fetchEvaluationsData() { 
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getEvaluations&t=${new Date().getTime()}`).then(res => res.json()).then(r => { if(r.success) appCache.evaluations = r.data; return appCache.evaluations; }).catch(()=>[]);
             if (appCache.evaluations && appCache.evaluations.length > 0) return appCache.evaluations;
-            return await fetchPromise || MOCK_EVALUATIONS;
+            return await fetchPromise || [];
         }
 
         // ==========================================
@@ -461,7 +452,7 @@
         // ==========================================
         function renderEvents(container) {
             if (!appCache.activities || appCache.activities.length === 0) {
-                container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรม...</p></div>`;
+                container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-medium text-lg tracking-wide">Activity Digit 69</p></div>`;
             }
 
             fetchActivitiesData().then(activities => {
@@ -556,12 +547,16 @@
             document.getElementById('reg-student-id').value = data.studentId || searchId; document.getElementById('reg-citizen-id').value = data.citizenId || data.year || '';
             document.getElementById('reg-hidden-student-id').value = data.studentId || ''; document.getElementById('reg-hidden-citizen-id').value = data.citizenId || data.year || '';
             document.getElementById('reg-name').value = data.name || ''; document.getElementById('reg-faculty').value = data.faculty || '';
-            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f.value) { f.readOnly = true; f.classList.replace('bg-white', 'bg-slate-100'); } });
+            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f.value) { f.readOnly = true; f.classList.replace('bg-white/70', 'bg-slate-50'); f.classList.add('text-slate-500', 'shadow-inner'); } });
             document.getElementById('step-search').classList.add('hidden'); document.getElementById('step-form').classList.remove('hidden'); showToast('ดึงข้อมูลสำเร็จ', 'success');
         }
 
         function showManualForm(prefillId = '') {
             const searchInput = document.getElementById('search-student-id').value.trim() || prefillId;
+            
+            // ปลดล็อคฟิลด์ต่างๆ ให้สามารถแก้ไข/กรอกข้อมูลเองได้
+            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f) { f.readOnly = false; f.classList.replace('bg-slate-50', 'bg-white/70'); f.classList.remove('text-slate-500', 'shadow-inner'); } });
+            
             if (searchInput.length === 13 && !isNaN(searchInput)) document.getElementById('reg-citizen-id').value = searchInput; else document.getElementById('reg-student-id').value = searchInput;
             document.getElementById('step-search').classList.add('hidden'); document.getElementById('step-form').classList.remove('hidden'); document.getElementById('step-form').firstElementChild.classList.add('hidden'); 
         }
@@ -569,18 +564,81 @@
         function resetSearchForm() {
             document.getElementById('step-form').classList.add('hidden'); document.getElementById('step-search').classList.remove('hidden'); document.getElementById('search-feedback').classList.add('hidden'); document.getElementById('step-form').reset();
             document.getElementById('reg-hidden-student-id').value = ''; document.getElementById('reg-hidden-citizen-id').value = ''; document.getElementById('step-form').firstElementChild.classList.remove('hidden');
-            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f) { f.readOnly = false; f.classList.replace('bg-slate-100', 'bg-white'); } });
+            ['reg-name', 'reg-faculty', 'reg-student-id', 'reg-citizen-id'].forEach(id => { const f = document.getElementById(id); if (f) { f.readOnly = false; f.classList.replace('bg-slate-50', 'bg-white/70'); f.classList.remove('text-slate-500', 'shadow-inner'); } });
         }
 
-        function handleRegistrationSubmit(e, eventId) {
+        async function handleRegistrationSubmit(e, eventId) {
             e.preventDefault();
-            const sid = document.getElementById('reg-student-id').value.trim(); const cid = document.getElementById('reg-citizen-id').value.trim();
+            const sid = document.getElementById('reg-student-id').value.trim(); 
+            const cid = document.getElementById('reg-citizen-id').value.trim();
             const eventObj = appCache.activities.find(ev => String(ev.id) === String(eventId));
-            const payload = { action: 'checkIn', eventId: eventId, eventName: eventObj?.title || 'กิจกรรม', studentId: document.getElementById('reg-hidden-student-id').value || sid, citizenId: document.getElementById('reg-hidden-citizen-id').value || cid, name: document.getElementById('reg-name').value, faculty: document.getElementById('reg-faculty').value, timestamp: new Date().toLocaleString('th-TH') };
+            const eventName = eventObj?.title || 'กิจกรรม';
+
+            // 1. เช็คจากแคชในเครื่อง (ดักจับการกดรัวๆ เบื้องต้น)
+            const hasRegisteredLocally = appCache.checkIns.some(row => {
+                const rowEvent = String(row[1]).trim();
+                const rowSid = String(row[2]).trim();
+                const rowCid = String(row[3]).trim();
+                return rowEvent === eventName && ((sid && rowSid === sid) || (cid && rowCid === cid));
+            });
+
+            if (hasRegisteredLocally) {
+                showToast('ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!', 'error');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="ph ph-spinner animate-spin text-xl"></i> กำลังตรวจสอบ...';
+            submitBtn.disabled = true;
+
+            try {
+                // 2. เช็คจากเซิร์ฟเวอร์แบบ Real-time เพื่อความแม่นยำ 100%
+                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns&_nocache=${new Date().getTime()}`);
+                const result = await res.json();
+                
+                if (result.success && result.data) {
+                    appCache.checkIns = result.data; // อัปเดต Cache ของระบบ
+                    const isActuallyRegistered = result.data.some(row => {
+                        const rowEvent = String(row[1]).trim();
+                        const rowSid = String(row[2]).trim();
+                        const rowCid = String(row[3]).trim();
+                        return rowEvent === eventName && ((sid && rowSid === sid) || (cid && rowCid === cid));
+                    });
+
+                    if (isActuallyRegistered) {
+                        showToast('ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!', 'error');
+                        submitBtn.innerHTML = originalBtnText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.log("Offline mode: skipping server check");
+            }
+
+            // 3. เมื่อผ่านการตรวจสอบทั้งหมด จึงทำการบันทึกข้อมูล
+            const payload = { 
+                action: 'checkIn', 
+                eventId: eventId, 
+                eventName: eventName, 
+                studentId: document.getElementById('reg-hidden-student-id').value || sid, 
+                citizenId: document.getElementById('reg-hidden-citizen-id').value || cid, 
+                name: document.getElementById('reg-name').value, 
+                faculty: document.getElementById('reg-faculty').value, 
+                timestamp: new Date().toLocaleString('th-TH') 
+            };
+            
+            // แอบใส่ข้อมูลลงแคชชั่วคราว เพื่อกันการกดปุ่มย้อนกลับแล้วส่งข้อมูลซ้ำ
+            appCache.checkIns.push([payload.timestamp, payload.eventName, payload.studentId, payload.citizenId, payload.name, payload.faculty, 3]);
+
             if (eventObj) eventObj.joined = (parseInt(eventObj.joined) || 0) + 1;
+            
+            submitBtn.innerHTML = '<i class="ph-fill ph-check-circle text-xl"></i> สำเร็จ!';
             showToast('ลงทะเบียนสำเร็จ! กรุณาทำแบบประเมิน...', 'success');
+            
             fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => null);
-            setTimeout(() => { navigate('survey', { eventId: eventId, eventTitle: eventObj?.title, studentId: payload.studentId }); }, 1200);
+            setTimeout(() => { navigate('survey', { eventId: eventId, eventTitle: eventName, studentId: payload.studentId || payload.citizenId }); }, 1200);
         }
 
         function renderSurvey(container, param) {
@@ -664,7 +722,7 @@
         function clearHistorySearch() { sessionStorage.removeItem('historySearchTerm'); sessionStorage.removeItem('historyData'); renderHistory(document.getElementById('app-content')); }
 
         async function renderShirtShop(container) {
-            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังตรวจสอบสถานะระบบสดๆ...</p><p class="text-xs text-slate-400 mt-2">โปรดรอสักครู่ เพื่อเชื่อมต่อฐานข้อมูลส่วนกลาง</p></div>`;
+            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold text-lg tracking-wide">Activity Digit 69</p></div>`;
             
             try {
                 const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSettings&_nocache=${new Date().getTime()}`, { cache: 'no-store' });
@@ -904,17 +962,18 @@
                 return navigate('shirt');
             }
 
-            // ⚡ Optimistic Save
-            currentCheckoutOrder.status = 1; 
+            // ⚡ Optimistic Save: กลับไปหน้าติดตามสถานะทันที เพื่อให้ไม่ต้องรอ
+            currentCheckoutOrder.status = 1; // ตั้งสถานะเป็น 1 (รอตรวจสอบ)
             currentCheckoutOrder.paymentMethod = method;
             currentCheckoutOrder.date = formatThaiDate(new Date(), true);
-            appCache.orders.unshift(currentCheckoutOrder); 
+            appCache.orders.unshift(currentCheckoutOrder); // แอบเพิ่มลง Cache จำลอง
 
             navigate('tracking');
             showToast('กำลังบันทึกข้อมูล...', 'success');
 
             const payload = { action: 'createOrder', orderId: currentCheckoutOrder.id, studentId: currentCheckoutOrder.studentId, name: currentCheckoutOrder.name, type: currentCheckoutOrder.type, size: currentCheckoutOrder.size, qty: currentCheckoutOrder.qty, total: currentCheckoutOrder.total, paymentMethod: method, timestamp: new Date().toLocaleString('th-TH') };
             
+            // Background Sync
             fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
                .then(() => showToast(method === 'qr' ? 'อัปโหลดสลิปเรียบร้อย!' : 'บันทึกแจ้งชำระเงินสดเรียบร้อย!', 'success'))
                .catch(() => showToast('เกิดปัญหาการบันทึก', 'warning'));
@@ -948,7 +1007,7 @@
                 return;
             }
 
-            const myOrder = appCache.orders[0] || MOCK_ORDERS[1]; 
+            const myOrder = appCache.orders[0] || MOCK_ORDERS[1]; // ดึง Order ล่าสุดจาก Cache
             const currentStep = myOrder.status;
             let html = `
                 <div class="fade-in max-w-3xl mx-auto">
@@ -1477,7 +1536,8 @@
                 body: JSON.stringify({ 
                     action: 'saveSettings', 
                     isShirtShopOpen: isShirtShopOpen, 
-                    popupSettings: popupSettings 
+                    popupSettings: popupSettings, 
+                    promptPaySettings: promptPaySettings 
                 }) 
             }).then(res => res.json())
               .then(data => {
@@ -1509,8 +1569,20 @@
                     </div>
 
                     <form onsubmit="submitSettings(event)" class="space-y-5 sm:space-y-6">
+                        
+                        <!-- PromptPay Settings -->
                         <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
-                            <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-app-window text-primary"></i> ตั้งค่าประกาศหน้าแรก (Popup)</h2>
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-qr-code text-emerald-500"></i> ตั้งค่าบัญชีรับชำระเงิน (PromptPay)</h2>
+                            <div class="space-y-4 sm:space-y-5">
+                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">ชื่อบัญชีรับเงิน</label><input type="text" id="setting-pp-name" value="${promptPaySettings.accountName}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50" required></div>
+                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">เลขบัญชี / รหัสพร้อมเพย์</label><input type="text" id="setting-pp-number" value="${promptPaySettings.accountNumber}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50" required></div>
+                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">ธนาคาร / สาขา</label><input type="text" id="setting-pp-bank" value="${promptPaySettings.bankName}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50" required></div>
+                            </div>
+                        </div>
+
+                        <!-- Popup Settings -->
+                        <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-100">
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5 flex items-center gap-2"><i class="ph-fill ph-app-window text-indigo-500"></i> ตั้งค่าประกาศหน้าแรก (Popup)</h2>
                             <div class="space-y-4 sm:space-y-5">
                                 <div class="flex items-center justify-between p-4 sm:p-5 bg-indigo-50 rounded-xl sm:rounded-2xl border border-indigo-100">
                                     <div><p class="font-bold text-indigo-900 text-sm sm:text-base">เปิดใช้งาน Popup แจ้งเตือน</p><p class="text-xs sm:text-sm text-indigo-700 mt-0.5 font-medium">แสดงประกาศเมื่อเข้าหน้าเว็บครั้งแรก</p></div>
@@ -1524,7 +1596,7 @@
                                 <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รายละเอียดเนื้อหา (เว้นบรรทัดได้)</label><textarea id="setting-popup-desc" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50">${popupSettings.description}</textarea></div>
                                 <div>
                                     <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">ลิงก์รูปภาพแบนเนอร์ (URL Image)</label>
-                                    <input type="text" id="setting-popup-image" value="${popupSettings.imageUrl}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50 mb-3" placeholder="วางลิงก์รูปภาพ (เช่น https://...)" oninput="document.getElementById('setting-popup-preview').src = this.value || 'https://placehold.co/800x400?text=No+Image';">
+                                    <input type="text" id="setting-popup-image" value="${popupSettings.imageUrl}" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50 mb-3" placeholder="เช่น https://..." oninput="document.getElementById('setting-popup-preview').src = this.value || 'https://placehold.co/800x400?text=No+Image';">
                                     <div class="w-full h-28 sm:h-40 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden relative shadow-inner">
                                         <img id="setting-popup-preview" src="${popupSettings.imageUrl || 'https://placehold.co/800x400?text=No+Image'}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/800x400?text=Image+Not+Found'">
                                     </div>
@@ -1534,7 +1606,7 @@
 
                         <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2 sm:pt-4">
                             <button type="button" onclick="previewCurrentPopup()" class="w-full sm:w-auto px-6 py-3.5 sm:py-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-eye text-lg"></i> ดูตัวอย่าง</button>
-                            <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่าประกาศ</button>
+                            <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่าทั้งหมด</button>
                         </div>
                     </form>
                 </div>`;
@@ -1555,7 +1627,12 @@
             popupSettings.description = document.getElementById('setting-popup-desc').value; 
             popupSettings.imageUrl = document.getElementById('setting-popup-image').value;
 
+            promptPaySettings.accountName = document.getElementById('setting-pp-name').value;
+            promptPaySettings.accountNumber = document.getElementById('setting-pp-number').value;
+            promptPaySettings.bankName = document.getElementById('setting-pp-bank').value;
+
             localStorage.setItem('CRRU_PopupSettings', JSON.stringify(popupSettings));
+            localStorage.setItem('CRRU_PromptPaySettings', JSON.stringify(promptPaySettings));
             sessionStorage.removeItem('homePopupShown');
 
             fetch(GOOGLE_SCRIPT_URL, { 
@@ -1563,10 +1640,11 @@
                 body: JSON.stringify({ 
                     action: 'saveSettings', 
                     isShirtShopOpen: isShirtShopOpen, 
-                    popupSettings: popupSettings 
+                    popupSettings: popupSettings,
+                    promptPaySettings: promptPaySettings
                 }) 
             }).then(() => {
-                showToast('บันทึกการตั้งค่าประกาศหน้าแรกเรียบร้อยแล้ว', 'success'); 
+                showToast('บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success'); 
                 btn.innerHTML = txt; btn.disabled = false; 
             }).catch(() => {
                 showToast('บันทึกสำเร็จ (Offline Mode)', 'warning');
