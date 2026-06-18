@@ -40,7 +40,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <!-- Brand -->
-                <div class="flex items-center">
+                <div class="flex items-center cursor-pointer hover:opacity-80 transition-opacity" onclick="navigate(currentRole === 'student' ? 'events' : 'admin-dash')">
                     <i class="ph-fill ph-student text-primary text-2xl sm:text-3xl mr-2" id="brand-icon"></i>
                     <span class="font-bold text-lg sm:text-xl text-slate-800 tracking-tight" id="brand-text">DIGIT.<span class="text-primary">CRRU</span></span>
                 </div>
@@ -571,23 +571,32 @@
 
         async function handleRegistrationSubmit(e, eventId) {
             e.preventDefault();
-            const sid = document.getElementById('reg-student-id').value.trim(); 
-            const cid = document.getElementById('reg-citizen-id').value.trim();
+            
+            // ดึงค่า ID ที่จะใช้บันทึกจริงมาตรวจสอบ
+            const finalSid = document.getElementById('reg-hidden-student-id').value.trim() || document.getElementById('reg-student-id').value.trim(); 
+            const finalCid = document.getElementById('reg-hidden-citizen-id').value.trim() || document.getElementById('reg-citizen-id').value.trim();
+            
             const eventObj = appCache.activities.find(ev => String(ev.id) === String(eventId));
             const eventName = eventObj?.title || 'กิจกรรม';
             const errorMsgEl = document.getElementById('reg-error-message');
             
             if (errorMsgEl) errorMsgEl.classList.add('hidden'); // รีเซ็ตข้อความแจ้งเตือนสีแดง
 
-            // 1. เช็คจากแคชในเครื่อง (ดักจับการกดรัวๆ เบื้องต้น)
-            const hasRegisteredLocally = appCache.checkIns.some(row => {
-                const rowEvent = String(row[1]).trim();
-                const rowSid = String(row[2]).trim();
-                const rowCid = String(row[3]).trim();
-                return rowEvent === eventName && ((sid && rowSid === sid) || (cid && rowCid === cid));
-            });
+            // ฟังก์ชันช่วยเช็คข้อมูลซ้ำซ้อนในชีต CheckIns (ตำแหน่งข้อมูล: [0=Timestamp, 1=Event, 2=StudentID, 3=CitizenID])
+            const isDuplicate = (checkInsData) => {
+                return checkInsData.some(row => {
+                    if (!row || row.length < 4) return false;
+                    const rowEvent = String(row[1]).trim();
+                    const rowSid = String(row[2]).trim();
+                    const rowCid = String(row[3]).trim();
+                    
+                    // บล็อกทันทีถ้า "ชื่อกิจกรรมตรงกัน" และ ("รหัสนักศึกษาตรงกัน" หรือ "เลขบัตรประชาชนตรงกัน")
+                    return rowEvent === eventName && ((finalSid && rowSid === finalSid) || (finalCid && rowCid === finalCid));
+                });
+            };
 
-            if (hasRegisteredLocally) {
+            // 1. เช็คจากแคชในเครื่อง (ดักจับการกดรัวๆ เบื้องต้น)
+            if (isDuplicate(appCache.checkIns)) {
                 if (errorMsgEl) {
                     errorMsgEl.innerHTML = '<i class="ph-fill ph-warning-circle text-lg inline-block align-middle mr-1"></i> ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!';
                     errorMsgEl.classList.remove('hidden');
@@ -608,14 +617,8 @@
                 
                 if (result.success && result.data) {
                     appCache.checkIns = result.data; // อัปเดต Cache ของระบบ
-                    const isActuallyRegistered = result.data.some(row => {
-                        const rowEvent = String(row[1]).trim();
-                        const rowSid = String(row[2]).trim();
-                        const rowCid = String(row[3]).trim();
-                        return rowEvent === eventName && ((sid && rowSid === sid) || (cid && rowCid === cid));
-                    });
 
-                    if (isActuallyRegistered) {
+                    if (isDuplicate(result.data)) {
                         if (errorMsgEl) {
                             errorMsgEl.innerHTML = '<i class="ph-fill ph-warning-circle text-lg inline-block align-middle mr-1"></i> ระบบตรวจพบว่าคุณลงทะเบียนกิจกรรมนี้ไปแล้ว!';
                             errorMsgEl.classList.remove('hidden');
@@ -635,8 +638,8 @@
                 action: 'checkIn', 
                 eventId: eventId, 
                 eventName: eventName, 
-                studentId: document.getElementById('reg-hidden-student-id').value || sid, 
-                citizenId: document.getElementById('reg-hidden-citizen-id').value || cid, 
+                studentId: finalSid, 
+                citizenId: finalCid, 
                 name: document.getElementById('reg-name').value, 
                 faculty: document.getElementById('reg-faculty').value, 
                 timestamp: new Date().toLocaleString('th-TH') 
@@ -651,7 +654,7 @@
             showToast('ลงทะเบียนสำเร็จ! กรุณาทำแบบประเมิน...', 'success');
             
             fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => null);
-            setTimeout(() => { navigate('survey', { eventId: eventId, eventTitle: eventName, studentId: payload.studentId || payload.citizenId }); }, 1200);
+            setTimeout(() => { navigate('survey', { eventId: eventId, eventTitle: eventName, studentId: finalSid || finalCid }); }, 1200);
         }
 
         function renderSurvey(container, param) {
