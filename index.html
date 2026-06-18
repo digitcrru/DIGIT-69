@@ -209,6 +209,7 @@
             activities: [],
             checkIns: [],
             orders: [],
+            evaluations: [], // 📌 เพิ่มสำหรับเก็บข้อมูลแบบประเมิน
             students: {} // เก็บประวัติการค้นหานักศึกษา
         };
         
@@ -243,6 +244,7 @@
             { id: 'admin-dash', label: 'ภาพรวม (Dashboard)', tabLabel: 'ภาพรวม', icon: 'ph-chart-pie-slice' },
             { id: 'admin-orders', label: 'จัดการสั่งจองเสื้อ', tabLabel: 'จองเสื้อ', icon: 'ph-t-shirt' },
             { id: 'admin-events', label: 'จัดการกิจกรรม', tabLabel: 'กิจกรรม', icon: 'ph-calendar-plus' },
+            { id: 'admin-spss', label: 'รายงานผล (SPSS)', tabLabel: 'SPSS', icon: 'ph-chart-bar' }, // 📌 เพิ่มเมนู SPSS
             { id: 'admin-settings', label: 'ตั้งค่าระบบ', tabLabel: 'ตั้งค่า', icon: 'ph-gear' } 
         ];
 
@@ -254,6 +256,21 @@
         const MOCK_ORDERS = [
             { id: 'ORD-26-001', studentId: '69010001', name: 'นายรักเรียน ขยันยิ่ง', type: 'แพ็คเกจคู่', size: 'โปโล L, กิจกรรม L', qty: 2, total: 560, date: '17 มิ.ย. 2569', status: 2, hasEdited: false },
             { id: 'ORD-26-002', studentId: '69010045', name: 'นางสาวเรียนดี สีสด', type: 'แพ็คเกจคู่', size: 'โปโล M, กิจกรรม S', qty: 2, total: 560, date: '17 มิ.ย. 2569', status: 1, hasEdited: false }
+        ];
+
+        // 📌 เพิ่ม Mock Data สำหรับ CheckIns และ Evaluations เพื่อให้ทดสอบดูหน้า SPSS ได้ทันที
+        const MOCK_CHECKINS = [
+            ['10/06/2569 09:00', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010001', '1234567890123', 'นายรักเรียน ขยันยิ่ง', 'เทคโนโลยีดิจิทัล', 3],
+            ['10/06/2569 09:05', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010045', '1234567890124', 'นางสาวเรียนดี สีสด', 'เทคโนโลยีดิจิทัล', 3],
+            ['10/06/2569 09:10', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010050', '1234567890125', 'นายสมชาย ใจดี', 'เทคโนโลยีดิจิทัล', 3],
+            ['10/06/2569 09:15', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', '69010055', '1234567890126', 'น.ส.มานี มีแชร์', 'เทคโนโลยีดิจิทัล', 3]
+        ];
+
+        const MOCK_EVALUATIONS = [
+            ['10/06/2569 12:00', '69010001', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 4, 5, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 'กิจกรรมดีมากครับ จัดอีกบ่อยๆ'],
+            ['10/06/2569 12:05', '69010045', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 4, 4, 3, 4, 4, 4, 5, 4, 4, 4, 3, 4, 4, 'สถานที่แคบไปนิดนึงค่ะ'],
+            ['10/06/2569 12:10', '69010050', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 'ได้ความรู้เยอะมากครับ'],
+            ['10/06/2569 12:15', '69010055', 'ACT-1', 'ปฐมนิเทศนักศึกษาใหม่ Dek69', 5, 4, 4, 5, 5, 4, 5, 4, 5, 5, 4, 5, 5, 'โดยรวมจัดงานออกมาได้ดีมากค่ะ']
         ];
 
         const STATUS_MAP = {
@@ -270,6 +287,7 @@
             fetchActivitiesData();
             fetchAllCheckInsData();
             fetchOrdersData();
+            fetchEvaluationsData(); // 📌 ดึงข้อมูลแบบประเมิน
 
             setTimeout(() => {
                 if (!sessionStorage.getItem('homePopupShown') && currentRole === 'student') {
@@ -378,7 +396,7 @@
                 else if(viewId === 'edit-order') renderEditOrder(content, param);
             } else {
                 if(viewId === 'admin-dash') renderAdminDashboard(content); else if(viewId === 'admin-orders') renderAdminOrders(content);
-                else if(viewId === 'admin-events') renderAdminEvents(content); else if(viewId === 'admin-settings') renderAdminSettings(content);
+                else if(viewId === 'admin-events') renderAdminEvents(content); else if(viewId === 'admin-spss') renderAdminSPSS(content); else if(viewId === 'admin-settings') renderAdminSettings(content);
             }
         }
 
@@ -422,13 +440,19 @@
         async function fetchAllCheckInsData() { 
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`).then(res => res.json()).then(r => { if(r.success) appCache.checkIns = r.data; return appCache.checkIns; }).catch(()=>[]);
             if (appCache.checkIns && appCache.checkIns.length > 0) return appCache.checkIns;
-            return await fetchPromise || [];
+            return await fetchPromise || MOCK_CHECKINS;
         }
 
         async function fetchOrdersData() { 
             const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`).then(res => res.json()).then(r => { if(r.success) appCache.orders = r.data; return appCache.orders; }).catch(()=>null);
             if (appCache.orders && appCache.orders.length > 0) return appCache.orders;
             return await fetchPromise || MOCK_ORDERS;
+        }
+
+        async function fetchEvaluationsData() { 
+            const fetchPromise = fetch(`${GOOGLE_SCRIPT_URL}?action=getEvaluations`).then(res => res.json()).then(r => { if(r.success) appCache.evaluations = r.data; return appCache.evaluations; }).catch(()=>[]);
+            if (appCache.evaluations && appCache.evaluations.length > 0) return appCache.evaluations;
+            return await fetchPromise || MOCK_EVALUATIONS;
         }
 
         // ==========================================
@@ -1310,6 +1334,148 @@
             const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })); link.download = `รายชื่อ_${eventName}.csv`;
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
+
+        function renderAdminSPSS(container) {
+            container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-bold">กำลังประมวลผลข้อมูล...</p></div>`;
+            
+            Promise.all([fetchEvaluationsData(), fetchAllCheckInsData(), fetchActivitiesData()]).then(([evaluations, checkIns, activities]) => {
+                let eventOptions = '<option value="">-- เลือกกิจกรรมเพื่อดูรายงาน --</option>';
+                const uniqueEvents = [...new Set(evaluations.map(e => e[3]))].filter(Boolean);
+                uniqueEvents.forEach(ev => { eventOptions += `<option value="${ev}">${ev}</option>`; });
+
+                container.innerHTML = `
+                    <div class="fade-in max-w-5xl mx-auto pb-10">
+                        <div class="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">รายงานผลประเมิน (SPSS)</h1><p class="text-sm sm:text-base text-slate-500 mt-1">สรุปข้อมูลความพึงพอใจและสถิติผู้เข้าร่วม</p></div>
+                            <button onclick="window.print()" class="px-4 py-2 sm:py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg sm:rounded-xl font-bold hover:bg-slate-50 flex items-center justify-center gap-2 text-xs sm:text-sm shadow-sm transition w-full md:w-auto"><i class="ph ph-printer text-lg"></i> พิมพ์รายงาน</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-sm border border-slate-100 mb-6 print:hidden">
+                            <label class="block text-sm font-bold text-slate-700 mb-2">เลือกกิจกรรมที่ต้องการดูรายงาน:</label>
+                            <select id="spss-event-selector" onchange="generateSPSSReport(this.value)" class="w-full p-3 sm:p-3.5 rounded-xl border border-slate-300 outline-none focus:border-primary font-medium bg-slate-50 text-sm">
+                                ${eventOptions}
+                            </select>
+                        </div>
+
+                        <!-- พื้นที่สำหรับแสดงผลรายงาน -->
+                        <div id="spss-report-content" class="hidden"></div>
+                    </div>
+                `;
+            });
+        }
+
+        window.generateSPSSReport = function(eventName) {
+            const contentDiv = document.getElementById('spss-report-content');
+            if (!eventName) { contentDiv.classList.add('hidden'); return; }
+
+            const evals = appCache.evaluations.filter(e => String(e[3]).trim() === eventName);
+            if (evals.length === 0) { contentDiv.innerHTML = '<div class="text-center py-10 bg-white rounded-3xl border border-slate-100 text-slate-500">ไม่มีข้อมูลแบบประเมินสำหรับกิจกรรมนี้</div>'; contentDiv.classList.remove('hidden'); return; }
+
+            // 1. ประมวลผลเพศ (หาจากคำนำหน้าชื่อใน CheckIns)
+            let mCount = 0; let fCount = 0;
+            evals.forEach(ev => {
+                const sid = String(ev[1]).trim();
+                const chk = appCache.checkIns.find(c => String(c[2]).trim() === sid);
+                if (chk && chk[4]) {
+                    const name = String(chk[4]).trim();
+                    if (name.startsWith('นาย')) mCount++;
+                    else if (name.startsWith('นาง') || name.startsWith('น.ส.') || name.startsWith('นางสาว')) fCount++;
+                }
+            });
+            const totalGender = mCount + fCount || 1; 
+            const mPct = ((mCount / totalGender) * 100).toFixed(2); const fPct = ((fCount / totalGender) * 100).toFixed(2);
+            
+            let majorityGender = 'ชาย'; let majorityCount = mCount; let majorityPct = mPct;
+            let minorityGender = 'หญิง'; let minorityCount = fCount; let minorityPct = fPct;
+            if (fCount > mCount) { majorityGender = 'หญิง'; majorityCount = fCount; majorityPct = fPct; minorityGender = 'ชาย'; minorityCount = mCount; minorityPct = mPct; }
+
+            const surveyMap = {
+                'q1_1': 'การประชาสัมพันธ์โครงการ ฯ', 'q1_2': 'ความเหมาะสมของสถานที่', 'q1_3': 'ความเหมาะสมของระยะเวลา', 'q1_4': 'การจัดลำดับขั้นตอนของกิจกรรม',
+                'q2_1': 'เอกสาร', 'q2_2': 'โสตทัศนูปกรณ์', 'q2_3': 'เจ้าหน้าที่สนับสนุน', 'q2_4': 'อาหาร, เครื่องดื่มและสถานที่',
+                'q3_1': 'ท่านได้รับความรู้ แนวคิด ทักษะและประสบการณ์ใหม่ ๆ จากโครงการ', 'q3_2': 'ท่านสามารถนำสิ่งที่ได้รับจากโครงการ/กิจกรรมนี้ไปใช้ในการปฏิบัติงาน', 'q3_3': 'สิ่งที่ท่านได้รับจากโครงการ/กิจกรรมครั้งนี้ตรงตามความคาดหวังของท่านหรือไม่', 'q3_4': 'โครงการ/กิจกรรมนี้เอื้ออำนวยต่อการเรียนรู้และพัฒนาความสามารถของท่าน', 'q3_5': 'ประโยชน์ที่ท่านได้รับจากโครงการ/กิจกรรม'
+            };
+
+            const qMeans = []; let totalScoreSum = 0; let validEvalCount = 0;
+            for (let col = 4; col <= 16; col++) {
+                let sum = 0; let count = 0;
+                evals.forEach(ev => { const val = parseInt(ev[col]); if (!isNaN(val)) { sum += val; count++; } });
+                const mean = count > 0 ? (sum / count) : 0;
+                const qKey = Object.keys(surveyMap)[col - 4];
+                qMeans.push({ qText: surveyMap[qKey], mean: mean.toFixed(2) });
+                totalScoreSum += mean; if(mean > 0) validEvalCount++;
+            }
+            
+            const overallMean = validEvalCount > 0 ? (totalScoreSum / validEvalCount).toFixed(2) : 0;
+            const sortedMeans = [...qMeans].sort((a,b) => b.mean - a.mean);
+            const top1 = sortedMeans[0] || {qText: '-', mean: '0.00'};
+            const top2 = sortedMeans[1] || {qText: '-', mean: '0.00'};
+            const top3 = sortedMeans[2] || {qText: '-', mean: '0.00'};
+
+            const getMeaning = (mean) => {
+                const m = parseFloat(mean);
+                if (m >= 4.51) return 'มีความพึงพอใจมากที่สุด'; if (m >= 3.51) return 'มีความพึงพอใจมาก';
+                if (m >= 2.51) return 'มีความพึงพอใจปานกลาง'; if (m >= 1.51) return 'มีความพึงพอใจน้อย'; return 'มีความพึงพอใจน้อยที่สุด';
+            };
+
+            const comments = evals.map(e => String(e[17] || '').trim()).filter(c => c !== '');
+
+            let html = `
+                <div class="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 print:shadow-none print:border-none print:p-0">
+                    <h2 class="text-xl sm:text-2xl font-bold text-center text-slate-800 mb-6 sm:mb-8">รายงานผลประเมินความพึงพอใจ<br><span class="text-primary text-lg sm:text-xl">${eventName}</span></h2>
+                    
+                    <div class="mb-8 border border-slate-200 rounded-xl overflow-hidden text-xs sm:text-sm print:break-inside-avoid">
+                        <div class="bg-slate-50 font-bold p-3 text-center border-b border-slate-200">เกณฑ์ในการแปลความหมายของค่าคะแนนเฉลี่ย<br><span class="font-medium text-slate-500">ทั้งนี้ในการวิเคราะห์ข้อมูล แบ่งออกเป็น 5 ระดับ คือ</span></div>
+                        <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-slate-600 bg-white">
+                            <div class="flex justify-between border-b sm:border-0 border-slate-100 pb-2 sm:pb-0"><span>ค่าเฉลี่ยระหว่าง 4.51 - 5.00</span><span class="font-bold">หมายถึง มีความพึงพอใจมากที่สุด</span></div>
+                            <div class="flex justify-between border-b sm:border-0 border-slate-100 pb-2 sm:pb-0"><span>ค่าเฉลี่ยระหว่าง 3.51 - 4.50</span><span class="font-bold">หมายถึง มีความพึงพอใจมาก</span></div>
+                            <div class="flex justify-between border-b sm:border-0 border-slate-100 pb-2 sm:pb-0"><span>ค่าเฉลี่ยระหว่าง 2.51 - 3.50</span><span class="font-bold">หมายถึง มีความพึงพอใจปานกลาง</span></div>
+                            <div class="flex justify-between border-b sm:border-0 border-slate-100 pb-2 sm:pb-0"><span>ค่าเฉลี่ยระหว่าง 1.51 - 2.50</span><span class="font-bold">หมายถึง มีความพึงพอใจน้อย</span></div>
+                            <div class="flex justify-between"><span>ค่าเฉลี่ยระหว่าง 1.00 - 1.50</span><span class="font-bold">หมายถึง มีความพึงพอใจน้อยที่สุด</span></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8 print:break-inside-avoid">
+                        <h3 class="font-bold text-lg text-slate-800 border-l-4 border-primary pl-3 mb-4">ตารางที่ 1 ข้อมูลผู้ตอบแบบสอบถาม</h3>
+                        <p class="text-sm sm:text-base text-slate-700 leading-loose indent-8 bg-slate-50 p-5 rounded-2xl border border-slate-100 print:border-none print:bg-transparent print:p-0">
+                            จากตารางที่ 1 พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่เป็นเพศ(${majorityGender}) จำนวน ${majorityCount} คน คิดเป็นร้อยละ ${majorityPct} และเพศ(${minorityGender}) จำนวน ${minorityCount} คน คิดเป็นร้อยละ ${minorityPct}
+                        </p>
+                    </div>
+
+                    <div class="mb-8 print:break-inside-avoid">
+                        <h3 class="font-bold text-lg text-slate-800 border-l-4 border-primary pl-3 mb-4">ตารางที่ 2 ผลการสำรวจความพึงพอใจในการจัดกิจกรรม</h3>
+                        <p class="text-sm sm:text-base text-slate-700 leading-loose indent-8 bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-6 print:border-none print:bg-transparent print:p-0">
+                            จากตารางที่ 2 ผลการสำรวจความพึงพอใจในการจัดกิจกรรม พบว่า ผู้ตอบแบบสอบถามส่วนใหญ่มีความพึงพอใจในระดับ${getMeaning(overallMean).replace('มีความพึงพอใจ','')} โดยมีค่าเฉลี่ยเท่ากับ (${overallMean}) ซึ่งเมื่อพิจารณาเป็นรายข้อ พบว่า ${top1.qText} (ค่าเฉลี่ย ${top1.mean}) รองลงมาคือ ${top2.qText} (ค่าเฉลี่ย ${top2.mean}) อันดับที่ 3 คือ ${top3.qText} (ค่าเฉลี่ย ${top3.mean})
+                        </p>
+                        
+                        <div class="overflow-x-auto border border-slate-200 rounded-xl print:border-none">
+                            <table class="w-full text-left border-collapse min-w-[600px] print:w-full">
+                                <thead>
+                                    <tr class="bg-slate-100 text-slate-600 text-sm border-b border-slate-200 print:bg-transparent"><th class="p-3 font-bold text-center w-12">ข้อ</th><th class="p-3 font-bold">รายการประเมิน</th><th class="p-3 font-bold text-center w-24">ค่าเฉลี่ย</th><th class="p-3 font-bold text-center w-40">ระดับความคิดเห็น</th></tr>
+                                </thead>
+                                <tbody class="text-sm text-slate-700 bg-white">
+            `;
+            
+            qMeans.forEach((q, index) => {
+                html += `<tr class="border-b border-slate-100 hover:bg-slate-50 print:border-b-gray-300"><td class="p-3 text-center text-slate-400 font-medium">${index + 1}</td><td class="p-3 font-medium">${q.qText}</td><td class="p-3 text-center font-bold text-primary">${q.mean}</td><td class="p-3 text-center text-xs text-slate-500">${getMeaning(q.mean).replace('มีความพึงพอใจ','')}</td></tr>`;
+            });
+            html += `<tr class="bg-indigo-50 font-bold border-t-2 border-indigo-200 print:bg-transparent print:border-black"><td colspan="2" class="p-3 text-right text-indigo-900">ค่าเฉลี่ยรวมทั้งหมด</td><td class="p-3 text-center text-primary text-base">${overallMean}</td><td class="p-3 text-center text-indigo-700">${getMeaning(overallMean).replace('มีความพึงพอใจ','')}</td></tr>`;
+            html += `</tbody></table></div></div>
+            
+            <div class="print:break-inside-avoid">
+                <h3 class="font-bold text-lg text-slate-800 border-l-4 border-primary pl-3 mb-4">ตอนที่ 3 ข้อเสนอแนะเชิงพรรณนา</h3>
+                <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-3 print:border-none print:bg-transparent print:p-0">`;
+            
+            if (comments.length === 0) {
+                html += `<p class="text-slate-400 italic text-sm">- ผู้เข้าร่วมกิจกรรมไม่ได้ระบุข้อเสนอแนะเพิ่มเติม -</p>`;
+            } else {
+                comments.forEach((c) => { 
+                    html += `<p class="text-sm text-slate-700 flex gap-3 leading-relaxed"><span class="text-primary font-bold"><i class="ph-fill ph-caret-right"></i></span> <span>${c}</span></p>`; 
+                });
+            }
+            
+            html += `</div></div></div>`;
+            contentDiv.innerHTML = html; contentDiv.classList.remove('hidden');
+        };
 
         function renderAdminSettings(container) {
             container.innerHTML = `
