@@ -21,35 +21,40 @@
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .step-active .step-icon { background-color: #4f46e5; color: white; border-color: #4f46e5; }
-        .step-active .step-line { background-color: #4f46e5; }
+        .step-active .step-icon { background-color: #5a54f9; color: white; border-color: #5a54f9; }
+        .step-active .step-line { background-color: #5a54f9; }
         .step-inactive .step-icon { background-color: white; color: #cbd5e1; border-color: #e2e8f0; }
         .step-inactive .step-line { background-color: #e2e8f0; }
     </style>
     
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: '#4f46e5', primary_hover: '#4338ca', secondary: '#10b981', admin: '#0f172a', admin_hover: '#1e293b' } } }
+            theme: { extend: { colors: { primary: '#5a54f9', primary_hover: '#4b45d9', secondary: '#10b981', admin: '#0f172a', admin_hover: '#1e293b' } } }
         }
     </script>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
+    <!-- Navigation (Top Bar) -->
     <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100" id="main-nav">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
+                <!-- Brand -->
                 <div class="flex items-center">
                     <i class="ph-fill ph-student text-primary text-2xl sm:text-3xl mr-2" id="brand-icon"></i>
                     <span class="font-bold text-lg sm:text-xl text-slate-800 tracking-tight" id="brand-text">DIGIT.<span class="text-primary">CRRU</span></span>
                 </div>
                 
+                <!-- Desktop Menu -->
                 <div class="hidden md:flex space-x-1 items-center flex-grow justify-center" id="desktop-menu"></div>
 
+                <!-- 📌 แก้ไขส่วนของ Role Switcher ให้ตรงกับภาพ image_2a8706.png -->
                 <div class="flex items-center">
-                    <div class="bg-slate-100 p-1.5 rounded-2xl flex gap-1 mr-0 md:mr-4 hidden sm:flex border border-slate-200">
-                        <button onclick="switchRole('student')" id="btn-role-student" class="px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl bg-indigo-100 text-indigo-700 shadow-sm transition-all border border-indigo-200">นักศึกษา</button>
-                        <button onclick="switchRole('admin')" id="btn-role-admin" class="px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent transition-all">แอดมิน</button>
+                    <div class="bg-slate-100/80 p-1 rounded-xl mr-0 md:mr-4 hidden sm:inline-flex">
+                        <button onclick="switchRole('student')" id="btn-role-student" class="px-5 py-1.5 text-sm font-bold rounded-lg bg-white text-primary shadow-sm transition-all duration-200">นักศึกษา</button>
+                        <button onclick="switchRole('admin')" id="btn-role-admin" class="px-5 py-1.5 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all duration-200">แอดมิน</button>
                     </div>
+                    <!-- Mobile Hamburger -->
                     <button onclick="toggleMobileMenu()" class="sm:hidden text-slate-500 hover:text-primary focus:outline-none p-2 rounded-lg bg-slate-50 border border-slate-200 ml-2">
                         <i class="ph ph-user-switch text-xl"></i>
                     </button>
@@ -57,19 +62,25 @@
             </div>
         </div>
         
+        <!-- Mobile Menu (Role Switcher for Small Screens) -->
         <div id="mobile-menu" class="hidden sm:hidden bg-white border-t border-slate-100 px-4 py-4 shadow-lg absolute w-full z-40">
             <p class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider text-center">สลับบทบาท (Role)</p>
-            <div class="flex gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-                 <button onclick="switchRole('student'); toggleMobileMenu();" id="btn-role-student-mob" class="flex-1 px-3 py-2.5 text-sm font-bold rounded-xl bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200 transition-all">นักศึกษา</button>
-                 <button onclick="switchRole('admin'); toggleMobileMenu();" id="btn-role-admin-mob" class="flex-1 px-3 py-2.5 text-sm font-bold rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent transition-all">แอดมิน</button>
+            <div class="flex bg-slate-100/80 p-1 rounded-xl">
+                 <button onclick="switchRole('student'); toggleMobileMenu();" id="btn-role-student-mob" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-primary shadow-sm transition-all duration-200">นักศึกษา</button>
+                 <button onclick="switchRole('admin'); toggleMobileMenu();" id="btn-role-admin-mob" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all duration-200">แอดมิน</button>
             </div>
         </div>
     </nav>
 
+    <!-- Main Content Area -->
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 md:pb-8 w-full" id="app-content"></main>
 
+    <!-- Mobile Tab Bar (Bottom Navigation) -->
     <nav id="mobile-tab-bar" class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center z-40 pt-1 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]" style="padding-bottom: env(safe-area-inset-bottom);"></nav>
 
+    <!-- ================= MODALS ================= -->
+
+    <!-- Modal for Slip Viewing -->
     <div id="slipModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity">
         <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl transform transition-all">
             <div class="flex justify-between items-center mb-4">
@@ -77,8 +88,7 @@
                 <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="ph ph-x text-2xl"></i></button>
             </div>
             <div class="bg-slate-100 rounded-xl h-64 sm:h-80 flex items-center justify-center mb-4 border border-slate-200 overflow-hidden relative">
-                <img src="https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?auto=format&fit=crop&w=600&q=80" alt="Slip" class="h-full object-contain">
-                <div class="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">ตัวอย่างสลิปจำลอง</div>
+                <img id="modal-slip-image" src="" alt="Slip" class="h-full object-contain">
             </div>
             <div class="flex gap-3 justify-end">
                 <button onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-medium transition-colors text-sm sm:text-base">ปิดหน้าต่าง</button>
@@ -89,6 +99,7 @@
         </div>
     </div>
 
+    <!-- Modal for Edit Event -->
     <div id="editEventModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity">
         <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl transform transition-all">
             <div class="flex justify-between items-center mb-6">
@@ -116,6 +127,7 @@
         </div>
     </div>
 
+    <!-- Home Announcement Popup -->
     <div id="homePopupModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4 transition-opacity fade-in">
         <div class="bg-white rounded-3xl overflow-hidden max-w-md w-full shadow-2xl transform transition-all relative">
             <button onclick="closeHomePopup()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors z-10 backdrop-blur-md">
@@ -141,8 +153,10 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-20 md:bottom-5 right-4 md:right-5 z-[130] flex flex-col gap-2 w-auto max-w-[90%] pointer-events-none"></div>
 
+    <!-- ================= SCRIPTS ================= -->
     <script>
         // ==========================================
         // URL ของ GOOGLE APPS SCRIPT
@@ -155,10 +169,9 @@
         let currentModalOrderId = null;
         let globalActivities = [];
         let currentCheckoutOrder = null;
-        let isShirtShopOpen = true; 
-
-        // ตัวแปรเก็บการตั้งค่า Popup
-        let popupSettings = {
+        
+        let isShirtShopOpen = localStorage.getItem('CRRU_ShopOpen') === 'false' ? false : true; 
+        let popupSettings = JSON.parse(localStorage.getItem('CRRU_PopupSettings')) || {
             enabled: true,
             title: 'แจ้งเตือนนักศึกษาใหม่\nรหัส 69 ทุกคน!',
             description: 'ขอให้นักศึกษาชั้นปีที่ 1 (รหัส 69) ทุกคน เข้าไปทำการ "สั่งจองชุดเสื้อคณะ (แพ็คเกจคู่)" ให้เรียบร้อย ภายในวันที่กำหนด เพื่อใช้ในการทำกิจกรรมรับน้องและประดับรุ่นครับ',
@@ -176,7 +189,7 @@
         }
 
         const NAV_STUDENT = [
-            { id: 'events', label: 'กิจกรรมทั้งหมด', tabLabel: 'กิจกรรม', icon: 'ph-megaphone' },
+            { id: 'events', label: 'ลงทะเบียนเข้าร่วมกิจกรรม', tabLabel: 'กิจกรรม', icon: 'ph-megaphone' },
             { id: 'history', label: 'ประวัติของฉัน', tabLabel: 'ประวัติ', icon: 'ph-clock-counter-clockwise' },
             { id: 'shirt', label: 'สั่งจองเสื้อ', tabLabel: 'สั่งจอง', icon: 'ph-t-shirt' },
             { id: 'tracking', label: 'ติดตามสถานะ', tabLabel: 'ติดตาม', icon: 'ph-truck' }
@@ -189,10 +202,9 @@
             { id: 'admin-settings', label: 'ตั้งค่าระบบ', tabLabel: 'ตั้งค่า', icon: 'ph-gear' } 
         ];
 
-        // --- Mock Data ---
         const MOCK_EVENTS = [
-            { id: 1, timestamp: '10/06/2026 09:00', title: 'ปฐมนิเทศนักศึกษาใหม่ Dek69', date: '15 ตุลาคม 2569', location: 'หอประชุมใหญ่', status: 'open', spots: 500, joined: 320 },
-            { id: 2, timestamp: '12/06/2026 14:30', title: 'กิจกรรมรับน้อง Dek68 และ Dek69', date: '5 พฤศจิกายน 2569', location: 'ลานกิจกรรม', status: 'open', spots: 200, joined: 185 }
+            { id: 'ACT-1', timestamp: '10/06/2026 09:00', title: 'ปฐมนิเทศนักศึกษาใหม่ Dek69', date: '15 ตุลาคม 2569', location: 'หอประชุมใหญ่', status: 'open', spots: 50, joined: 6 },
+            { id: 'ACT-2', timestamp: '12/06/2026 14:30', title: 'กิจกรรมรับน้อง Dek68 และ Dek69', date: '5 พฤศจิกายน 2569', location: 'ลานกิจกรรม', status: 'open', spots: 200, joined: 185 }
         ];
 
         const MOCK_ORDERS = [
@@ -207,7 +219,6 @@
             4: { text: 'พร้อมรับ', color: 'bg-green-100 text-green-700 border-green-200', icon: 'ph-package' }
         };
 
-        // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             switchRole('student');
             setTimeout(() => {
@@ -218,16 +229,17 @@
             }, 500);
         });
 
+        // 📌 อัปเดตคลาสของ Role Switcher ให้ตรงกับรูปภาพ image_2a8706.png เป๊ะๆ
         function switchRole(role) {
             currentRole = role;
             const btnStudent = document.getElementById('btn-role-student'); const btnAdmin = document.getElementById('btn-role-admin');
             const btnStudentMob = document.getElementById('btn-role-student-mob'); const btnAdminMob = document.getElementById('btn-role-admin-mob');
             const brandIcon = document.getElementById('brand-icon'); const brandText = document.getElementById('brand-text');
 
-            const aC = 'px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl bg-indigo-100 text-indigo-700 shadow-sm transition-all border border-indigo-200';
-            const iC = 'px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent transition-all';
-            const aCMob = 'flex-1 px-3 py-2.5 text-sm font-bold rounded-xl bg-indigo-100 text-indigo-700 shadow-sm border border-indigo-200 transition-all';
-            const iCMob = 'flex-1 px-3 py-2.5 text-sm font-bold rounded-xl text-slate-500 hover:text-slate-700 hover:bg-white border border-transparent transition-all';
+            const aC = 'px-5 py-1.5 text-sm font-bold rounded-lg bg-white text-primary shadow-sm transition-all duration-200';
+            const iC = 'px-5 py-1.5 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all duration-200';
+            const aCMob = 'flex-1 py-2 text-sm font-bold rounded-lg bg-white text-primary shadow-sm transition-all duration-200';
+            const iCMob = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all duration-200';
 
             if (role === 'student') {
                 if(btnStudent) btnStudent.className = aC; if(btnAdmin) btnAdmin.className = iC;
@@ -287,20 +299,34 @@
         // ==========================================
         async function fetchActivitiesData() {
             try {
-                const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities`); const result = await res.json();
-                if (result.success && result.data && result.data.length > 0) {
-                    result.data.forEach(item => { item.date = formatThaiDate(item.date); item.timestamp = formatThaiDate(item.timestamp, true); });
-                    globalActivities = result.data; return globalActivities;
+                const [actRes, chkRes] = await Promise.all([ fetch(`${GOOGLE_SCRIPT_URL}?action=getActivities`), fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`) ]);
+                const actResult = await actRes.json(); const chkResult = await chkRes.json();
+
+                const checkInCounts = {};
+                if (chkResult.success && chkResult.data) {
+                    chkResult.data.forEach(row => {
+                        if(row && row.length > 1) {
+                            const eventName = String(row[1]).trim();
+                            if (eventName) checkInCounts[eventName] = (checkInCounts[eventName] || 0) + 1;
+                        }
+                    });
+                }
+
+                if (actResult.success && actResult.data && actResult.data.length > 0) {
+                    actResult.data.forEach(item => { 
+                        item.date = formatThaiDate(item.date); 
+                        item.timestamp = formatThaiDate(item.timestamp, true); 
+                        item.joined = checkInCounts[item.title.trim()] || 0;
+                    });
+                    globalActivities = actResult.data; 
+                    return globalActivities;
                 }
             } catch (error) { console.warn('Offline Mode'); }
             globalActivities = MOCK_EVENTS; return globalActivities; 
         }
-        async function fetchAllCheckInsData() {
-            try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return new Array(45); 
-        }
-        async function fetchOrdersData() {
-            try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return MOCK_ORDERS; 
-        }
+
+        async function fetchAllCheckInsData() { try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllCheckIns`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return []; }
+        async function fetchOrdersData() { try { const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders`); const result = await res.json(); if (result.success && result.data) return result.data; } catch (e) {} return MOCK_ORDERS; }
 
         // ==========================================
         // STUDENT VIEWS
@@ -308,25 +334,46 @@
         function renderEvents(container) {
             container.innerHTML = `<div class="fade-in py-20 text-center"><i class="ph ph-spinner animate-spin text-4xl text-primary mb-4"></i><p class="text-slate-500 font-medium">กำลังโหลดข้อมูลกิจกรรม...</p></div>`;
             fetchActivitiesData().then(activities => {
+                const openActivities = activities.filter(event => event.status === 'open');
+
                 let html = `<div class="fade-in"><div class="mb-6 sm:mb-8 text-center sm:text-left"><h1 class="text-2xl sm:text-3xl font-bold text-slate-800">ลงทะเบียนเข้าร่วมกิจกรรม</h1><p class="text-sm sm:text-base text-slate-500 mt-1 sm:mt-2">เลือกลงทะเบียนกิจกรรมที่เปิดรับสมัคร</p></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">`;
-                activities.forEach(event => {
-                    const isOpen = event.status === 'open';
-                    const statusBadge = isOpen ? `<span class="bg-green-100 text-green-700 text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full border border-green-200 shadow-sm whitespace-nowrap">เปิดรับสมัคร</span>` : `<span class="bg-red-100 text-red-700 text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-1 rounded-full border border-red-200 shadow-sm whitespace-nowrap">ปิดรับสมัคร</span>`;
-                    const percentFull = Math.round((event.joined / event.spots) * 100) || 0;
-                    html += `
-                        <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col p-5 sm:p-6">
-                            <div class="flex justify-between items-start mb-3 sm:mb-4 gap-2 sm:gap-4"><h3 class="text-lg sm:text-xl font-bold text-slate-800 line-clamp-2 leading-snug">${event.title}</h3><div>${statusBadge}</div></div>
-                            <div class="space-y-2 sm:space-y-3 mt-auto mb-4 sm:mb-6 text-xs sm:text-sm text-slate-600">
-                                <div class="flex items-center gap-2"><i class="ph-fill ph-calendar-blank text-primary text-base sm:text-lg"></i> ${event.date}</div>
-                                <div class="flex items-center gap-2"><i class="ph-fill ph-map-pin text-primary text-base sm:text-lg"></i> ${event.location}</div>
-                                <div class="mt-3 sm:mt-4 bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100">
-                                    <div class="flex justify-between text-[10px] sm:text-xs mb-1.5 sm:mb-2 font-bold text-slate-600 uppercase tracking-wide"><span>ผู้สมัคร ${event.joined}/${event.spots} คน</span><span class="text-primary">${percentFull}%</span></div>
-                                    <div class="w-full bg-slate-200 rounded-full h-2 sm:h-2.5"><div class="bg-primary h-2 sm:h-2.5 rounded-full" style="width: ${percentFull}%"></div></div>
+                
+                if (openActivities.length === 0) {
+                    html += `<div class="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm"><i class="ph-fill ph-calendar-x text-5xl text-slate-300 mb-3"></i><p class="text-slate-500 font-bold text-lg">ยังไม่มีกิจกรรมที่เปิดรับสมัครในขณะนี้</p><p class="text-sm text-slate-400 mt-1">กรุณาติดตามการประกาศกิจกรรมใหม่ได้เร็วๆ นี้</p></div>`;
+                } else {
+                    openActivities.forEach(event => {
+                        const percentFull = Math.min(Math.round((event.joined / event.spots) * 100) || 0, 100);
+                        
+                        // 📌 แก้ไขส่วนของ Progress Bar ให้ตรงกับภาพ image_0c73fc.png เป๊ะๆ
+                        html += `
+                            <div class="bg-white rounded-2xl sm:rounded-[20px] shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col p-5 sm:p-6">
+                                <div class="flex justify-between items-start mb-3 sm:mb-4 gap-2 sm:gap-4">
+                                    <h3 class="text-lg sm:text-xl font-bold text-slate-800 line-clamp-2 leading-snug">${event.title}</h3>
+                                    <div><span class="bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full whitespace-nowrap">เปิดรับสมัคร</span></div>
                                 </div>
-                            </div>
-                            <button onclick="navigate('register', '${event.id}')" ${!isOpen ? 'disabled' : ''} class="w-full py-3 sm:py-3.5 rounded-xl font-bold transition-colors flex justify-center items-center gap-2 text-sm sm:text-base ${isOpen ? 'bg-slate-800 text-white hover:bg-black shadow-md' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}">${isOpen ? 'ลงทะเบียน <i class="ph ph-arrow-right"></i>' : 'เต็มแล้ว / ปิดรับสมัคร'}</button>
-                        </div>`;
-                });
+                                
+                                <div class="space-y-2 mt-auto mb-4 sm:mb-6 text-sm text-slate-500 font-medium">
+                                    <div class="flex items-center gap-2"><i class="ph-fill ph-calendar-blank text-primary text-base sm:text-lg"></i> ${event.date}</div>
+                                    <div class="flex items-center gap-2"><i class="ph-fill ph-map-pin text-primary text-base sm:text-lg"></i> ${event.location}</div>
+                                    
+                                    <!-- Progress Bar ที่ดีไซน์ตามภาพ -->
+                                    <div class="mt-4 pt-3 sm:pt-4 bg-[#f8fafc] p-4 rounded-2xl border border-slate-100/50">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-[13px] sm:text-sm font-bold text-slate-700">ยอดลงทะเบียน ${event.joined}/${event.spots} คน</span>
+                                            <span class="text-[13px] sm:text-sm font-bold text-[#5a54f9]">${percentFull}%</span>
+                                        </div>
+                                        <div class="w-full bg-[#e2e8f0] rounded-full h-2.5 overflow-hidden">
+                                            <div class="bg-[#5a54f9] h-2.5 rounded-full transition-all duration-500" style="width: ${percentFull}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button onclick="navigate('register', '${event.id}')" class="w-full py-3 sm:py-3.5 rounded-xl font-bold transition-colors flex justify-center items-center gap-2 text-sm sm:text-base bg-slate-800 text-white hover:bg-black shadow-md">
+                                    ลงทะเบียน <i class="ph ph-arrow-right"></i>
+                                </button>
+                            </div>`;
+                    });
+                }
                 html += `</div></div>`; container.innerHTML = html;
             });
         }
@@ -368,7 +415,7 @@
                     </div>
                 </div>`;
         }
-
+        
         async function fetchStudentData() {
             const searchId = document.getElementById('search-student-id').value.trim(); const feedback = document.getElementById('search-feedback');
             if(!searchId) { feedback.textContent = 'กรุณากรอกรหัสก่อนค้นหา'; feedback.classList.remove('hidden'); return; }
@@ -488,6 +535,7 @@
                                 <div class="flex-grow z-10"><label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">ชื่อ-นามสกุล</label><input type="text" id="order-student-name" required class="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-blue-900 font-bold outline-none text-sm"></div>
                                 <div class="mt-1 sm:mt-0 flex-shrink-0 self-end sm:self-center z-10"><button type="button" onclick="resetOrderSearch()" class="text-xs sm:text-sm font-bold text-blue-600 hover:text-blue-800 bg-white px-3 sm:px-4 py-2 rounded-lg border border-blue-200 shadow-sm w-full sm:w-auto">เปลี่ยนผู้สั่งจอง</button></div>
                             </div>
+
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
                                 <div class="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-200 flex flex-col">
                                     <h3 class="text-lg sm:text-xl font-bold text-slate-800 mb-4 sm:mb-6">1. เสื้อโปโลคณะ</h3>
@@ -797,6 +845,7 @@
                             </tbody></table>
                         </div>
                     </div>
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2"><i class="ph-fill ph-list-checks text-primary"></i> รายการคำสั่งซื้อทั้งหมด</h2>
                     <div class="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse min-w-[900px]">
@@ -824,7 +873,7 @@
 
         async function updateOrderStatus(orderId, newStatus) {
             showToast('กำลังบันทึก...', 'warning');
-            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOrderStatus', orderId: String(orderId), status: parseInt(newStatus) }) }); showToast(`อัปเดตสถานะสำเร็จ`, 'success'); } catch (error) { showToast('อัปเดตสถานะจำลอง', 'error'); } navigate(currentView); 
+            try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateOrderStatus', orderId: String(orderId), status: parseInt(newStatus) }) }); showToast(`อัปเดตสถานะสำเร็จ`, 'success'); } catch (error) { showToast('อัปเดตสถานะจำลอง', 'warning'); } navigate(currentView); 
         }
         function openSlipModal(orderId) { currentModalOrderId = orderId; document.getElementById('slipModal').classList.remove('hidden'); }
         function closeModal() { currentModalOrderId = null; document.getElementById('slipModal').classList.add('hidden'); }
@@ -922,8 +971,9 @@
                             <div class="flex items-center justify-between p-4 sm:p-5 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200">
                                 <div><p class="font-bold text-slate-800 text-sm sm:text-base">ระบบสั่งจองเสื้อคณะ</p><p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">เปิดให้นักศึกษาเข้ามาสั่งจองเสื้อได้</p></div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="setting-shirt-toggle" class="sr-only peer" ${isShirtShopOpen ? 'checked' : ''}>
-                                    <div class="w-12 sm:w-14 h-6 sm:h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 sm:after:h-6 after:w-5 sm:after:w-6 after:transition-all peer-checked:bg-green-500 shadow-sm"></div>
+                                    <input type="checkbox" id="setting-shirt-toggle" class="sr-only peer" ${isShirtShopOpen ? 'checked' : ''} onchange="document.getElementById('shirt-toggle-text').innerText = this.checked ? 'เปิด' : 'ปิด'; document.getElementById('shirt-toggle-text').className = this.checked ? 'ml-3 text-sm font-bold text-green-500 w-6' : 'ml-3 text-sm font-bold text-slate-400 w-6'">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 shadow-inner"></div>
+                                    <span id="shirt-toggle-text" class="ml-3 text-sm font-bold ${isShirtShopOpen ? 'text-green-500' : 'text-slate-400'} w-6">${isShirtShopOpen ? 'เปิด' : 'ปิด'}</span>
                                 </label>
                             </div>
                         </div>
@@ -933,24 +983,28 @@
                                 <div class="flex items-center justify-between p-4 sm:p-5 bg-indigo-50 rounded-xl sm:rounded-2xl border border-indigo-100">
                                     <div><p class="font-bold text-indigo-900 text-sm sm:text-base">เปิดใช้งาน Popup แจ้งเตือน</p><p class="text-xs sm:text-sm text-indigo-700 mt-0.5 font-medium">แสดงประกาศเมื่อเข้าหน้าเว็บครั้งแรก</p></div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="setting-popup-toggle" class="sr-only peer" ${popupSettings.enabled ? 'checked' : ''}>
-                                        <div class="w-12 sm:w-14 h-6 sm:h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 sm:after:h-6 after:w-5 sm:after:w-6 after:transition-all peer-checked:bg-primary shadow-sm"></div>
+                                        <input type="checkbox" id="setting-popup-toggle" class="sr-only peer" ${popupSettings.enabled ? 'checked' : ''} onchange="document.getElementById('popup-toggle-text').innerText = this.checked ? 'เปิด' : 'ปิด'; document.getElementById('popup-toggle-text').className = this.checked ? 'ml-3 text-sm font-bold text-primary w-6' : 'ml-3 text-sm font-bold text-slate-400 w-6'">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                                        <span id="popup-toggle-text" class="ml-3 text-sm font-bold ${popupSettings.enabled ? 'text-primary' : 'text-slate-400'} w-6">${popupSettings.enabled ? 'เปิด' : 'ปิด'}</span>
                                     </label>
                                 </div>
-                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">หัวข้อประกาศ</label><textarea id="setting-popup-title" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-bold text-sm bg-slate-50">${popupSettings.title}</textarea></div>
-                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รายละเอียดเนื้อหา</label><textarea id="setting-popup-desc" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50">${popupSettings.description}</textarea></div>
+                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">หัวข้อประกาศ (เว้นบรรทัดได้)</label><textarea id="setting-popup-title" rows="2" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-bold text-sm bg-slate-50">${popupSettings.title}</textarea></div>
+                                <div><label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รายละเอียดเนื้อหา (เว้นบรรทัดได้)</label><textarea id="setting-popup-desc" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none font-medium text-sm bg-slate-50">${popupSettings.description}</textarea></div>
                                 <div>
                                     <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">รูปภาพแบนเนอร์ (อัปโหลดจากเครื่อง)</label>
                                     <input type="hidden" id="setting-popup-image" value="${popupSettings.imageUrl}">
-                                    <label class="flex flex-col items-center justify-center w-full h-28 sm:h-32 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors relative overflow-hidden group">
-                                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500 z-10"><i class="ph ph-upload-simple text-2xl sm:text-3xl mb-1 text-primary group-hover:scale-110 transition-transform"></i><p class="text-[10px] sm:text-xs font-bold">คลิกอัปโหลดรูปภาพใหม่</p></div>
-                                        <img id="setting-popup-preview" src="${popupSettings.imageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-10 transition-opacity">
+                                    <label class="flex flex-col items-center justify-center w-full h-28 sm:h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors relative overflow-hidden group">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500 z-10"><i class="ph ph-upload-simple text-2xl sm:text-4xl mb-2 text-primary group-hover:scale-110 transition-transform"></i><p class="text-[10px] sm:text-sm font-bold text-primary">คลิกเปลี่ยนรูปภาพ</p></div>
+                                        <img id="setting-popup-preview" src="${popupSettings.imageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity">
                                         <input type="file" class="hidden" accept="image/*" onchange="previewSettingsPopupImage(this)" />
                                     </label>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex justify-end pt-2 sm:pt-4"><button type="submit" class="w-full md:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่า</button></div>
+                        <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2 sm:pt-4">
+                            <button type="button" onclick="previewCurrentPopup()" class="w-full sm:w-auto px-6 py-3.5 sm:py-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-eye text-lg"></i> ดูตัวอย่าง</button>
+                            <button type="submit" class="w-full sm:w-auto px-6 sm:px-10 py-3.5 sm:py-4 rounded-xl font-bold text-white bg-admin hover:bg-admin_hover transition-colors shadow-lg text-sm sm:text-base flex items-center justify-center gap-2"><i class="ph ph-floppy-disk text-lg sm:text-xl"></i> บันทึกการตั้งค่า</button>
+                        </div>
                     </form>
                 </div>`;
         }
@@ -962,16 +1016,34 @@
             }
         }
 
+        function previewCurrentPopup() {
+            document.getElementById('popup-banner-img').src = document.getElementById('setting-popup-image').value; 
+            document.getElementById('popup-title').innerHTML = document.getElementById('setting-popup-title').value.replace(/\n/g, '<br>'); 
+            document.getElementById('popup-desc').innerText = document.getElementById('setting-popup-desc').value;
+            document.getElementById('homePopupModal').classList.remove('hidden'); 
+        }
+
         function submitSettings(e) {
             e.preventDefault(); const btn = e.target.querySelector('button[type="submit"]'); const txt = btn.innerHTML; btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> บันทึก...'; btn.disabled = true;
+            
             isShirtShopOpen = document.getElementById('setting-shirt-toggle').checked;
-            popupSettings.enabled = document.getElementById('setting-popup-toggle').checked; popupSettings.title = document.getElementById('setting-popup-title').value; popupSettings.description = document.getElementById('setting-popup-desc').value; popupSettings.imageUrl = document.getElementById('setting-popup-image').value;
+            popupSettings.enabled = document.getElementById('setting-popup-toggle').checked; 
+            popupSettings.title = document.getElementById('setting-popup-title').value; 
+            popupSettings.description = document.getElementById('setting-popup-desc').value; 
+            popupSettings.imageUrl = document.getElementById('setting-popup-image').value;
+
+            localStorage.setItem('CRRU_ShopOpen', isShirtShopOpen);
+            localStorage.setItem('CRRU_PopupSettings', JSON.stringify(popupSettings));
+            sessionStorage.removeItem('homePopupShown');
+
             setTimeout(() => { showToast('บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success'); btn.innerHTML = txt; btn.disabled = false; }, 600);
         }
 
         function openHomePopup() { 
             if (!popupSettings.enabled) return;
-            document.getElementById('popup-banner-img').src = popupSettings.imageUrl; document.getElementById('popup-title').innerHTML = popupSettings.title.replace(/\n/g, '<br>'); document.getElementById('popup-desc').innerText = popupSettings.description;
+            document.getElementById('popup-banner-img').src = popupSettings.imageUrl; 
+            document.getElementById('popup-title').innerHTML = popupSettings.title.replace(/\n/g, '<br>'); 
+            document.getElementById('popup-desc').innerText = popupSettings.description;
             document.getElementById('homePopupModal').classList.remove('hidden'); 
         }
         function closeHomePopup() { document.getElementById('homePopupModal').classList.add('hidden'); }
@@ -980,7 +1052,7 @@
             const container = document.getElementById('toast-container'); const toast = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-white border-l-4 border-green-500' : type === 'error' ? 'bg-white border-l-4 border-red-500' : 'bg-white border-l-4 border-amber-500';
             const icon = type === 'success' ? '<i class="ph-fill ph-check-circle text-green-500 text-xl sm:text-2xl"></i>' : type === 'error' ? '<i class="ph-fill ph-x-circle text-red-500 text-xl sm:text-2xl"></i>' : '<i class="ph-fill ph-warning-circle text-amber-500 text-xl sm:text-2xl"></i>';
-            toast.className = `${bgColor} text-slate-700 p-3 sm:p-4 rounded-xl shadow-lg flex items-center gap-2 sm:gap-3 transform transition-all duration-300 translate-x-full border border-slate-100`;
+            toast.className = `${bgColor} text-slate-700 p-3 sm:p-4 rounded-xl shadow-lg flex items-center gap-2 sm:gap-3 transform transition-all duration-300 translate-x-full border border-slate-100 pointer-events-auto`;
             toast.innerHTML = `${icon} <span class="font-bold text-xs sm:text-sm leading-tight">${message}</span>`;
             container.appendChild(toast); requestAnimationFrame(() => toast.classList.remove('translate-x-full'));
             setTimeout(() => { toast.classList.add('translate-x-full'); setTimeout(() => toast.remove(), 300); }, 3000);
